@@ -2,8 +2,11 @@ import fs from "fs";
 import path from "path";
 
 import { loadBlogPosts } from "./lib/loaders/blogPostsLoader";
+import { loadStatusLol } from "./lib/loaders/statuslolLoader";
 import { Entity } from "./lib/types";
 import { writeArchive } from "./lib/writers/archiveWriter";
+import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
+import { writeStatuslol } from "./lib/writers/statuslolWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -23,25 +26,29 @@ async function main() {
 
   await prepFolders();
 
-  const blogPostLoader = loadBlogPosts();
-
-  const loaders = [blogPostLoader];
+  const loaders = [loadBlogPosts(), loadStatusLol()];
 
   console.log("Loading data");
 
   const loadStart = Date.now();
 
-  const [posts] = await Promise.all(loaders);
+  const results = await Promise.all(loaders);
+
+  const [posts, statuslols] = results;
 
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const entities: Entity[] = [...posts];
+  const entities: Entity[] = [...(posts ?? []), ...(statuslols ?? [])];
 
   const sorted = entities.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  const writers = [writeArchive(PUBLIC_DIR, sorted)];
+  const writers = [
+    writeArchive(PUBLIC_DIR, sorted),
+    writeBlogPosts(PUBLIC_DIR, sorted),
+    writeStatuslol(PUBLIC_DIR, sorted),
+  ];
 
   console.log("Writing data");
 

@@ -18,6 +18,7 @@ async function loadBlogPost(filePath: string): Promise<BlogPostEntity> {
 
   return {
     type: "blogPost",
+    id: slug,
     slug,
     title,
     date: new Date(date),

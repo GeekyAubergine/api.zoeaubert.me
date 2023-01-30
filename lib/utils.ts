@@ -14,3 +14,7 @@ export async function getFilesRecursive(path: string, ext: string) {
   }
   return result;
 }
+
+export function exhaust(value: never): never {
+  throw new Error(`Unhandled value: ${value}`);
+}
