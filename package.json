@@ -1,0 +1,27 @@
+{
+  "name": "api.zoeaubert.me",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node index.ts",
+    "build": "eleventy"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GeekyAubergine/api.zoeaubert.me.git"
+  },
+  "author": "Zoe Aubert | GeekyAubergine",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GeekyAubergine/api.zoeaubert.me/issues"
+  },
+  "homepage": "https://github.com/GeekyAubergine/api.zoeaubert.me#readme",
+  "dependencies": {
+    "@11ty/eleventy": "^2.0.0-beta.2",
+    "@types/marked": "^4.0.8",
+    "front-matter": "^4.0.2",
+    "ts-node": "^10.9.1"
+  }
+}
