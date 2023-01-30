@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
-
+import { loadMastadonToots } from "./lib/loaders/mastodonLoader";
+import { writeMastodon } from "./lib/writers/statuslolWriter copy";
 import { loadBlogPosts } from "./lib/loaders/blogPostsLoader";
 import { loadStatusLol } from "./lib/loaders/statuslolLoader";
 import { Entity } from "./lib/types";
@@ -26,7 +27,7 @@ async function main() {
 
   await prepFolders();
 
-  const loaders = [loadBlogPosts(), loadStatusLol()];
+  const loaders = [loadBlogPosts(), loadStatusLol(), loadMastadonToots()];
 
   console.log("Loading data");
 
@@ -34,13 +35,17 @@ async function main() {
 
   const results = await Promise.all(loaders);
 
-  const [posts, statuslols] = results;
+  const [posts, statuslols, mastodonToots] = results;
 
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const entities: Entity[] = [...(posts ?? []), ...(statuslols ?? [])];
+  const entities: Entity[] = [
+    ...(posts ?? []),
+    ...(statuslols ?? []),
+    ...(mastodonToots ?? []),
+  ];
 
   const sorted = entities.sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -48,6 +53,7 @@ async function main() {
     writeArchive(PUBLIC_DIR, sorted),
     writeBlogPosts(PUBLIC_DIR, sorted),
     writeStatuslol(PUBLIC_DIR, sorted),
+    writeMastodon(PUBLIC_DIR, sorted),
   ];
 
   console.log("Writing data");

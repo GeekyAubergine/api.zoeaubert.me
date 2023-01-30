@@ -22,4 +22,13 @@ export type StatusLolEntity = {
   url: string;
 };
 
-export type Entity = BlogPostEntity | StatusLolEntity;
+export type MastodonEntity = {
+  type: "mastodon";
+  id: string;
+  date: Date;
+  content: string;
+  url: string;
+  tags: string[];
+};
+
+export type Entity = BlogPostEntity | StatusLolEntity | MastodonEntity;
