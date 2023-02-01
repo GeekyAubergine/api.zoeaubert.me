@@ -48,6 +48,8 @@ async function processToot(
     return existingEntity as MastodonEntity;
   }
 
+  console.log(`Updating toot: ${data.date}`);
+
   return {
     ...data,
     rawDataHash,
@@ -59,14 +61,16 @@ export async function loadMastadonToots(
 ): Promise<Record<string, MastodonEntity>> {
   const request = await fetch(URL);
   const data: any = await request.json();
-  const rawToots: MastodonEntity[] = data
-    .filter(
-      (toot: any) =>
-        toot.application.name === "Micro.blog" ||
-        toot.application.name === "status.lol" ||
-        CONTENT_TO_FILTER_OUT.test(toot.content) !== null
-    )
-    .map((toot: any) => processToot(loaderParams.archive, toot));
+  const rawToots: MastodonEntity[] = await Promise.all(
+    data
+      .filter(
+        (toot: any) =>
+          toot.application.name !== "Micro.blog" &&
+          toot.application.name !== "status.lol" &&
+          CONTENT_TO_FILTER_OUT.test(toot.content) === false
+      )
+      .map((toot: any) => processToot(loaderParams.archive, toot))
+  );
 
   return arrayToRecord(rawToots, (toot) => toot.id);
 }
