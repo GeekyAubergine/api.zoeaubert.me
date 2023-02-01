@@ -1,4 +1,5 @@
 ---
+slug: creating-a-microblog-theme
 title: Creating a Micro.blog Theme + Tailwind
 date: 2022-05-27T21:19
 description: How I built my custom Micro.blog theme with Tailwind

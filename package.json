@@ -20,10 +20,17 @@
   "homepage": "https://github.com/GeekyAubergine/api.zoeaubert.me#readme",
   "dependencies": {
     "@11ty/eleventy": "^2.0.0-beta.2",
-    "@types/marked": "^4.0.8",
-    "@types/node-fetch": "^2.6.2",
+    "aws-sdk": "^2.1305.0",
     "front-matter": "^4.0.2",
+    "md5": "^2.3.0",
     "node-fetch": "^2.6.9",
     "ts-node": "^10.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.6",
+    "@types/aws-sdk": "^2.7.0",
+    "@types/marked": "^4.0.8",
+    "@types/md5": "^2.3.2",
+    "@types/node-fetch": "^2.6.2"
   }
 }

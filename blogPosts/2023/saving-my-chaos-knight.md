@@ -1,5 +1,6 @@
 ---
 date: 2023-01-29T22:04
+slug: saving-my-chaos-knight
 title: Saving my Chaos Knight
 description: How I saved my broken Chaos Knight model with some stressful drilling
 tags: ['warhammer', 'ageofsigmar', 'slaves-to-darkness']
