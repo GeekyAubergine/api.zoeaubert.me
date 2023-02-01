@@ -13,6 +13,8 @@ import { writeTimeline } from "./lib/writers/timelineWriter";
 import { loadMicroBlog } from "./lib/loaders/microBlogLoader";
 import { writeMicroBlogs } from "./lib/writers/microBlogWriter";
 import { writeToots } from "./lib/writers/tootsWriter";
+import { loadAlbums } from "./lib/loaders/albumsLoader";
+import { writeAlbums } from "./lib/writers/albumsWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -62,27 +64,24 @@ async function main() {
     loadStatusLol(loaderParams),
     loadMastadonToots(loaderParams),
     loadMicroBlog(loaderParams),
+    loadAlbums(loaderParams),
   ];
 
   console.log("Loading data");
 
   const loadStart = Date.now();
 
-  const results = await Promise.all(loaders);
-
-  const [posts, statuslols, mastodonToots, microBlogs] = results;
+  // @ts-expect-error it's very confused
+  const results: Record<string, Entity>[] = await Promise.all(loaders);
 
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const entitiesMap: Record<string, Entity> = {
-    ...archive.entities,
-    ...(posts ?? {}),
-    ...(statuslols ?? {}),
-    ...(mastodonToots ?? {}),
-    ...(microBlogs ?? {}),
-  };
+  const entitiesMap: Record<string, Entity> = results.reduce(
+    (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
+    archive.entities
+  );
 
   const entityIdDatePairs = Object.entries(entitiesMap).map(([id, entity]) => ({
     id,
@@ -108,6 +107,7 @@ async function main() {
     writeTimeline(PUBLIC_DIR, newArchive),
     writeMicroBlogs(PUBLIC_DIR, newArchive),
     writeToots(PUBLIC_DIR, newArchive),
+    writeAlbums(PUBLIC_DIR, newArchive)
   ];
 
   console.log("Writing data");

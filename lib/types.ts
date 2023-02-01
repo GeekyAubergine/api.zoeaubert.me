@@ -6,8 +6,6 @@ type BaseEntity<T, D> = {
   id: string;
   url: string;
   date: string;
-  content: string;
-  media: EntityMedia[];
 } & D;
 
 export type BlogPostEntity = BaseEntity<
@@ -15,18 +13,21 @@ export type BlogPostEntity = BaseEntity<
   {
     title: string;
     description: string;
+    content: string;
     tags: string[];
     hero: {
       url: string;
       alt: string;
       showHero: boolean;
     } | null;
+    media: EntityMedia[];
   }
 >;
 
 export type StatusLolEntity = BaseEntity<
   "statuslol",
   {
+    content: string;
     emoji: string;
   }
 >;
@@ -34,13 +35,46 @@ export type StatusLolEntity = BaseEntity<
 export type MastodonEntity = BaseEntity<
   "mastodon",
   {
+    content: string;
     tags: string[];
+    media: EntityMedia[];
   }
 >;
 
 export type MicroBlogEntity = BaseEntity<
   "microblog",
   {
+    content: string;
+    tags: string[];
+    media: EntityMedia[];
+  }
+>;
+
+export type Photo = {
+  id: string;
+  permalink: string;
+  url: string;
+  description: string;
+  alt: string;
+  tags: string[];
+  featured: boolean;
+};
+
+export type AlbumAwarePhoto = Photo & {
+  albumTotalPhotos: number;
+  previous: string | null;
+  next: string | null;
+  albumTitle: string;
+  date: string;
+};
+
+export type AlbumEntity = BaseEntity<
+  "album",
+  {
+    title: string;
+    description: string | null;
+    photos: Record<string, AlbumAwarePhoto>;
+    photoOrder: string[];
     tags: string[];
   }
 >;
@@ -49,7 +83,8 @@ export type Entity =
   | BlogPostEntity
   | StatusLolEntity
   | MastodonEntity
-  | MicroBlogEntity;
+  | MicroBlogEntity
+  | AlbumEntity;
 
 export type OrderedEntities = {
   entities: Record<string, Entity>;
