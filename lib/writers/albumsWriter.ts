@@ -31,10 +31,12 @@ export async function writeAlbums(
     {}
   );
 
-  const albumsByYear = Object.entries(albumsByYearMap).map(([year, ids]) => ({
-    year,
-    ids,
-  }));
+  const albumsByYear = Object.entries(albumsByYearMap)
+    .map(([year, ids]) => ({
+      year,
+      ids,
+    }))
+    .reverse();
 
   const photos = Object.values(albums.entities).reduce<Record<string, Photo>>(
     (acc, album: AlbumEntity) => {
