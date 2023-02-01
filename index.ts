@@ -3,14 +3,15 @@ import path from "path";
 import config from "./config";
 
 import { loadMastadonToots } from "./lib/loaders/mastodonLoader";
-import { writeMastodon } from "./lib/writers/mastodonWriter";
 import { loadBlogPosts } from "./lib/loaders/blogPostsLoader";
 import { loadStatusLol } from "./lib/loaders/statuslolLoader";
 import { Archive, Entity, LoaderParams } from "./lib/types";
 import { writeArchive } from "./lib/writers/archiveWriter";
 import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
-import { writeStatuslol } from "./lib/writers/statuslolWriter";
+import { writeMicros } from "./lib/writers/microsWriter";
 import { writeTimeline } from "./lib/writers/timelineWriter";
+import { loadMicroBlog } from "./lib/loaders/microBlogLoader";
+import { writeMicroBlogs } from "./lib/writers/microBlogWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -19,7 +20,7 @@ async function prepFolders() {
     .stat(PUBLIC_DIR)
     .then(() => true)
     .catch(() => false);
-  if (exists!) {
+  if (!exists) {
     await fs.promises.mkdir(PUBLIC_DIR, { recursive: true });
   }
 }
@@ -59,6 +60,7 @@ async function main() {
     loadBlogPosts(loaderParams),
     loadStatusLol(loaderParams),
     loadMastadonToots(loaderParams),
+    loadMicroBlog(loaderParams),
   ];
 
   console.log("Loading data");
@@ -67,7 +69,7 @@ async function main() {
 
   const results = await Promise.all(loaders);
 
-  const [posts, statuslols, mastodonToots] = results;
+  const [posts, statuslols, mastodonToots, microBlogs] = results;
 
   const loadEnd = Date.now();
 
@@ -78,6 +80,7 @@ async function main() {
     ...(posts ?? {}),
     ...(statuslols ?? {}),
     ...(mastodonToots ?? {}),
+    ...(microBlogs ?? {}),
   };
 
   const entityIdDatePairs = Object.entries(entitiesMap).map(([id, entity]) => ({
@@ -100,9 +103,9 @@ async function main() {
   const writers = [
     writeArchive(PUBLIC_DIR, newArchive),
     writeBlogPosts(PUBLIC_DIR, newArchive),
-    writeStatuslol(PUBLIC_DIR, newArchive),
-    writeMastodon(PUBLIC_DIR, newArchive),
+    writeMicros(PUBLIC_DIR, newArchive),
     writeTimeline(PUBLIC_DIR, newArchive),
+    writeMicroBlogs(PUBLIC_DIR, newArchive),
   ];
 
   console.log("Writing data");

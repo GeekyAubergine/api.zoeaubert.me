@@ -38,7 +38,18 @@ export type MastodonEntity = BaseEntity<
   }
 >;
 
-export type Entity = BlogPostEntity | StatusLolEntity | MastodonEntity;
+export type MicroBlogEntity = BaseEntity<
+  "microblog",
+  {
+    tags: string[];
+  }
+>;
+
+export type Entity =
+  | BlogPostEntity
+  | StatusLolEntity
+  | MastodonEntity
+  | MicroBlogEntity;
 
 export type OrderedEntities = {
   entities: Record<string, Entity>;

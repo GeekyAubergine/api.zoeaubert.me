@@ -15,7 +15,8 @@ export async function writeTimeline(
     const { type } = entity;
     switch (type) {
       case "blogPost":
-      case "mastodon": {
+      case "mastodon":
+      case "microblog": {
         const { tags } = entity;
         const newTags = [];
         for (const tag of tags) {
@@ -43,7 +44,8 @@ export async function writeTimeline(
       const { type } = entity;
       switch (type) {
         case "blogPost":
-        case "mastodon": {
+        case "mastodon":
+        case "microblog": {
           const { tags } = entity;
           return tags.includes(tag);
         }
