@@ -12,6 +12,7 @@ import { writeMicros } from "./lib/writers/microsWriter";
 import { writeTimeline } from "./lib/writers/timelineWriter";
 import { loadMicroBlog } from "./lib/loaders/microBlogLoader";
 import { writeMicroBlogs } from "./lib/writers/microBlogWriter";
+import { writeToots } from "./lib/writers/tootsWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -106,6 +107,7 @@ async function main() {
     writeMicros(PUBLIC_DIR, newArchive),
     writeTimeline(PUBLIC_DIR, newArchive),
     writeMicroBlogs(PUBLIC_DIR, newArchive),
+    writeToots(PUBLIC_DIR, newArchive),
   ];
 
   console.log("Writing data");

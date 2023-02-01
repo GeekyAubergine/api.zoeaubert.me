@@ -27,16 +27,36 @@ const URL = `https://social.lol//api/v1/accounts/${config.mastodon.accountId}/st
 //   return toot;
 // }
 
+function cleanContent(content: string): string {
+  const match = content.match(/<p.*?>.*?<\/p>/g);
+
+  if (!match) {
+    return content;
+  }
+
+  const paragraphs = match.filter(
+    (paragraph) => !paragraph.includes('rel="tag"')
+  );
+
+  return paragraphs.join("");
+}
+
 async function processToot(
   archive: Archive,
   toot: any
 ): Promise<MastodonEntity> {
+  const date = new Date(toot.created_at);
+
+  const url = `/${date.getFullYear()}/${(date.getMonth() + 1)
+    .toString()
+    .padStart(2, "0")}/${toot.id}`;
+
   const data: Omit<MastodonEntity, "rawDataHash"> = {
     type: "mastodon",
     id: toot.id,
-    url: toot.url,
+    url,
     date: new Date(toot.created_at).toISOString(),
-    content: toot.content,
+    content: cleanContent(toot.content).trim(),
     tags: toot.tags.map((tag: any) => tag.name),
     media: toot.media_attachments.map((attachment: any) => ({
       url: attachment.url,
