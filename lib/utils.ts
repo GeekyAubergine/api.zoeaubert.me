@@ -1,6 +1,6 @@
 import fs from "fs";
 import md5 from "md5";
-import { Archive, Entity } from "./types";
+import { Entity, OrderedEntities } from "./types";
 
 export async function getFilesRecursive(path: string, ext: string) {
   const files = await fs.promises.readdir(path);
@@ -51,15 +51,33 @@ export function arrayToRecord<K extends string | number | symbol, T extends {}>(
   }, {} as Record<K, T>);
 }
 
-export function archiveEntitiesInOrder(archive: Archive): Entity[] {
-  return filterNull(archive.entityOrder.map((id) => archive.entities[id]));
+export function sortEntitesByDate(
+  entities: Record<string, Entity>
+): OrderedEntities {
+  const entityOrder = recordToArray(entities)
+    .map((entity) => entity.id)
+    .sort((a, b) => {
+      const aDate = new Date((entities[a] as any).date);
+      const bDate = new Date((entities[b] as any).date);
+      return bDate.getTime() - aDate.getTime();
+    });
+  return { entityOrder, entities };
 }
 
-export function archiveEntitiesOfTypeInOrder(
-  archive: Archive,
-  type: Entity["type"]
-): Entity[] {
-  const entities = archiveEntitiesInOrder(archive);
+export function filterOrderedEntitiesBy(
+  orderedEntities: OrderedEntities,
+  predicate: (entity: Entity) => boolean
+): OrderedEntities {
+  let outOrder: OrderedEntities["entityOrder"] = [];
+  let outEntities: OrderedEntities["entities"] = {};
 
-  return entities.filter((e) => e.type === type);
+  for (const id of orderedEntities.entityOrder) {
+    const entity = orderedEntities.entities[id];
+    if (entity && predicate(entity)) {
+      outOrder.push(id);
+      outEntities[id] = entity;
+    }
+  }
+
+  return { entityOrder: outOrder, entities: outEntities };
 }

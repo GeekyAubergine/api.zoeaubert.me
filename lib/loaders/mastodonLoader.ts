@@ -38,6 +38,10 @@ async function processToot(
     date: new Date(toot.created_at).toISOString(),
     content: toot.content,
     tags: toot.tags.map((tag: any) => tag.name),
+    media: toot.media_attachments.map((attachment: any) => ({
+      url: attachment.url,
+      alt: attachment.description,
+    })),
   };
 
   const rawDataHash = hash(data);

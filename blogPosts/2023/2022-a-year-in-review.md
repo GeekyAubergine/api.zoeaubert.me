@@ -57,7 +57,7 @@ For an example of why I think this is powerful, see this graph where I've unhidd
 Later in the year, I noticed I was journaling less and less again and wasn't sure why. I have a template I use for my notes, and the way I'd designed it was groups of lists such as "what went well", "what was bad", and "reflections". This led to very restricted and "stiff" journaling where I'd just list things and not actually talk about them. As a result, I never really got my thoughts or emotions down on paper and removing them from my mind. Once I realised this, I completely redesigned my template to be much less restrictive.
 
 ```md
-# {% raw %}{{title}}{% endraw %}
+# {{title}}
 
 ## Season Theme:
 

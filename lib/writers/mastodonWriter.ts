@@ -1,5 +1,5 @@
 import fs from "fs";
-import { archiveEntitiesOfTypeInOrder } from "../utils";
+import { filterOrderedEntitiesBy } from "../utils";
 import path from "path";
 import { Archive } from "../types";
 
@@ -9,7 +9,10 @@ export async function writeMastodon(
 ): Promise<void> {
   const archivePath = path.join(outputDir, "mastodon.json");
 
-  const toots = archiveEntitiesOfTypeInOrder(archive, "mastodon");
+  const out = filterOrderedEntitiesBy(
+    archive,
+    (entity) => entity.type === "mastodon"
+  );
 
-  return fs.promises.writeFile(archivePath, JSON.stringify(toots, null, 2));
+  return fs.promises.writeFile(archivePath, JSON.stringify(out, null, 2));
 }

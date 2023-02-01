@@ -1,21 +1,25 @@
+type EntityMedia = { url: string; alt: string };
+
 type BaseEntity<T, D> = {
+  rawDataHash: string;
   type: T;
   id: string;
-  rawDataHash: string;
+  url: string;
   date: string;
+  content: string;
+  media: EntityMedia[];
 } & D;
 
 export type BlogPostEntity = BaseEntity<
   "blogPost",
   {
-    slug: string;
     title: string;
     description: string;
-    content: string;
     tags: string[];
-    heroImage: {
+    hero: {
       url: string;
       alt: string;
+      showHero: boolean;
     } | null;
   }
 >;
@@ -23,26 +27,25 @@ export type BlogPostEntity = BaseEntity<
 export type StatusLolEntity = BaseEntity<
   "statuslol",
   {
-    content: string;
     emoji: string;
-    url: string;
   }
 >;
 
 export type MastodonEntity = BaseEntity<
   "mastodon",
   {
-    content: string;
-    url: string;
     tags: string[];
   }
 >;
 
 export type Entity = BlogPostEntity | StatusLolEntity | MastodonEntity;
 
-export type Archive = {
+export type OrderedEntities = {
   entities: Record<string, Entity>;
   entityOrder: string[];
+};
+
+export type Archive = OrderedEntities & {
   lastUpdated: string;
 };
 

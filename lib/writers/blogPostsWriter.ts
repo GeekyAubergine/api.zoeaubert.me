@@ -1,5 +1,5 @@
 import fs from "fs";
-import { archiveEntitiesOfTypeInOrder } from "../utils";
+import { filterOrderedEntitiesBy } from "../utils";
 import path from "path";
 import { Archive } from "../types";
 
@@ -7,9 +7,12 @@ export async function writeBlogPosts(
   outputDir: string,
   archive: Archive
 ): Promise<void> {
-  const archivePath = path.join(outputDir, "blogPosts.json");
+  const archivePath = path.join(outputDir, "blog-posts.json");
 
-  const posts = archiveEntitiesOfTypeInOrder(archive, "blogPost");
+  const out = filterOrderedEntitiesBy(
+    archive,
+    (entity) => entity.type === "blogPost"
+  );
 
-  return fs.promises.writeFile(archivePath, JSON.stringify(posts, null, 2));
+  return fs.promises.writeFile(archivePath, JSON.stringify(out, null, 2));
 }

@@ -10,6 +10,7 @@ import { Archive, Entity, LoaderParams } from "./lib/types";
 import { writeArchive } from "./lib/writers/archiveWriter";
 import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
 import { writeStatuslol } from "./lib/writers/statuslolWriter";
+import { writeTimeline } from "./lib/writers/timelineWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -101,6 +102,7 @@ async function main() {
     writeBlogPosts(PUBLIC_DIR, newArchive),
     writeStatuslol(PUBLIC_DIR, newArchive),
     writeMastodon(PUBLIC_DIR, newArchive),
+    writeTimeline(PUBLIC_DIR, newArchive),
   ];
 
   console.log("Writing data");

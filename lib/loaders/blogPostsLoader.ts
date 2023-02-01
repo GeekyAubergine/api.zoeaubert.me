@@ -15,21 +15,40 @@ async function loadBlogPost(
 
   const frontMatter = frontMatterParser(fileContents);
   const { attributes, body } = frontMatter;
-  // @ts-expect-error It doesn't know these exist
-  const { slug, title, date, description, tags, heroImage, heroImageAlt } =
-    attributes;
+  const { slug, title, date, description, tags, hero, heroAlt, showHero } =
+    attributes as {
+      slug: string | undefined;
+      title: string | undefined;
+      date: string | undefined;
+      description: string | undefined;
+      tags: string[] | undefined;
+      hero: string | undefined;
+      heroAlt: string | undefined;
+      showHero: boolean | undefined;
+    };
+
+  if (!slug || !title || !date || !description) {
+    throw new Error(`Blog post is missing required attributes: ${filePath}`);
+  }
+
+  if (hero && !heroAlt) {
+    throw new Error(`Blog post is missing hero image alt text: ${filePath}`);
+  }
 
   const data: Omit<BlogPostEntity, "rawDataHash"> = {
     type: "blogPost",
     id: slug,
-    slug,
+    url: `/blog/${slug}/index.html`,
     title,
     date: new Date(date).toISOString(),
     description,
     content: body,
-    tags,
-    heroImage:
-      heroImage && heroImageAlt ? { url: heroImage, alt: heroImageAlt } : null,
+    tags: tags ?? [],
+    hero:
+      hero && heroAlt
+        ? { url: hero, alt: heroAlt, showHero: showHero ?? false }
+        : null,
+    media: [], // TODO
   };
 
   const rawDataHash = hash(data);
@@ -40,7 +59,7 @@ async function loadBlogPost(
     return existingEntity as BlogPostEntity;
   }
 
-  console.log(`Updating blog post: ${data.id} (${data.title})`)
+  console.log(`Updating blog post: ${data.id} (${data.title})`);
 
   return {
     ...data,

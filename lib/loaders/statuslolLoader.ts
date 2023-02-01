@@ -13,6 +13,7 @@ function mapStatusLol(status: any): StatusLolEntity {
     date: new Date(status.created * 1000).toISOString(),
     content: status.content,
     emoji: status.emoji,
+    media: [],
   };
 
   const rawDataHash = hash(data);
