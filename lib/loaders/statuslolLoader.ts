@@ -10,12 +10,13 @@ function mapStatusLol(status: any): StatusLolEntity {
 
   const data: Omit<StatusLolEntity, "rawDataHash"> = {
     type: "statuslol",
-    id: status.id,
+    id: `statuslol-${status.id}`,
     slug: `/micros/${formatDateAsSlugPart(date)}/${status.id}`,
     originalUrl: `https://geekyaubergine.status.lol/${status.id}`,
     date: new Date(status.created * 1000).toISOString(),
     content: status.content,
     emoji: status.emoji,
+    excerpt: `${status.emoji} ${status.content}`,
   };
 
   const rawDataHash = hash(data);
@@ -29,12 +30,17 @@ function mapStatusLol(status: any): StatusLolEntity {
 export async function loadStatusLol(
   _: LoaderParams
 ): Promise<Record<string, StatusLolEntity>> {
-  const request = await fetch(URL);
-  const data: any = await request.json();
-  const { response } = data;
-  const { statuses } = response;
+  try {
+    const request = await fetch(URL);
+    const data: any = await request.json();
+    const { response } = data;
+    const { statuses } = response;
 
-  const mapped: StatusLolEntity[] = statuses.map(mapStatusLol);
+    const mapped: StatusLolEntity[] = statuses.map(mapStatusLol);
 
-  return arrayToRecord(mapped, (status) => status.id);
+    return arrayToRecord(mapped, (status) => status.id);
+  } catch (e) {
+    console.error(e);
+    return {};
+  }
 }

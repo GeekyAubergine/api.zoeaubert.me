@@ -1,11 +1,8 @@
-import { arrayToRecord, hash } from "../utils";
-import fetch from "node-fetch";
+import { arrayToRecord, cleanTag, CONTENT_TO_FILTER_OUT, hash } from "../utils";
 import config from "../../config";
 import { Archive, LoaderParams, MastodonEntity } from "../types";
 
-const CONTENT_TO_FILTER_OUT = /https:\/\/zoeaubert.me/;
-
-const URL = `https://social.lol//api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true`;
+const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true`;
 
 // async function downloadAndStoreMediaFile(
 //   url: string,
@@ -47,18 +44,23 @@ async function processToot(
 ): Promise<MastodonEntity> {
   const date = new Date(toot.created_at);
 
-  const slug = `/${date.getFullYear()}/${(date.getMonth() + 1)
+  const slug = `/micros/${date.getFullYear()}/${(date.getMonth() + 1)
     .toString()
     .padStart(2, "0")}/${toot.id}`;
 
+  const content = cleanContent(toot.content).trim();
+
+  const firstLine = content.split("</p>")[0];
+
   const data: Omit<MastodonEntity, "rawDataHash"> = {
     type: "mastodon",
-    id: toot.id,
+    id: `mastodon-${toot.id}`,
     slug,
     originalUrl: toot.url,
     date: new Date(toot.created_at).toISOString(),
     content: cleanContent(toot.content).trim(),
-    tags: toot.tags.map((tag: any) => tag.name),
+    excerpt: firstLine ? `${firstLine}</p>` : "",
+    tags: toot.tags.map((tag: any) => cleanTag(tag.name)),
     media: toot.media_attachments.map((attachment: any) => ({
       url: attachment.url,
       alt: attachment.description,
@@ -84,18 +86,23 @@ async function processToot(
 export async function loadMastadonToots(
   loaderParams: LoaderParams
 ): Promise<Record<string, MastodonEntity>> {
-  const request = await fetch(URL);
-  const data: any = await request.json();
-  const rawToots: MastodonEntity[] = await Promise.all(
-    data
-      .filter(
-        (toot: any) =>
-          toot.application.name !== "Micro.blog" &&
-          toot.application.name !== "status.lol" &&
-          CONTENT_TO_FILTER_OUT.test(toot.content) === false
-      )
-      .map((toot: any) => processToot(loaderParams.archive, toot))
-  );
+  try {
+    const request = await fetch(URL);
+    const data: any = await request.json();
+    const rawToots: MastodonEntity[] = await Promise.all(
+      data
+        .filter(
+          (toot: any) =>
+            toot.application.name !== "Micro.blog" &&
+            toot.application.name !== "status.lol" &&
+            CONTENT_TO_FILTER_OUT.test(toot.content) === false
+        )
+        .map((toot: any) => processToot(loaderParams.archive, toot))
+    );
 
-  return arrayToRecord(rawToots, (toot) => toot.id);
+    return arrayToRecord(rawToots, (toot) => toot.id);
+  } catch (e) {
+    console.error(e);
+    return {};
+  }
 }

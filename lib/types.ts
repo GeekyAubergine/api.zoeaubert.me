@@ -1,4 +1,9 @@
-type EntityMedia = { url: string; alt: string };
+export type EntityMedia = {
+  url: string;
+  alt: string;
+  type: "image";
+  date: string;
+};
 
 type BaseEntity<T, D> = {
   rawDataHash: string;
@@ -30,6 +35,7 @@ export type StatusLolEntity = BaseEntity<
     content: string;
     emoji: string;
     originalUrl: string;
+    excerpt: string;
   }
 >;
 
@@ -40,6 +46,7 @@ export type MastodonEntity = BaseEntity<
     tags: string[];
     media: EntityMedia[];
     originalUrl: string;
+    excerpt: string;
   }
 >;
 
@@ -49,6 +56,7 @@ export type MicroBlogEntity = BaseEntity<
     content: string;
     tags: string[];
     media: EntityMedia[];
+    excerpt: string;
   }
 >;
 
@@ -117,6 +125,8 @@ export type OrderedEntities = {
 
 export type Archive = OrderedEntities & {
   lastUpdated: string;
+  about: string;
+  now: string;
 };
 
 export type LoaderParams = {

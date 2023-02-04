@@ -1,5 +1,5 @@
 import fs from "fs";
-import { exhaust } from "../utils";
+import { exhaust, filterOrderedEntitiesBy } from "../utils";
 import path from "path";
 import { Archive } from "../types";
 
@@ -9,7 +9,10 @@ export async function writeTimeline(
 ): Promise<void> {
   const archivePath = path.join(outputDir, "timeline.json");
 
-  const { entities, entityOrder } = archive;
+  const { entities, entityOrder } = filterOrderedEntitiesBy(
+    archive,
+    (entity) => entity.type !== "photo"
+  );
 
   const allTags = Object.values(entities).reduce<string[]>((acc, entity) => {
     const { type } = entity;

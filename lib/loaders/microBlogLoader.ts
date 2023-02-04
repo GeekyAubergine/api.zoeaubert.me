@@ -1,24 +1,51 @@
 import fs from "fs";
-import { arrayToRecord, hash } from "../utils";
+import { arrayToRecord, cleanTag, CONTENT_TO_FILTER_OUT, hash } from "../utils";
 
-import { LoaderParams, MicroBlogEntity } from "../types";
+import { EntityMedia, LoaderParams, MicroBlogEntity } from "../types";
+
+const REGEX_IMAGES = /<img src="(.*?)".*?alt="(.*?)"/gm;
 
 function mapMicroBlog(microBlog: any): MicroBlogEntity {
   const slug = microBlog.id.replace(
     "http://geekyaubergine.micro.blog/",
     "/micros/"
   );
+
+  const date = new Date(microBlog.date_published).toISOString();
+
+  const content = microBlog.content_text.replace(
+    /uploads\//g,
+    "https://cdn.geekyaubergine.com/"
+  );
+
+  const imagesMatch = (content as string).matchAll(REGEX_IMAGES);
+
+  const media: EntityMedia[] = [];
+
+  for (const match of imagesMatch) {
+    const [, url, alt] = match;
+    if (!url || !alt) {
+      continue;
+    }
+    media.push({
+      type: "image",
+      url,
+      alt,
+      date,
+    });
+  }
+
+  const firstLine = content.split("\n")[0];
+
   const data: Omit<MicroBlogEntity, "rawDataHash"> = {
     type: "microblog",
     id: slug,
     slug,
-    date: new Date(microBlog.date_published).toISOString(),
-    content: microBlog.content_text.replace(
-      /uploads\//g,
-      "https://cdn.geekyaubergine.com/"
-    ),
-    media: [],
-    tags: microBlog.tags ?? [],
+    date,
+    content,
+    excerpt: firstLine ?? "",
+    media,
+    tags: (microBlog.tags ?? []).map(cleanTag),
   };
 
   const rawDataHash = hash(data);
@@ -43,8 +70,9 @@ export async function loadMicroBlog(
     .map(mapMicroBlog)
     .filter(
       (micro: MicroBlogEntity) =>
-        !micro.content.includes("https://zoeaubert.me") &&
-        !micro.tags.includes("status")
+        !CONTENT_TO_FILTER_OUT.test(micro.content) &&
+        !micro.tags.includes("status") &&
+        !micro.tags.includes("photography")
     );
 
   return arrayToRecord(mapped, (micro) => micro.id);

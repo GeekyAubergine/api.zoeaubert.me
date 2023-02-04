@@ -4,6 +4,9 @@ import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
 import { Entity, OrderedEntities } from "./types";
 
+export const CONTENT_TO_FILTER_OUT =
+  /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
+
 const s3 = new S3({
   endpoint: `${config.cdn.endpoint}`,
   accessKeyId: `${config.cdn.key}`,
@@ -23,7 +26,11 @@ export function trimLeadingSlash(url: string): string {
   return url.replace(/^\//, "");
 }
 
-export async function formatDateAsSlugPart(date: Date): Promise<string> {
+export function cleanTag(tag: string): string {
+  return tag.replace(/ /g, "-").toLowerCase();
+}
+
+export function formatDateAsSlugPart(date: Date): string {
   const year = date.getFullYear();
   const month = date.getMonth() + 1;
   const day = date.getDate();
