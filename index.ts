@@ -15,16 +15,16 @@ import { writeMicroBlogs } from "./lib/writers/microBlogWriter";
 import { writeToots } from "./lib/writers/tootsWriter";
 import { loadAlbums } from "./lib/loaders/albumsLoader";
 import { writeAlbums } from "./lib/writers/albumsWriter";
+import { exists } from "./lib/utils";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
 async function prepFolders() {
-  const exists = await fs.promises
-    .stat(PUBLIC_DIR)
-    .then(() => true)
-    .catch(() => false);
-  if (!exists) {
+  if (!(await exists(PUBLIC_DIR))) {
     await fs.promises.mkdir(PUBLIC_DIR, { recursive: true });
+  }
+  if (!(await exists(config.cacheDir))) {
+    await fs.promises.mkdir(config.cacheDir, { recursive: true });
   }
 }
 
@@ -55,7 +55,6 @@ async function main() {
 
   const loaderParams: LoaderParams = {
     archive,
-    config,
     cacheDirectory: "",
   };
 
@@ -71,7 +70,6 @@ async function main() {
 
   const loadStart = Date.now();
 
-  // @ts-expect-error it's very confused
   const results: Record<string, Entity>[] = await Promise.all(loaders);
 
   const loadEnd = Date.now();
@@ -107,7 +105,7 @@ async function main() {
     writeTimeline(PUBLIC_DIR, newArchive),
     writeMicroBlogs(PUBLIC_DIR, newArchive),
     writeToots(PUBLIC_DIR, newArchive),
-    writeAlbums(PUBLIC_DIR, newArchive)
+    writeAlbums(PUBLIC_DIR, newArchive),
   ];
 
   console.log("Writing data");

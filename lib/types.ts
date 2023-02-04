@@ -4,7 +4,7 @@ type BaseEntity<T, D> = {
   rawDataHash: string;
   type: T;
   id: string;
-  url: string;
+  slug: string;
   date: string;
 } & D;
 
@@ -29,6 +29,7 @@ export type StatusLolEntity = BaseEntity<
   {
     content: string;
     emoji: string;
+    originalUrl: string;
   }
 >;
 
@@ -38,6 +39,7 @@ export type MastodonEntity = BaseEntity<
     content: string;
     tags: string[];
     media: EntityMedia[];
+    originalUrl: string;
   }
 >;
 
@@ -50,32 +52,53 @@ export type MicroBlogEntity = BaseEntity<
   }
 >;
 
-export type Photo = {
-  id: string;
-  permalink: string;
-  url: string;
-  description: string;
-  alt: string;
-  tags: string[];
-  featured: boolean;
-};
+export type PhotoEntity = BaseEntity<
+  "photo",
+  {
+    id: string;
+    description: string;
+    alt: string;
+    tags: string[];
+    featured: boolean;
+    orientation: "landscape" | "portrait" | "square";
+    thumbnailSmall: {
+      url: string;
+      width: number;
+      height: number;
+    };
+    thumbnailLarge: {
+      url: string;
+      width: number;
+      height: number;
+    };
+    fullSize: {
+      url: string;
+      width: number;
+      height: number;
+    };
+    albumSlug: string;
+    albumTotalPhotos: number;
+    indexString: string;
+    previous: string | null;
+    next: string | null;
+    albumTitle: string;
+    date: string;
+  }
+>;
 
-export type AlbumAwarePhoto = Photo & {
-  albumTotalPhotos: number;
-  previous: string | null;
-  next: string | null;
-  albumTitle: string;
+export type AlbumData = {
+  title: string;
+  slug: string;
+  description: string | null;
   date: string;
+  photoOrder: string[];
 };
 
 export type AlbumEntity = BaseEntity<
   "album",
-  {
-    title: string;
-    description: string | null;
-    photos: Record<string, AlbumAwarePhoto>;
-    photoOrder: string[];
+  AlbumData & {
     tags: string[];
+    coverPhotos: string[];
   }
 >;
 
@@ -84,7 +107,8 @@ export type Entity =
   | StatusLolEntity
   | MastodonEntity
   | MicroBlogEntity
-  | AlbumEntity;
+  | AlbumEntity
+  | PhotoEntity;
 
 export type OrderedEntities = {
   entities: Record<string, Entity>;
@@ -95,14 +119,7 @@ export type Archive = OrderedEntities & {
   lastUpdated: string;
 };
 
-export type Config = {
-  mastodon: {
-    accountId: string;
-  };
-};
-
 export type LoaderParams = {
   archive: Archive;
-  config: Config;
   cacheDirectory: string;
 };

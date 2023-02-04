@@ -1,7 +1,7 @@
 title: Haven Falconry
 date: '2019-08-11'
 photos:
-    - url: 'https://cdn.geekyaubergine.com/2019/08/haven-falconry/20190811-_MG_0264.jpg'
+    - url: '/2019/08/haven-falconry/20190811-_MG_0264.jpg'
       description: Lanner falcon
       alt: Lanner falcon with wings outstretched being held by a handler
       tags:
@@ -11,7 +11,7 @@ photos:
           - bird
           - falcon
           - bird-of-prey
-    - url: 'https://cdn.geekyaubergine.com/2019/08/haven-falconry/20190811-_MG_0322.jpg'
+    - url: '/2019/08/haven-falconry/20190811-_MG_0322.jpg'
       description: American bald eagle
       alt: Side profile of and American bald eagle looking to the right contrasted against a dark background
       tags:
@@ -21,7 +21,7 @@ photos:
           - bird
           - eagle
           - bird-of-prey
-    - url: 'https://cdn.geekyaubergine.com/2019/08/haven-falconry/20190811-_MG_0326.jpg'
+    - url: '/2019/08/haven-falconry/20190811-_MG_0326.jpg'
       description: American bald eagle
       alt: Side profile of and American bald eagle looking to the right contrasted against a dark background
       tags:
@@ -31,7 +31,7 @@ photos:
           - bird
           - eagle
           - bird-of-prey
-    - url: 'https://cdn.geekyaubergine.com/2019/08/haven-falconry/20190811-_MG_0367.jpg'
+    - url: '/2019/08/haven-falconry/20190811-_MG_0367.jpg'
       description: American kestrel
       alt: American kestrel sat on purch looking to the right
       tags:

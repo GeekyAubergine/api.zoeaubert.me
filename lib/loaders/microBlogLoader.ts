@@ -4,14 +4,14 @@ import { arrayToRecord, hash } from "../utils";
 import { LoaderParams, MicroBlogEntity } from "../types";
 
 function mapMicroBlog(microBlog: any): MicroBlogEntity {
-  const url = microBlog.id.replace(
+  const slug = microBlog.id.replace(
     "http://geekyaubergine.micro.blog/",
     "/micros/"
   );
   const data: Omit<MicroBlogEntity, "rawDataHash"> = {
     type: "microblog",
-    id: url,
-    url,
+    id: slug,
+    slug,
     date: new Date(microBlog.date_published).toISOString(),
     content: microBlog.content_text.replace(
       /uploads\//g,

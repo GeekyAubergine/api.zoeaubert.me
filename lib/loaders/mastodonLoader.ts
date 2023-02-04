@@ -47,14 +47,15 @@ async function processToot(
 ): Promise<MastodonEntity> {
   const date = new Date(toot.created_at);
 
-  const url = `/${date.getFullYear()}/${(date.getMonth() + 1)
+  const slug = `/${date.getFullYear()}/${(date.getMonth() + 1)
     .toString()
     .padStart(2, "0")}/${toot.id}`;
 
   const data: Omit<MastodonEntity, "rawDataHash"> = {
     type: "mastodon",
     id: toot.id,
-    url,
+    slug,
+    originalUrl: toot.url,
     date: new Date(toot.created_at).toISOString(),
     content: cleanContent(toot.content).trim(),
     tags: toot.tags.map((tag: any) => tag.name),

@@ -1,6 +1,36 @@
 import fs from "fs";
 import md5 from "md5";
+import S3 from "aws-sdk/clients/s3.js";
+import config from "../config";
 import { Entity, OrderedEntities } from "./types";
+
+const s3 = new S3({
+  endpoint: `${config.cdn.endpoint}`,
+  accessKeyId: `${config.cdn.key}`,
+  secretAccessKey: `${config.cdn.secret}`,
+  signatureVersion: "v4",
+});
+
+export function exhaust(value: never): never {
+  throw new Error(`Unhandled value: ${value}`);
+}
+
+export function stripDoubleSlashes(url: string): string {
+  return url.replace(/\/\//g, "/");
+}
+
+export function trimLeadingSlash(url: string): string {
+  return url.replace(/^\//, "");
+}
+
+export async function formatDateAsSlugPart(date: Date): Promise<string> {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year.toString().padStart(4, "0")}/${month
+    .toString()
+    .padStart(2, "0")}/${day.toString().padStart(2, "0")}`;
+}
 
 export async function getFilesRecursive(path: string, ext: string) {
   const files = await fs.promises.readdir(path);
@@ -17,11 +47,68 @@ export async function getFilesRecursive(path: string, ext: string) {
   return result;
 }
 
-// export async function archiveFile(url: string): Promise<string> {}
-
-export function exhaust(value: never): never {
-  throw new Error(`Unhandled value: ${value}`);
+export async function exists(path: string): Promise<boolean> {
+  return fs.promises
+    .stat(path)
+    .then(() => true)
+    .catch(() => false);
 }
+
+export async function uploadToCDN(
+  url: string,
+  filePath: string,
+  contentType: string | null = null
+): Promise<any> {
+  const ContentType =
+    contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
+
+  const x = await s3
+    .upload({
+      Bucket: config.cdn.bucket,
+      Key: trimLeadingSlash(stripDoubleSlashes(url)),
+      Body: fs.createReadStream(stripDoubleSlashes(filePath)),
+      ACL: "public-read",
+      ContentType,
+    })
+    .promise();
+
+  return x;
+}
+
+export async function downloadAndCacheFile(url: string): Promise<string> {
+  const cachePath = `${config.cacheDir}/${url.replace(
+    `${config.cdn.url}/`,
+    ""
+  )}`;
+
+  if (await exists(cachePath)) {
+    return cachePath;
+  }
+
+  const folder = cachePath.slice(0, cachePath.lastIndexOf("/"));
+
+  if (!(await exists(folder))) {
+    await fs.promises.mkdir(folder, { recursive: true });
+  }
+
+  const file = await fetch(url);
+
+  if (!file.ok) {
+    throw new Error(`Failed to download ${url}`);
+  }
+
+  const fileContents = await file.blob();
+
+  const arrayBuffer = await fileContents.arrayBuffer();
+
+  const buffer = Buffer.from(arrayBuffer);
+
+  await fs.promises.writeFile(cachePath, buffer);
+
+  return cachePath;
+}
+
+// export async function archiveFile(url: string): Promise<string> {}
 
 export function hash(data: {}): string {
   return md5(JSON.stringify(data));

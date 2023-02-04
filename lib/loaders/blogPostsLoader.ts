@@ -38,7 +38,7 @@ async function loadBlogPost(
   const data: Omit<BlogPostEntity, "rawDataHash"> = {
     type: "blogPost",
     id: slug,
-    url: `/blog/${slug}/index.html`,
+    slug: `/blog/${slug}`,
     title,
     date: new Date(date).toISOString(),
     description,

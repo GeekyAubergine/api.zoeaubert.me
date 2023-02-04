@@ -1,7 +1,7 @@
 import fs from "fs";
 import { filterOrderedEntitiesBy } from "../utils";
 import path from "path";
-import { AlbumEntity, Archive, Photo } from "../types";
+import { AlbumEntity, Archive, PhotoEntity } from "../types";
 
 export async function writeAlbums(
   outputDir: string,
@@ -38,42 +38,36 @@ export async function writeAlbums(
     }))
     .reverse();
 
-  const photos = Object.values(albums.entities).reduce<Record<string, Photo>>(
-    (acc, album: AlbumEntity) => {
-      const { photos } = album;
-
-      return {
-        ...acc,
-        ...photos,
-      };
-    },
-    {}
+  const photos = filterOrderedEntitiesBy(
+    archive,
+    (entity) => entity.type === "photo"
   );
 
-  const tagCounts = Object.values(photos).reduce<Record<string, number>>(
-    (acc, photo) => {
-      const { tags } = photo;
+  const tagCounts = Object.values(photos.entities).reduce<
+    Record<string, number>
+  >((acc, photo: PhotoEntity) => {
+    const { tags } = photo;
 
-      for (const tag of tags) {
-        acc[tag] = (acc[tag] ?? 0) + 1;
-      }
+    for (const tag of tags) {
+      acc[tag] = (acc[tag] ?? 0) + 1;
+    }
 
-      return acc;
-    },
-    {}
-  );
+    return acc;
+  }, {});
 
   const tags = Object.entries(tagCounts)
     .map(([tag, count]) => ({
       tag,
       count,
-      permalink: `/photos/tags/${tag}/index.html`,
-      photos: Object.values(photos)
-        .filter((photo) => photo.tags.includes(tag))
-        .map((photo) => photo.id),
+      permalink: `/albums/tags/${tag}/index.html`,
       albums: Object.values(albums.entities)
         .filter((album: AlbumEntity) => album.tags.includes(tag))
-        .map((album) => album.id),
+        .map((album: AlbumEntity) => ({
+          albumId: album.id,
+          photoOrder: album.photoOrder.filter((id) =>
+            (photos.entities[id] as PhotoEntity | null)?.tags.includes(tag)
+          ),
+        })),
     }))
     .sort((a, b) => b.count - a.count);
 
@@ -81,7 +75,8 @@ export async function writeAlbums(
     albums: albums.entities,
     albumOrder: albums.entityOrder,
     albumsByYear,
-    photos,
+    photos: photos.entities,
+    photoIds: photos.entityOrder,
     tags,
   };
 

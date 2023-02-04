@@ -1,7 +1,7 @@
 title: Jersey Wetlands
 date: '2018-04-20'
 photos:
-    - url: 'https://cdn.geekyaubergine.com/2018/04/jersey-wetlands/58.jpg'
+    - url: '/2018/04/jersey-wetlands/58.jpg'
       description: Kestrel
       alt: Kestrel sitting on a branch at top of tree with blue/white sky in the background
       tags:
@@ -10,7 +10,7 @@ photos:
           - kestrel
           - bird
           - bird-of-prey
-    - url: 'https://cdn.geekyaubergine.com/2018/04/jersey-wetlands/59.jpg'
+    - url: '/2018/04/jersey-wetlands/59.jpg'
       description: Marsh Harrier flying
       alt: Marsh Harrier flying against blue sky approaching camera
       tags:
@@ -19,7 +19,7 @@ photos:
           - marsh-harrier
           - bird
           - bird-of-prey
-    - url: 'https://cdn.geekyaubergine.com/2018/04/jersey-wetlands/60.jpg'
+    - url: '/2018/04/jersey-wetlands/60.jpg'
       description: Marsh Harrier
       alt: Marsh Harrier flying against blue sky approaching camera
       tags:
@@ -28,7 +28,7 @@ photos:
           - marsh-harrier
           - bird
           - bird-of-prey
-    - url: 'https://cdn.geekyaubergine.com/2018/04/jersey-wetlands/61.jpg'
+    - url: '/2018/04/jersey-wetlands/61.jpg'
       description: Marsh Harrier
       alt: Marsh Harrier flying against blue from below flying towards top right of frame
       tags:
@@ -38,7 +38,7 @@ photos:
           - bird
           - bird-of-prey
       featured: true
-    - url: 'https://cdn.geekyaubergine.com/2018/04/jersey-wetlands/62.jpg'
+    - url: '/2018/04/jersey-wetlands/62.jpg'
       description: Marsh Harrier
       alt: Marsh Harrier flying against blue from below flying towards top right of frame
       tags:
@@ -48,7 +48,7 @@ photos:
           - bird
           - bird-of-prey
       featured: true
-    - url: 'https://cdn.geekyaubergine.com/2018/04/jersey-wetlands/63.jpg'
+    - url: '/2018/04/jersey-wetlands/63.jpg'
       description: Marsh Harrier
       alt: Marsh Harrier flying against blue from below flying towards right of frame
       tags:

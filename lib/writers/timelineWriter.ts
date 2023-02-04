@@ -26,22 +26,8 @@ export async function writeTimeline(
         }
         return acc.concat(newTags);
       }
-      case "album": {
-        const { photos } = entity;
-
-        const tags = Object.values(photos).reduce<string[]>((acc, photo) => {
-          const { tags } = photo;
-          const newTags = [];
-          for (const tag of tags) {
-            if (!acc.includes(tag)) {
-              newTags.push(tag);
-            }
-          }
-          return acc.concat(newTags);
-        }, []);
-
-        return acc.concat(tags);
-      }
+      case "album":
+      case "photo":
       case "statuslol":
         return acc;
       default:
@@ -65,12 +51,8 @@ export async function writeTimeline(
           const { tags } = entity;
           return tags.includes(tag);
         }
-        case "album": {
-          const { photos } = entity;
-          return Object.values(photos).some((photo) =>
-            photo.tags.includes(tag)
-          );
-        }
+        case "album":
+        case "photo":
         case "statuslol":
           return false;
         default:
