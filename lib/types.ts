@@ -131,6 +131,7 @@ export type Archive = OrderedEntities & {
   about: string;
   now: string;
   faq: string;
+  links: string;
 };
 
 export type LoaderParams = {

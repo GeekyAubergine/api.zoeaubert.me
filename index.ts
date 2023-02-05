@@ -13,6 +13,7 @@ import { loadAlbums } from "./lib/loaders/albumsLoader";
 import { loadAbout } from "./lib/loaders/aboutLoader";
 import { loadNow } from "./lib/loaders/nowLoader";
 import { loadFaq } from "./lib/loaders/faqLoader";
+import { loadLinks } from "./lib/loaders/linksLoader";
 
 import { writeArchive } from "./lib/writers/archiveWriter";
 import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
@@ -29,6 +30,7 @@ import { writeAll } from "./lib/writers/allWriter";
 import { writeYears } from "./lib/writers/yearsWriter";
 import { writePhotos } from "./lib/writers/photosWriter";
 import { writeFaq } from "./lib/writers/faqWriter";
+import { writeLinks } from "./lib/writers/linksWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -58,6 +60,7 @@ async function loadArchive(): Promise<Archive> {
       about: "",
       now: "",
       faq: "",
+      links: "",
     };
   }
 }
@@ -78,6 +81,7 @@ async function main() {
     loadAbout(loaderParams),
     loadNow(loaderParams),
     loadFaq(loaderParams),
+    loadLinks(loaderParams),
   ] as const;
 
   const entityLoaders = [
@@ -102,7 +106,7 @@ async function main() {
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const [about, now, faq] = basicResults;
+  const [about, now, faq, links] = basicResults;
 
   const entitiesMap: Record<string, Entity> = entityResults.reduce(
     (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
@@ -127,6 +131,7 @@ async function main() {
     about,
     now,
     faq,
+    links,
   };
 
   const writers = [
@@ -145,6 +150,7 @@ async function main() {
     writeYears(PUBLIC_DIR, newArchive),
     writePhotos(PUBLIC_DIR, newArchive),
     writeFaq(PUBLIC_DIR, newArchive),
+    writeLinks(PUBLIC_DIR, newArchive),
   ];
 
   console.log("Writing data");
