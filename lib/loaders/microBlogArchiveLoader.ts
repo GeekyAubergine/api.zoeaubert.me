@@ -60,7 +60,7 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
   };
 }
 
-export async function loadMicroBlog(
+export async function loadMicroBlogArchive(
   _: LoaderParams
 ): Promise<Record<string, MicroBlogEntity>> {
   const archiveContents = await fs.promises.readFile(

@@ -8,7 +8,7 @@ import { Archive, Entity, LoaderParams } from "./lib/types";
 import { loadMastadonToots } from "./lib/loaders/mastodonLoader";
 import { loadBlogPosts } from "./lib/loaders/blogPostsLoader";
 import { loadStatusLol } from "./lib/loaders/statuslolLoader";
-import { loadMicroBlog } from "./lib/loaders/microBlogLoader";
+import { loadMicroBlogArchive } from "./lib/loaders/microBlogArchiveLoader";
 import { loadAlbums } from "./lib/loaders/albumsLoader";
 import { loadAbout } from "./lib/loaders/aboutLoader";
 import { loadNow } from "./lib/loaders/nowLoader";
@@ -88,7 +88,7 @@ async function main() {
     loadBlogPosts(loaderParams),
     loadStatusLol(loaderParams),
     loadMastadonToots(loaderParams),
-    loadMicroBlog(loaderParams),
+    loadMicroBlogArchive(loaderParams),
     loadAlbums(loaderParams),
   ] as const;
 

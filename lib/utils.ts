@@ -61,32 +61,51 @@ export async function exists(path: string): Promise<boolean> {
     .catch(() => false);
 }
 
+export function cdnPathForFileNameAndDate(
+  fileName: string,
+  date: string
+): string {
+  const cleanedFilePath = fileName.replace(`${config.cacheDir}/`, "");
+  const slugPart = formatDateAsSlugPart(new Date(date));
+  return `/${slugPart}/${cleanedFilePath}`;
+}
+
 export async function uploadToCDN(
-  url: string,
   filePath: string,
+  url: string,
   contentType: string | null = null
 ): Promise<any> {
   const ContentType =
     contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
 
-  const x = await s3
-    .upload({
-      Bucket: config.cdn.bucket,
-      Key: trimLeadingSlash(stripDoubleSlashes(url)),
-      Body: fs.createReadStream(stripDoubleSlashes(filePath)),
-      ACL: "public-read",
-      ContentType,
-    })
-    .promise();
+  console.log(`Uploading ${filePath} to ${url} as ${ContentType}`);
 
-  return x;
+  try {
+    const x = await s3
+      .upload({
+        Bucket: config.cdn.bucket,
+        Key: trimLeadingSlash(stripDoubleSlashes(url)),
+        Body: fs.createReadStream(stripDoubleSlashes(filePath)),
+        ACL: "public-read",
+        ContentType,
+      })
+      .promise();
+
+    return x;
+  } catch (e) {
+    console.error(e);
+    throw e;
+  }
 }
 
 export async function downloadAndCacheFile(url: string): Promise<string> {
-  const cachePath = `${config.cacheDir}/${url.replace(
-    `${config.cdn.url}/`,
-    ""
-  )}`;
+  const fileExtension = url.split(".").pop();
+
+  if (!fileExtension) {
+    throw new Error(`Failed to get file extension for ${url}`);
+  }
+
+  const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
 
   if (await exists(cachePath)) {
     return cachePath;

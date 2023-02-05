@@ -1,4 +1,12 @@
-import { arrayToRecord, cleanTag, CONTENT_TO_FILTER_OUT, hash } from "../utils";
+import {
+  arrayToRecord,
+  cdnPathForFileNameAndDate,
+  cleanTag,
+  CONTENT_TO_FILTER_OUT,
+  downloadAndCacheFile,
+  hash,
+  uploadToCDN,
+} from "../utils";
 import config from "../../config";
 import { Archive, EntityMedia, LoaderParams, MastodonEntity } from "../types";
 
@@ -61,6 +69,28 @@ function splitContentAndTags(content: string): {
   };
 }
 
+async function processAttachment(
+  attachment: any,
+  postSlug: string,
+  dateString: string
+): Promise<EntityMedia> {
+  const cached = await downloadAndCacheFile(attachment.url);
+
+  const cdnPath = cdnPathForFileNameAndDate(cached, dateString);
+
+  await uploadToCDN(cached, cdnPath);
+
+  return {
+    type: attachment.type,
+    url: `${config.cdn.url}${cdnPath}`,
+    alt: attachment.description,
+    width: attachment.meta?.original?.width,
+    height: attachment.meta?.original?.height,
+    postSlug,
+    date: dateString,
+  };
+}
+
 async function processToot(
   archive: Archive,
   toot: any
@@ -72,8 +102,6 @@ async function processToot(
     .padStart(2, "0")}/${toot.id}`;
 
   const { content, tags } = splitContentAndTags(toot.content);
-
-  console.log({ content, tags });
 
   const firstLine = content.split("</p>")[0];
 
@@ -88,16 +116,10 @@ async function processToot(
     content,
     excerpt: firstLine ? `${firstLine}</p>` : "",
     tags,
-    media: toot.media_attachments.map(
-      (attachment: any): EntityMedia => ({
-        type: attachment.type,
-        url: attachment.url,
-        alt: attachment.description,
-        width: attachment.meta?.original?.width,
-        height: attachment.meta?.original?.height,
-        postSlug: slug,
-        date: dateString,
-      })
+    media: await Promise.all(
+      toot.media_attachments.map((attachment: any) =>
+        processAttachment(attachment, slug, dateString)
+      )
     ),
   };
 

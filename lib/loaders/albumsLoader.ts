@@ -20,7 +20,7 @@ import {
   getFilesRecursive,
   hash,
   stripDoubleSlashes,
-  // uploadToCDN,
+  uploadToCDN,
 } from "../utils";
 
 const ALBUMS_DIR = path.join(__dirname, "../../albums");
@@ -120,7 +120,7 @@ async function resizeImage(
 
   await fs.promises.writeFile(filePath, resized);
 
-  // await uploadToCDN(sizedSlug, filePath, "image/jpeg");
+  await uploadToCDN(filePath, sizedSlug, "image/jpeg");
 
   return {
     url: sizedSlug,
