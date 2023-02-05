@@ -1,8 +1,12 @@
 import { arrayToRecord, cleanTag, CONTENT_TO_FILTER_OUT, hash } from "../utils";
 import config from "../../config";
-import { Archive, LoaderParams, MastodonEntity } from "../types";
+import { Archive, EntityMedia, LoaderParams, MastodonEntity } from "../types";
 
 const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true`;
+
+const CONTENT_TAG_REGEX = /<a.*?rel="tag".*?>#<span>(.*?)<\/span><\/a>/g;
+const CONTENT_EMPTY_TAG_REGEX = /<p>\s*<\/p>/g;
+const TAGS_TO_FILTER_OUT = ["WarhammerCommunity"];
 
 // async function downloadAndStoreMediaFile(
 //   url: string,
@@ -24,18 +28,37 @@ const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/sta
 //   return toot;
 // }
 
-function cleanContent(content: string): string {
-  const match = content.match(/<p.*?>.*?<\/p>/g);
+function splitContentAndTags(content: string): {
+  content: string;
+  tags: string[];
+} {
+  const tagsMatch = content.matchAll(CONTENT_TAG_REGEX);
 
-  if (!match) {
-    return content;
+  const outContent = content
+    .replace(CONTENT_TAG_REGEX, "")
+    .replace(CONTENT_EMPTY_TAG_REGEX, "");
+
+  const tags: string[] = [];
+
+  for (const match of tagsMatch) {
+    const [, tag] = match;
+    if (!tag) {
+      continue;
+    }
+
+    const cleaned = cleanTag(tag);
+
+    if (TAGS_TO_FILTER_OUT.includes(cleaned)) {
+      continue;
+    }
+
+    tags.push(cleaned);
   }
 
-  const paragraphs = match.filter(
-    (paragraph) => !paragraph.includes('rel="tag"')
-  );
-
-  return paragraphs.join("");
+  return {
+    content: outContent.trim(),
+    tags,
+  };
 }
 
 async function processToot(
@@ -48,23 +71,34 @@ async function processToot(
     .toString()
     .padStart(2, "0")}/${toot.id}`;
 
-  const content = cleanContent(toot.content).trim();
+  const { content, tags } = splitContentAndTags(toot.content);
+
+  console.log({ content, tags });
 
   const firstLine = content.split("</p>")[0];
+
+  const dateString = new Date(toot.created_at).toISOString();
 
   const data: Omit<MastodonEntity, "rawDataHash"> = {
     type: "mastodon",
     id: `mastodon-${toot.id}`,
     slug,
     originalUrl: toot.url,
-    date: new Date(toot.created_at).toISOString(),
-    content: cleanContent(toot.content).trim(),
+    date: dateString,
+    content,
     excerpt: firstLine ? `${firstLine}</p>` : "",
-    tags: toot.tags.map((tag: any) => cleanTag(tag.name)),
-    media: toot.media_attachments.map((attachment: any) => ({
-      url: attachment.url,
-      alt: attachment.description,
-    })),
+    tags,
+    media: toot.media_attachments.map(
+      (attachment: any): EntityMedia => ({
+        type: attachment.type,
+        url: attachment.url,
+        alt: attachment.description,
+        width: attachment.meta?.original?.width,
+        height: attachment.meta?.original?.height,
+        postSlug: slug,
+        date: dateString,
+      })
+    ),
   };
 
   const rawDataHash = hash(data);
