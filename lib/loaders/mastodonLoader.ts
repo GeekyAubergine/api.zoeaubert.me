@@ -12,47 +12,36 @@ import { Archive, EntityMedia, LoaderParams, MastodonEntity } from "../types";
 
 const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true`;
 
-const CONTENT_TAG_REGEX = /<a.*?rel="tag".*?>#<span>(.*?)<\/span><\/a>/g;
+const REGEX_LINKS = /<a.*?>.*?<\/a>/g;
+const REGEX_TAG_LINK = /rel="tag">#<span>(.*?)<\/span>/;
 const CONTENT_EMPTY_TAG_REGEX = /<p>\s*<\/p>/g;
 const TAGS_TO_FILTER_OUT = ["WarhammerCommunity"];
-
-// async function downloadAndStoreMediaFile(
-//   url: string,
-//   uploadsDir: string
-// ): Promise<string> {
-//   return "";
-// }
-
-// async function downloadAndStoreMedia(
-//   toot: MastodonEntity,
-//   uploadsDir: string
-// ): Promise<MastodonEntity> {
-//   const media = toot.media_attachments;
-
-//   if (media.length === 0) {
-//     return toot;
-//   }
-
-//   return toot;
-// }
 
 function splitContentAndTags(content: string): {
   content: string;
   tags: string[];
 } {
-  const tagsMatch = content.matchAll(CONTENT_TAG_REGEX);
+  const linksMatch = content.matchAll(REGEX_LINKS);
 
-  const outContent = content
-    .replace(CONTENT_TAG_REGEX, "")
-    .replace(CONTENT_EMPTY_TAG_REGEX, "");
+  let outContent = content.replace(CONTENT_EMPTY_TAG_REGEX, "");
 
   const tags: string[] = [];
 
-  for (const match of tagsMatch) {
-    const [, tag] = match;
+  for (const match of linksMatch) {
+    const [fullMatch] = match;
+
+    const tagsMatch = fullMatch.match(REGEX_TAG_LINK);
+
+    if (!tagsMatch) {
+      continue;
+    }
+
+    const [, tag] = tagsMatch;
     if (!tag) {
       continue;
     }
+
+    outContent = outContent.replace(fullMatch, "");
 
     const cleaned = cleanTag(tag);
 
@@ -116,10 +105,16 @@ async function processToot(
     content,
     excerpt: firstLine ? `${firstLine}</p>` : "",
     tags,
-    media: await Promise.all(
-      toot.media_attachments.map((attachment: any) =>
-        processAttachment(attachment, slug, dateString)
-      )
+    media: toot.media_attachments.map(
+      (attachment: any): EntityMedia => ({
+        type: attachment.type,
+        url: attachment.url,
+        alt: attachment.description,
+        width: attachment.meta?.original?.width,
+        height: attachment.meta?.original?.height,
+        postSlug: slug,
+        date: dateString,
+      })
     ),
   };
 
@@ -136,6 +131,11 @@ async function processToot(
   return {
     ...data,
     rawDataHash,
+    media: await Promise.all(
+      toot.media_attachments.map((attachment: any) =>
+        processAttachment(attachment, slug, dateString)
+      )
+    ),
   };
 }
 
