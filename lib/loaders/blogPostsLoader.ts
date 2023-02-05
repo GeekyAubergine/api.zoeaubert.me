@@ -3,7 +3,7 @@ import path from "path";
 import frontMatterParser from "front-matter";
 import { Archive, BlogPostEntity, LoaderParams } from "../types";
 
-import { arrayToRecord, getFilesRecursive, hash } from "../utils";
+import { arrayToRecord, cleanTag, getFilesRecursive, hash } from "../utils";
 
 const POSTS_DIR = path.join(__dirname, "../../blogPosts");
 
@@ -43,7 +43,7 @@ async function loadBlogPost(
     date: new Date(date).toISOString(),
     description,
     content: body,
-    tags: tags ?? [],
+    tags: (tags ?? []).map(cleanTag),
     hero:
       hero && heroAlt
         ? { url: hero, alt: heroAlt, showHero: showHero ?? false }

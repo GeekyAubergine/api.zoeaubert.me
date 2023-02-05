@@ -1,8 +1,11 @@
 export type EntityMedia = {
+  type: "image";
   url: string;
   alt: string;
-  type: "image";
   date: string;
+  postSlug: string;
+  width: number;
+  height: number;
 };
 
 type BaseEntity<T, D> = {
@@ -127,6 +130,7 @@ export type Archive = OrderedEntities & {
   lastUpdated: string;
   about: string;
   now: string;
+  faq: string;
 };
 
 export type LoaderParams = {

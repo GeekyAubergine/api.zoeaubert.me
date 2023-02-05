@@ -3,7 +3,7 @@ slug: 2022-a-year-in-review
 date: 2023-01-08T16:10
 title: 2022 A Year In Review
 description: A look back over my 2022
-tags: ['life']
+tags: ['Life']
 ---
 
 2022 has been a year of significant change for me. I've wanted to write this since the summer when I thought of this title. I was considering borrowing the style from [Robb Knight](https://rknight.me/just-2022-things/)'s and [Sophie](https://localghost.dev/blog/2022-the-year-in-lists/)'s posts, but much like my journalling, I find lists restrictive (more on this later in the journaling section), so I chose to do it this way instead.
@@ -34,7 +34,7 @@ Now, whenever I'm researching/learning something, I will open a note about it, j
 
 I've not followed this religiously, and there are many things I should've taken notes on, so my graph could be more impressive, but what I have so far makes me happy. I am aware this might fall into the "feeling productive without really being productive" category.
 
-![Screenshot of obsidan graph](/assets/2023/2022_year_in_review/2022-obsidian-graph.png)
+![Screenshot of obsidan graph](https://cdn.geekyaubergine.com/2023/2022_year_in_review/2022-obsidian-graph.png)
 
 I also have a note called "inbox". This is where I stick _any and all_ links to anything I find interesting for me to review later. I used to try and remember things, and writing them down and not worrying about forgetting them is easily the biggest win for me so far.
 
@@ -52,7 +52,7 @@ I often struggle to remember people and things about them. Now, if I know I'm go
 
 For an example of why I think this is powerful, see this graph where I've unhidden the "people" (pink) and "journal" (yellow) notes. The purple ones are social events/groups. It shows how deeply connected both my journal, and people's notes are to everything I do.
 
-![Screenshot of obsidan graph](/assets/2023/2022_year_in_review/2022-obsidian-graph-full.png)
+![Screenshot of obsidan graph](https://cdn.geekyaubergine.com/2023/2022_year_in_review/2022-obsidian-graph-full.png)
 
 Later in the year, I noticed I was journaling less and less again and wasn't sure why. I have a template I use for my notes, and the way I'd designed it was groups of lists such as "what went well", "what was bad", and "reflections". This led to very restricted and "stiff" journaling where I'd just list things and not actually talk about them. As a result, I never really got my thoughts or emotions down on paper and removing them from my mind. Once I realised this, I completely redesigned my template to be much less restrictive.
 

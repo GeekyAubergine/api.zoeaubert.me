@@ -12,6 +12,7 @@ import { loadMicroBlog } from "./lib/loaders/microBlogLoader";
 import { loadAlbums } from "./lib/loaders/albumsLoader";
 import { loadAbout } from "./lib/loaders/aboutLoader";
 import { loadNow } from "./lib/loaders/nowLoader";
+import { loadFaq } from "./lib/loaders/faqLoader";
 
 import { writeArchive } from "./lib/writers/archiveWriter";
 import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
@@ -23,6 +24,11 @@ import { writeAlbums } from "./lib/writers/albumsWriter";
 import { writeStatusLols } from "./lib/writers/statuslolWriter";
 import { writeAbout } from "./lib/writers/aboutWriter";
 import { writeNow } from "./lib/writers/nowWriter";
+import { writeTags } from "./lib/writers/tagsWriter";
+import { writeAll } from "./lib/writers/allWriter";
+import { writeYears } from "./lib/writers/yearsWriter";
+import { writePhotos } from "./lib/writers/photosWriter";
+import { writeFaq } from "./lib/writers/faqWriter";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
@@ -51,6 +57,7 @@ async function loadArchive(): Promise<Archive> {
       lastUpdated: "1970-00-00T00:00:00.000Z",
       about: "",
       now: "",
+      faq: "",
     };
   }
 }
@@ -70,6 +77,7 @@ async function main() {
   const basicLoaders = [
     loadAbout(loaderParams),
     loadNow(loaderParams),
+    loadFaq(loaderParams),
   ] as const;
 
   const entityLoaders = [
@@ -94,7 +102,7 @@ async function main() {
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const [about, now] = basicResults;
+  const [about, now, faq] = basicResults;
 
   const entitiesMap: Record<string, Entity> = entityResults.reduce(
     (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
@@ -118,6 +126,7 @@ async function main() {
     lastUpdated: new Date().toISOString(),
     about,
     now,
+    faq,
   };
 
   const writers = [
@@ -131,6 +140,11 @@ async function main() {
     writeStatusLols(PUBLIC_DIR, newArchive),
     writeAbout(PUBLIC_DIR, newArchive),
     writeNow(PUBLIC_DIR, newArchive),
+    writeTags(PUBLIC_DIR, newArchive),
+    writeAll(PUBLIC_DIR, newArchive),
+    writeYears(PUBLIC_DIR, newArchive),
+    writePhotos(PUBLIC_DIR, newArchive),
+    writeFaq(PUBLIC_DIR, newArchive),
   ];
 
   console.log("Writing data");

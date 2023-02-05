@@ -3,7 +3,8 @@ import { arrayToRecord, cleanTag, CONTENT_TO_FILTER_OUT, hash } from "../utils";
 
 import { EntityMedia, LoaderParams, MicroBlogEntity } from "../types";
 
-const REGEX_IMAGES = /<img src="(.*?)".*?alt="(.*?)"/gm;
+const REGEX_IMAGES =
+  /<img src="(.*?)".*?width="(.*?)".*?height="(.*?)".*?alt="(.*?)"/gm;
 
 function mapMicroBlog(microBlog: any): MicroBlogEntity {
   const slug = microBlog.id.replace(
@@ -23,8 +24,8 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
   const media: EntityMedia[] = [];
 
   for (const match of imagesMatch) {
-    const [, url, alt] = match;
-    if (!url || !alt) {
+    const [, url, width, height, alt] = match;
+    if (!url || !alt || !width || !height) {
       continue;
     }
     media.push({
@@ -32,6 +33,9 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
       url,
       alt,
       date,
+      postSlug: slug,
+      width: parseInt(width, 10),
+      height: parseInt(height, 10),
     });
   }
 
@@ -72,7 +76,9 @@ export async function loadMicroBlog(
       (micro: MicroBlogEntity) =>
         !CONTENT_TO_FILTER_OUT.test(micro.content) &&
         !micro.tags.includes("status") &&
-        !micro.tags.includes("photography")
+        !micro.tags.includes("Status") &&
+        !micro.tags.includes("photography") &&
+        !micro.tags.includes("Photography")
     );
 
   return arrayToRecord(mapped, (micro) => micro.id);

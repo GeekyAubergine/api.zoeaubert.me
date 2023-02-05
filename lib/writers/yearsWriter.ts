@@ -3,15 +3,15 @@ import { filterOrderedEntitiesBy } from "../utils";
 import path from "path";
 import { Archive } from "../types";
 
-export async function writeTimeline(
+export async function writeYears(
   outputDir: string,
   archive: Archive
 ): Promise<void> {
-  const archivePath = path.join(outputDir, "timeline.json");
+  const archivePath = path.join(outputDir, "years.json");
 
   const { entities, entityOrder } = filterOrderedEntitiesBy(
     archive,
-    (entity) => entity.type !== "photo"
+    (entity) => entity.type !== "photo" && entity.type !== "album"
   );
 
   const entitiesByYear = entityOrder.reduce<Record<string, string[]>>(
@@ -37,8 +37,6 @@ export async function writeTimeline(
   });
 
   const out = {
-    entities,
-    entityOrder,
     years,
     entitiesByYear,
   };

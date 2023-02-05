@@ -27,7 +27,7 @@ export function trimLeadingSlash(url: string): string {
 }
 
 export function cleanTag(tag: string): string {
-  return tag.replace(/ /g, "-").toLowerCase();
+  return tag.replace(/ |-/g, "-");
 }
 
 export function formatDateAsSlugPart(date: Date): string {

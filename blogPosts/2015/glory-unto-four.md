@@ -3,7 +3,7 @@ slug: glory-unto-four
 title: Glory Unto Four
 date: 2015-01-25
 description: I made a meme programming language and it was terrible
-tags: ['Programming']
+tags: ["Programming", "Languages"]
 ---
 
 ## Disclaimer/Errata
@@ -41,9 +41,9 @@ All commands must be separated by a '/'. That's it. So adding one and moving rig
 
 Notes:
 
--   And values stored in a negative index are not printed
--   At the end of the program all values are printed out
--   To print the values as numbers the first command should be 'b/'. To print the values as ASCII the first command should be 'bb/'
+- And values stored in a negative index are not printed
+- At the end of the program all values are printed out
+- To print the values as numbers the first command should be 'b/'. To print the values as ASCII the first command should be 'bb/'
 
 Here's 'Hello, World!' in Four
 
