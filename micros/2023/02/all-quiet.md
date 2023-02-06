@@ -1,6 +1,5 @@
 ---
 date: 2023-02-04T20:04
-slug: all-quiet
 tags: ["Movies"]
 ---
 [All Quiet on the Western Front](https://www.imdb.com/title/tt1016150/) (2022)
