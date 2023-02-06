@@ -23,13 +23,14 @@ async function loadMicro(
 
   const frontMatter = frontMatterParser(fileContents);
   const { attributes, body } = frontMatter;
-  const { slug, date, tags } = attributes as {
-    slug: string | undefined;
+  const { date, tags } = attributes as {
     date: string | undefined;
     tags: string[] | undefined;
   };
 
-  if (!slug || !date) {
+  const slug = path.basename(filePath).replace(".md", "");
+
+  if (!date) {
     throw new Error(`Blog post is missing required attributes: ${filePath}`);
   }
 
