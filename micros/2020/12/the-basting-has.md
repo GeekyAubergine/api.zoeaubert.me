@@ -1,6 +1,6 @@
 ---
 date: 2020-12-25T12:54
-tags: ["Food", "Covid", "Christmas2020", "TwitterArchive"]
+tags: ["TwitterArchive", "Food", "Covid", "Christmas2020"]
 ---
 
 The basting has begun

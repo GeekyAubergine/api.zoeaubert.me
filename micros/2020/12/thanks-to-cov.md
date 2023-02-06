@@ -1,6 +1,6 @@
 ---
 date: 2020-12-25T12:31
-tags: ["Food", "Covid", "Christmas2020", "TwitterArchive"]
+tags: ["TwitterArchive", "Food", "Covid", "Christmas2020"]
 ---
 So, thanks to COVID I’m doing Christmas alone, this'll be my first roast so I have a plan, let’s see how it goes 🙃 I took the meat out of the fridge at 12:00 so we are currently T-140 mins ish, expect updates 😝
 

@@ -1,6 +1,6 @@
 ---
 date: 2020-12-25T15:19
-tags: ["Food", "Covid", "Christmas2020", "TwitterArchive"]
+tags: ["TwitterArchive", "Food", "Covid", "Christmas2020"]
 ---
 Despite a large time slippage and being generally incompetent, not too bad overall
 
