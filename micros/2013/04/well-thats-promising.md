@@ -1,6 +1,6 @@
 ---
 date: 2013-04-28T12:44
-tags: ["TwitterArchive", "Computers"]
+tags: ["TwitterArchive", "Tech"]
 ---
 Well that's promising...
 
