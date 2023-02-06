@@ -23,7 +23,7 @@ function splitContentAndTags(content: string): {
 } {
   const linksMatch = content.matchAll(REGEX_LINKS);
 
-  let outContent = content.replace(CONTENT_EMPTY_TAG_REGEX, "");
+  let outContent = content;
 
   const tags: string[] = [];
 
@@ -53,7 +53,7 @@ function splitContentAndTags(content: string): {
   }
 
   return {
-    content: outContent.trim(),
+    content: outContent.replace(CONTENT_EMPTY_TAG_REGEX, "").trim(),
     tags,
   };
 }

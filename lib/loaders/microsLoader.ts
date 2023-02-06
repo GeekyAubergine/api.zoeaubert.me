@@ -1,43 +1,39 @@
 import fs from "fs";
 import path from "path";
 import frontMatterParser from "front-matter";
-import { Archive, BlogPostEntity, EntityMedia, LoaderParams } from "../types";
+import { Archive, EntityMedia, LoaderParams, MicroEntity } from "../types";
 
-import { arrayToRecord, cleanTag, getFilesRecursive, hash } from "../utils";
+import {
+  arrayToRecord,
+  cleanTag,
+  formatDateAsSlugPart,
+  getFilesRecursive,
+  hash,
+} from "../utils";
 
-const POSTS_DIR = path.join(__dirname, "../../blogPosts");
+const POSTS_DIR = path.join(__dirname, "../../micros");
 
 const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
 
-async function loadBlogPost(
+async function loadMicro(
   archive: Archive,
   filePath: string
-): Promise<BlogPostEntity> {
+): Promise<MicroEntity> {
   const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
   const frontMatter = frontMatterParser(fileContents);
   const { attributes, body } = frontMatter;
-  const { slug, title, date, description, tags, hero, heroAlt, showHero } =
-    attributes as {
-      slug: string | undefined;
-      title: string | undefined;
-      date: string | undefined;
-      description: string | undefined;
-      tags: string[] | undefined;
-      hero: string | undefined;
-      heroAlt: string | undefined;
-      showHero: boolean | undefined;
-    };
+  const { slug, date, tags } = attributes as {
+    slug: string | undefined;
+    date: string | undefined;
+    tags: string[] | undefined;
+  };
 
-  if (!slug || !title || !date || !description) {
+  if (!slug || !date) {
     throw new Error(`Blog post is missing required attributes: ${filePath}`);
   }
 
-  if (hero && !heroAlt) {
-    throw new Error(`Blog post is missing hero image alt text: ${filePath}`);
-  }
-
-  const postSlug = `/blog/${slug}`;
+  const postSlug = `/micros/${formatDateAsSlugPart(new Date(date))}/${slug}`;
   const dateString = new Date(date).toISOString();
 
   const imagesMatch = body.matchAll(IMAGE_REGEX);
@@ -70,19 +66,13 @@ async function loadBlogPost(
     });
   }
 
-  const data: Omit<BlogPostEntity, "rawDataHash"> = {
-    type: "blogPost",
+  const data: Omit<MicroEntity, "rawDataHash"> = {
+    type: "micro",
     id: slug,
     slug: postSlug,
-    title,
     date: dateString,
-    description,
     content: body,
     tags: (tags ?? []).map(cleanTag),
-    hero:
-      hero && heroAlt
-        ? { url: hero, alt: heroAlt, showHero: showHero ?? false }
-        : null,
     media,
   };
 
@@ -91,10 +81,10 @@ async function loadBlogPost(
   const existingEntity = archive.entities[data.id];
 
   if (existingEntity && existingEntity.rawDataHash === rawDataHash) {
-    return existingEntity as BlogPostEntity;
+    return existingEntity as MicroEntity;
   }
 
-  console.log(`Updating blog post: ${data.id} (${data.title})`);
+  console.log(`Updating micro post: ${data.id} (${data.slug})`);
 
   return {
     ...data,
@@ -102,15 +92,15 @@ async function loadBlogPost(
   };
 }
 
-export async function loadBlogPosts(
+export async function loadMicros(
   loaderParams: LoaderParams
-): Promise<Record<string, BlogPostEntity>> {
+): Promise<Record<string, MicroEntity>> {
   const { archive } = loaderParams;
 
   const paths = await getFilesRecursive(POSTS_DIR, ".md");
 
   const posts = await Promise.all(
-    paths.map((path) => loadBlogPost(archive, path))
+    paths.map((path) => loadMicro(archive, path))
   );
 
   return arrayToRecord(posts, (post) => post.id);

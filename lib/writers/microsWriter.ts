@@ -15,6 +15,7 @@ export async function writeMicros(
       entity.type === "statuslol" ||
       entity.type === "microblog" ||
       entity.type === "mastodon" ||
+      entity.type === "micro" ||
       (entity.type === "blogPost" && entity.tags.includes("micro"))
   );
 

@@ -36,6 +36,7 @@ export async function writePhotos(
       case "blogPost":
       case "mastodon":
       case "microblog":
+      case "micro":
         return acc.concat(entity.media);
       case "album":
       case "statuslol":

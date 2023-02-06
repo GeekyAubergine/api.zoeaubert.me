@@ -14,6 +14,7 @@ import { loadAbout } from "./lib/loaders/aboutLoader";
 import { loadNow } from "./lib/loaders/nowLoader";
 import { loadFaq } from "./lib/loaders/faqLoader";
 import { loadLinks } from "./lib/loaders/linksLoader";
+import { loadMicros } from "./lib/loaders/microsLoader";
 
 import { writeArchive } from "./lib/writers/archiveWriter";
 import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
@@ -90,6 +91,7 @@ async function main() {
     loadMastadonToots(loaderParams),
     loadMicroBlogArchive(loaderParams),
     loadAlbums(loaderParams),
+    loadMicros(loaderParams),
   ] as const;
 
   console.log("Loading data");

@@ -19,6 +19,7 @@ export async function writeTags(
     const { type } = entity;
     switch (type) {
       case "blogPost":
+      case "micro":
       case "mastodon":
       case "microblog": {
         const { tags } = entity;
@@ -50,6 +51,7 @@ export async function writeTags(
       const { type } = entity;
       switch (type) {
         case "blogPost":
+        case "micro":
         case "mastodon":
         case "microblog": {
           const { tags } = entity;

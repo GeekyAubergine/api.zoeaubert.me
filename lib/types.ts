@@ -32,6 +32,15 @@ export type BlogPostEntity = BaseEntity<
   }
 >;
 
+export type MicroEntity = BaseEntity<
+  "micro",
+  {
+    content: string;
+    tags: string[];
+    media: EntityMedia[];
+  }
+>;
+
 export type StatusLolEntity = BaseEntity<
   "statuslol",
   {
@@ -115,6 +124,7 @@ export type AlbumEntity = BaseEntity<
 
 export type Entity =
   | BlogPostEntity
+  | MicroEntity
   | StatusLolEntity
   | MastodonEntity
   | MicroBlogEntity
