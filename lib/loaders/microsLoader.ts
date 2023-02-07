@@ -69,7 +69,7 @@ async function loadMicro(
 
   const data: Omit<MicroEntity, "rawDataHash"> = {
     type: "micro",
-    id: slug,
+    id: postSlug,
     slug: postSlug,
     date: dateString,
     content: body,
