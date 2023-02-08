@@ -38,6 +38,7 @@ export type MicroEntity = BaseEntity<
     content: string;
     tags: string[];
     media: EntityMedia[];
+    excerpt: string;
   }
 >;
 

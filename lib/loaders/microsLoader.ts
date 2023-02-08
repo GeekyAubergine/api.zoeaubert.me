@@ -67,6 +67,8 @@ async function loadMicro(
     });
   }
 
+  const firstLine = body.split(/\/n/)[0]?.replace(/\[(.*?)]\(.*?\)/g, "$1");
+
   const data: Omit<MicroEntity, "rawDataHash"> = {
     type: "micro",
     id: postSlug,
@@ -75,6 +77,7 @@ async function loadMicro(
     content: body,
     tags: (tags ?? []).map(cleanTag),
     media,
+    excerpt: firstLine ?? ''
   };
 
   const rawDataHash = hash(data);
