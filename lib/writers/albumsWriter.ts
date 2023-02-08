@@ -2,6 +2,7 @@ import fs from "fs";
 import { filterOrderedEntitiesBy } from "../utils";
 import path from "path";
 import { AlbumEntity, Archive, PhotoEntity } from "../types";
+import natsort from "natsort";
 
 export async function writeAlbums(
   outputDir: string,
@@ -69,7 +70,7 @@ export async function writeAlbums(
           ),
         })),
     }))
-    .sort((a, b) => b.count - a.count);
+    .sort((a, b) => natsort()(a.tag, b.tag));
 
   const out = {
     albums: albums.entities,
