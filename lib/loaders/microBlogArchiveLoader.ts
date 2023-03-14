@@ -10,7 +10,7 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
   const slug = microBlog.id.replace(
     "http://geekyaubergine.micro.blog/",
     "/micros/"
-  );
+  ).replace('.html', '');
 
   const date = new Date(microBlog.date_published).toISOString();
 
