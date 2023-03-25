@@ -14,7 +14,7 @@ I attended my first hackathon hosted by [Hack Pompey](https://hackpompey.co.uk/)
 
 tldr: We made a [Vampire Survivors](https://store.steampowered.com/app/1794680/Vampire_Survivors/) style game based around Blahai the Blahbarian
 
-If you want to play it, you can find it [here](https://zoeaubert.me/projects/blahbarian-hackathon/). Warning that the noises are pretty loud.
+You can [play it here](https://zoeaubert.me/projects/blahbarian-hackathon/). Warning that the noises are pretty loud.
 
 The code is available [here](https://github.com/GeekyAubergine/blahbarian).
 
