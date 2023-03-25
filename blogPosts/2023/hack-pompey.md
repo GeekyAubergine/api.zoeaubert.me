@@ -6,6 +6,8 @@ description: I attended my first hackathon, and we made a meme game
 tags: ['Programming']
 ---
 
+![Two pixel art blue sharks wearing a barbarian horned had and a white shield with blue cross and red edging](https://cdn.geekyaubergine.com/2023/04572345cced.png)
+
 I attended my first hackathon hosted by [Hack Pompey](https://hackpompey.co.uk/), and it went well. 
 
 tldr: We made a [Vampire Survivors](https://store.steampowered.com/app/1794680/Vampire_Survivors/) style game based around Blahai the Blahbarian
