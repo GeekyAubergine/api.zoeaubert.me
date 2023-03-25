@@ -2,7 +2,7 @@
 slug: hack-pompey
 date: 2023-03-25T22:30
 title: Hack Pompey - Blahbarian
-description: I attended my first hackathon, and we made a meme game
+description: I attended my first hackathon, and we made a game
 tags: ['Programming']
 ---
 
