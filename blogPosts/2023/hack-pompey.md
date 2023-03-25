@@ -4,6 +4,8 @@ date: 2023-03-25T22:30
 title: Hack Pompey 2023 - Blahbarian
 description: I attended my first hackathon, and we made a game
 tags: ['Programming']
+hero: "https://cdn.geekyaubergine.com/2023/04572345cced.png"
+heroAlt: "Two pixel art blue sharks wearing a barbarian horned had and a white shield with blue cross and red edging"
 ---
 
 ![Two pixel art blue sharks wearing a barbarian horned had and a white shield with blue cross and red edging](https://cdn.geekyaubergine.com/2023/04572345cced.png)
