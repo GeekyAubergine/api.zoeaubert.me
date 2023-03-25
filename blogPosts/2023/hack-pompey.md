@@ -1,7 +1,7 @@
 ---
 slug: hack-pompey-2023
 date: 2023-03-25T22:30
-title: Hack Pompey - Blahbarian
+title: Hack Pompey 2023 - Blahbarian
 description: I attended my first hackathon, and we made a game
 tags: ['Programming']
 ---
