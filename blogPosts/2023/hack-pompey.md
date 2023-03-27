@@ -16,7 +16,7 @@ tldr: We made a [Vampire Survivors](https://store.steampowered.com/app/1794680/V
 
 You can [play it here](https://zoeaubert.me/projects/blahbarian-hackathon/). Warning that the noises are pretty loud.
 
-The code is available [here](https://github.com/GeekyAubergine/blahbarian).
+The code is available [here](https://github.com/GeekyAubergine/blahbarian/tree/hackathon).
 
 ## The Team
 
