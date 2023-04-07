@@ -21,6 +21,7 @@ import {
   hash,
   stripDoubleSlashes,
   uploadToCDN,
+  // uploadToCDN,
 } from "../utils";
 
 const ALBUMS_DIR = path.join(__dirname, "../../albums");
@@ -99,7 +100,9 @@ async function resizeImage(
 
   const sizedSlug = `${slug.slice(0, -4)}-${size}.jpg`;
 
-  if (await exists(sizedSlug)) {
+  const localPath = `${config.cacheDir}${sizedSlug}`;
+
+  if (await exists(localPath)) {
     return {
       url: sizedSlug,
       width,
@@ -107,9 +110,7 @@ async function resizeImage(
     };
   }
 
-  const filePath = `${config.cacheDir}${sizedSlug}`;
-
-  console.log(`Processing ${sizedSlug}`);
+  console.log(`Processing ${sizedSlug} not found at ${localPath}`);
 
   const resized = await sharp(buffer)
     .resize(width, height)
@@ -118,9 +119,9 @@ async function resizeImage(
     })
     .toBuffer();
 
-  await fs.promises.writeFile(filePath, resized);
+  await fs.promises.writeFile(localPath, resized);
 
-  await uploadToCDN(filePath, sizedSlug, "image/jpeg");
+  await uploadToCDN(localPath, sizedSlug, "image/jpeg");
 
   return {
     url: sizedSlug,
