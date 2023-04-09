@@ -17,6 +17,7 @@ function mapStatusLol(status: any): StatusLolEntity {
     content: status.content,
     emoji: status.emoji,
     excerpt: `${status.emoji} ${status.content}`,
+    tags: ['Status'],
   };
 
   const rawDataHash = hash(data);

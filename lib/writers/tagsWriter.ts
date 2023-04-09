@@ -19,6 +19,7 @@ export async function writeTags(
     const { type } = entity;
     switch (type) {
       case "blogPost":
+      case "statuslol":
       case "micro":
       case "mastodon":
       case "microblog": {
@@ -33,7 +34,6 @@ export async function writeTags(
       }
       case "album":
       case "photo":
-      case "statuslol":
         return acc;
       default:
         return exhaust(type);
@@ -50,6 +50,7 @@ export async function writeTags(
 
       const { type } = entity;
       switch (type) {
+        case "statuslol":
         case "blogPost":
         case "micro":
         case "mastodon":
@@ -59,7 +60,6 @@ export async function writeTags(
         }
         case "album":
         case "photo":
-        case "statuslol":
           return false;
         default:
           return exhaust(type);

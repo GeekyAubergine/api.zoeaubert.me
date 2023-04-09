@@ -49,6 +49,7 @@ export type StatusLolEntity = BaseEntity<
     emoji: string;
     originalUrl: string;
     excerpt: string;
+    tags: string[];
   }
 >;
 

@@ -3,7 +3,7 @@ slug: 2022-a-year-in-review
 date: 2023-01-08T16:10
 title: 2022 A Year In Review
 description: A look back over my 2022
-tags: ['Life']
+tags: ['Life', 'YearInReview']
 ---
 
 2022 has been a year of significant change for me. I've wanted to write this since the summer when I thought of this title. I was considering borrowing the style from [Robb Knight](https://rknight.me/just-2022-things/)'s and [Sophie](https://localghost.dev/blog/2022-the-year-in-lists/)'s posts, but much like my journalling, I find lists restrictive (more on this later in the journaling section), so I chose to do it this way instead.

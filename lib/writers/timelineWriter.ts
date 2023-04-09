@@ -36,11 +36,26 @@ export async function writeTimeline(
     return parseInt(b) - parseInt(a);
   });
 
+  const recentNonBlogEntities = entityOrder
+    .filter((id) => {
+      const entity = entities[id];
+      if (!entity) {
+        return false;
+      }
+
+      const { type } = entity;
+
+      return type !== "blogPost";
+    })
+    .slice(0, 5);
+
   const out = {
     entities,
     entityOrder,
     years,
     entitiesByYear,
+    recentEntityOrder: entityOrder.slice(0, 5),
+    recentNonBlogEntities,
   };
 
   return fs.promises.writeFile(archivePath, JSON.stringify(out, null, 2));
