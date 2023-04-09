@@ -6,6 +6,8 @@ description: I attended my first hackathon, and we made a game
 tags: ['Programming', 'GameDev']
 hero: "https://cdn.geekyaubergine.com/2023/04572345cced.png"
 heroAlt: "Two pixel art blue sharks wearing a barbarian horned had and a white shield with blue cross and red edging"
+heroWidth: 256
+heroHeight: 128
 ---
 
 ![Two pixel art blue sharks wearing a barbarian horned had and a white shield with blue cross and red edging](https://cdn.geekyaubergine.com/2023/04572345cced.png)

@@ -6,6 +6,8 @@ description: How I saved my broken Chaos Knight model with some stressful drilli
 tags: ['Warhammer', 'AgeOfSigmar', 'SlavesToDarkness']
 hero: 'https://cdn.geekyaubergine.com/2023/saving-my-chaos-knight/IMG_2656.JPG'
 heroAlt: 'Slaves to Darkness Chaos Knight in a top-down side-on perspective. In the background is a green and yellow cutting mat, several other models and some tools'
+heroWidth: 800
+heroHeight: 600
 ---
 
 Packing for my recent house move was a stressful process. Not only was it time-consuming, but some models required extra attention. I've always been worried about the structural integrity of the lances on the [Chaos Knights](https://www.games-workshop.com/en-GB/slaves-to-darkness-chaos-knights-2023) (slightly different set to mine, but you'll hopefully get my points). This concern was justified.

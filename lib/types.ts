@@ -27,6 +27,8 @@ export type BlogPostEntity = BaseEntity<
       url: string;
       alt: string;
       showHero: boolean;
+      width: number;
+      height: number;
     } | null;
     media: EntityMedia[];
   }

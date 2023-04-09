@@ -17,17 +17,29 @@ async function loadBlogPost(
 
   const frontMatter = frontMatterParser(fileContents);
   const { attributes, body } = frontMatter;
-  const { slug, title, date, description, tags, hero, heroAlt, showHero } =
-    attributes as {
-      slug: string | undefined;
-      title: string | undefined;
-      date: string | undefined;
-      description: string | undefined;
-      tags: string[] | undefined;
-      hero: string | undefined;
-      heroAlt: string | undefined;
-      showHero: boolean | undefined;
-    };
+  const {
+    slug,
+    title,
+    date,
+    description,
+    tags,
+    hero,
+    heroAlt,
+    showHero,
+    heroWidth,
+    heroHeight,
+  } = attributes as {
+    slug: string | undefined;
+    title: string | undefined;
+    date: string | undefined;
+    description: string | undefined;
+    tags: string[] | undefined;
+    hero: string | undefined;
+    heroAlt: string | undefined;
+    showHero: boolean | undefined;
+    heroWidth: number | undefined;
+    heroHeight: number | undefined;
+  };
 
   if (!slug || !title || !date || !description) {
     throw new Error(`Blog post is missing required attributes: ${filePath}`);
@@ -35,6 +47,11 @@ async function loadBlogPost(
 
   if (hero && !heroAlt) {
     throw new Error(`Blog post is missing hero image alt text: ${filePath}`);
+  }
+
+  if (hero && (!heroWidth || !heroHeight)) {
+    console.log({ attributes })
+    throw new Error(`Blog post is missing hero image dimensions: ${filePath}`);
   }
 
   const postSlug = `/blog/${slug}`;
@@ -81,7 +98,13 @@ async function loadBlogPost(
     tags: (tags ?? []).map(cleanTag),
     hero:
       hero && heroAlt
-        ? { url: hero, alt: heroAlt, showHero: showHero ?? false }
+        ? {
+            url: hero,
+            alt: heroAlt,
+            showHero: showHero ?? false,
+            width: heroWidth ?? 0,
+            height: heroHeight ?? 0,
+          }
         : null,
     media,
   };
