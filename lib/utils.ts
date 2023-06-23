@@ -78,8 +78,6 @@ export async function uploadToCDN(
   const ContentType =
     contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
 
-  console.log(`Uploading ${filePath} to ${url} as ${ContentType}`);
-
   try {
     const x = await s3
       .upload({

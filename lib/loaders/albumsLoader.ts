@@ -82,6 +82,7 @@ function photoSlug(album: { title: string; date: string }, url: string) {
 
 async function resizeImage(
   buffer: Buffer,
+  localPath: string,
   slug: string,
   size: "large" | "small",
   orientation: PhotoEntity["orientation"],
@@ -99,8 +100,6 @@ async function resizeImage(
   const height = Math.round(width / aspectRatio);
 
   const sizedSlug = `${slug.slice(0, -4)}-${size}.jpg`;
-
-  const localPath = `${config.cacheDir}${sizedSlug}`;
 
   if (await exists(localPath)) {
     return {
@@ -187,16 +186,17 @@ async function loadPhoto(
 
     const thumbnailLarge = await resizeImage(
       buffer,
+      chachedUrl,
       url,
       "large",
       orientation,
       width,
-
       height
     );
 
     const thumbnailSmall = await resizeImage(
       buffer,
+      chachedUrl,
       url,
       "small",
       orientation,
