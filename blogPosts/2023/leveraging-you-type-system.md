@@ -1,8 +1,8 @@
 ---
 slug: leveraging-your-type-system
-date: 2023-06-23T17:30
+date: 2023-06-23T18:00
 title: Leveraging Your Type System
-description: How to use you type system and compiler to prevent invalid states and improve the safety of your code
+description: Use your type system and compiler to prevent invalid states and improve the reliability of your code
 tags: ['Programming']
 ---
 
