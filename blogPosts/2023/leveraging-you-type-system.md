@@ -18,7 +18,7 @@ I've also taken "state" to mean the state of anything from your entire applicati
 
 The power of this approach is that if you use it correctly. You can get the compiler/static analyser (compiler from here on) to do a lot of work for you and prevent you from making mistakes.
 
-I'll be using TypeScript, but this should apply to almost any language. [View example code](https://github.com/GeekyAubergine/leveraging-your-type-system-examples)
+I'll be using TypeScript, but this should apply to almost any language. [View example code](https://github.com/GeekyAubergine/leveraging-your-type-system-examples).
 
 ## Invoice Example
 
