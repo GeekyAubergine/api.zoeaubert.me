@@ -4,6 +4,10 @@ date: 2023-06-23T18:00
 title: Leveraging Your Type System
 description: Use your type system and compiler to prevent invalid states and improve the reliability of your code
 tags: ['Programming']
+hero: 'https://cdn.geekyaubergine.com/2023/83bbe743c.png'
+heroAlt: 'Screen shot of 3 lines of code. The first line reads "export type Ok<T> = { ok: true; value: T }", the second line reads "export type Err<E> = { ok: false; error: E }" and the third line reads "export type Result<T, E> = Ok<T> | Err<E>"'
+heroWidth: 600
+heroHeight: 164
 ---
 
 Early last year, I decided to give Rust a go, and as many people can attest, I won't shut up about it. Fear not; this is not a post about Rust. One of the many features Rust provides is an excellent type system which results in a high level of safety. Since then, I have tried to replicate the level of safety in other languages.
