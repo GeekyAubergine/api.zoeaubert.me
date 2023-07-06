@@ -2,193 +2,242 @@ import fs from "fs";
 import md5 from "md5";
 import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
-import { Entity, OrderedEntities } from "./types";
+import { Entity, EntityMedia, Image, OrderedEntities } from "./types";
+import { ProjectError } from "./error";
 
-export const CONTENT_TO_FILTER_OUT =
-  /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
+export type Ok<T> = { ok: true; value: T };
 
-const s3 = new S3({
-  endpoint: `${config.cdn.endpoint}`,
-  accessKeyId: `${config.cdn.key}`,
-  secretAccessKey: `${config.cdn.secret}`,
-  signatureVersion: "v4",
-});
+export type Err = { ok: false; error: ProjectError };
+
+export type Result<T> = Ok<T> | Err;
+
+export function Ok<T>(value: T): Ok<T> {
+  return { ok: true, value };
+}
+
+export function Err(error: ProjectError): Err {
+  return { ok: false, error };
+}
 
 export function exhaust(value: never): never {
   throw new Error(`Unhandled value: ${value}`);
 }
 
-export function stripDoubleSlashes(url: string): string {
-  return url.replace(/\/\//g, "/");
+export function getImageSize(
+  url: string
+): Result<{ width: number; height: number }> {
+  const img = new Image();
+  img.src = url;
+
+  if (img.complete) {
+    return Ok({ width: img.width, height: img.height });
+  }
+
+  return Err({
+    type: "UNABLE_TO_GET_IMAGE_SIZE",
+    url,
+  });
 }
 
-export function trimLeadingSlash(url: string): string {
-  return url.replace(/^\//, "");
+export function hash(data: {}): string {
+  return md5(JSON.stringify(data));
 }
 
 export function cleanTag(tag: string): string {
   return tag.replace(/ |-/g, "-");
 }
 
-export function formatDateAsSlugPart(date: Date): string {
-  const year = date.getFullYear();
-  const month = date.getMonth() + 1;
-  const day = date.getDate();
-  return `${year.toString().padStart(4, "0")}/${month
-    .toString()
-    .padStart(2, "0")}/${day.toString().padStart(2, "0")}`;
-}
 
-export async function getFilesRecursive(path: string, ext: string) {
-  const files = await fs.promises.readdir(path);
-  const result: string[] = [];
-  for (const file of files) {
-    const filePath = `${path}/${file}`;
-    const stats = await fs.promises.stat(filePath);
-    if (stats.isDirectory()) {
-      result.push(...(await getFilesRecursive(filePath, ext)));
-    } else if (stats.isFile() && filePath.endsWith(ext)) {
-      result.push(filePath);
-    }
-  }
-  return result;
-}
+// export const CONTENT_TO_FILTER_OUT =
+//   /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
 
-export async function exists(path: string): Promise<boolean> {
-  return fs.promises
-    .stat(path)
-    .then(() => true)
-    .catch(() => false);
-}
+// const s3 = new S3({
+//   endpoint: `${config.cdn.endpoint}`,
+//   accessKeyId: `${config.cdn.key}`,
+//   secretAccessKey: `${config.cdn.secret}`,
+//   signatureVersion: "v4",
+// });
 
-export function cdnPathForFileNameAndDate(
-  fileName: string,
-  date: string
-): string {
-  const cleanedFilePath = fileName.replace(`${config.cacheDir}/`, "");
-  const slugPart = formatDateAsSlugPart(new Date(date));
-  return `/${slugPart}/${cleanedFilePath}`;
-}
+// export function stripDoubleSlashes(url: string): string {
+//   return url.replace(/\/\//g, "/");
+// }
 
-export async function uploadToCDN(
-  filePath: string,
-  url: string,
-  contentType: string | null = null
-): Promise<any> {
-  const ContentType =
-    contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
+// export function trimLeadingSlash(url: string): string {
+//   return url.replace(/^\//, "");
+// }
 
-  try {
-    const x = await s3
-      .upload({
-        Bucket: config.cdn.bucket,
-        Key: trimLeadingSlash(stripDoubleSlashes(url)),
-        Body: fs.createReadStream(stripDoubleSlashes(filePath)),
-        ACL: "public-read",
-        ContentType,
-      })
-      .promise();
+// export function cleanTag(tag: string): string {
+//   return tag.replace(/ |-/g, "-");
+// }
 
-    return x;
-  } catch (e) {
-    console.error(e);
-    throw e;
-  }
-}
+// export function formatDateAsSlugPart(date: Date): string {
+//   const year = date.getFullYear();
+//   const month = date.getMonth() + 1;
+//   const day = date.getDate();
+//   return `${year.toString().padStart(4, "0")}/${month
+//     .toString()
+//     .padStart(2, "0")}/${day.toString().padStart(2, "0")}`;
+// }
 
-export async function downloadAndCacheFile(url: string): Promise<string> {
-  const fileExtension = url.split(".").pop();
+// export async function getFilesRecursive(path: string, ext: string) {
+//   const files = await fs.promises.readdir(path);
+//   const result: string[] = [];
+//   for (const file of files) {
+//     const filePath = `${path}/${file}`;
+//     const stats = await fs.promises.stat(filePath);
+//     if (stats.isDirectory()) {
+//       result.push(...(await getFilesRecursive(filePath, ext)));
+//     } else if (stats.isFile() && filePath.endsWith(ext)) {
+//       result.push(filePath);
+//     }
+//   }
+//   return result;
+// }
 
-  if (!fileExtension) {
-    throw new Error(`Failed to get file extension for ${url}`);
-  }
+// export async function exists(path: string): Promise<ZResult<boolean>> {
+//   return fs.promises
+//     .stat(path)
+//     .then(() => Ok(true))
+//     .catch(() => Err(ZErrorBasic.UNABLE_TO_READ_FILE_SYSTEM));
+// }
 
-  const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
+// export function cdnPathForFileNameAndDate(
+//   fileName: string,
+//   date: string
+// ): string {
+//   const cleanedFilePath = fileName.replace(`${config.cacheDir}/`, "");
+//   const slugPart = formatDateAsSlugPart(new Date(date));
+//   return `/${slugPart}/${cleanedFilePath}`;
+// }
 
-  if (await exists(cachePath)) {
-    return cachePath;
-  }
+// export async function uploadToCDN(
+//   filePath: string,
+//   url: string,
+//   contentType: string | null = null
+// ): Promise<ZResult<S3.ManagedUpload.SendData>> {
+//   const ContentType =
+//     contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
 
-  const folder = cachePath.slice(0, cachePath.lastIndexOf("/"));
+//   try {
+//     const x = await s3
+//       .upload({
+//         Bucket: config.cdn.bucket,
+//         Key: trimLeadingSlash(stripDoubleSlashes(url)),
+//         Body: fs.createReadStream(stripDoubleSlashes(filePath)),
+//         ACL: "public-read",
+//         ContentType,
+//       })
+//       .promise();
 
-  if (!(await exists(folder))) {
-    await fs.promises.mkdir(folder, { recursive: true });
-  }
+//     return Ok(x);
+//   } catch (e) {
+//     return Err({
+//       type: "UNABLE_TO_UPLOAD_FILE_TO_CDN",
+//       localPath: filePath,
+//       uploadPath: url,
+//     });
+//   }
+// }
 
-  const file = await fetch(url);
+// export async function downloadAndCacheFile(url: string): Promise<
+//   ZResult<{
+//     cachePath: string;
+//   }>
+// > {
+//   const fileExtension = url.split(".").pop();
 
-  if (!file.ok) {
-    throw new Error(`Failed to download ${url}`);
-  }
+//   if (!fileExtension) {
+//     return Err({
+//       type: "UNABLE_TO_GET_FILE_EXTENSION",
+//       url,
+//     });
+//   }
 
-  const fileContents = await file.blob();
+//   const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
 
-  const arrayBuffer = await fileContents.arrayBuffer();
+//   if (await exists(cachePath)) {
+//     return Ok({ cachePath });
+//   }
 
-  const buffer = Buffer.from(arrayBuffer);
+//   const folder = cachePath.slice(0, cachePath.lastIndexOf("/"));
 
-  await fs.promises.writeFile(cachePath, buffer);
+//   if (!(await exists(folder))) {
+//     await fs.promises.mkdir(folder, { recursive: true });
+//   }
 
-  return cachePath;
-}
+//   const file = await fetch(url);
 
-// export async function archiveFile(url: string): Promise<string> {}
+//   if (!file.ok) {
+//     return Err({
+//       type: "UNABLE_TO_DOWNLOAD_FILE",
+//       url,
+//     });
+//   }
 
-export function hash(data: {}): string {
-  return md5(JSON.stringify(data));
-}
+//   const fileContents = await file.blob();
 
-export function filterNull<T extends {}>(
-  nullables: (T | null | undefined)[]
-): T[] {
-  return nullables.filter((v) => v != null) as T[];
-}
+//   const arrayBuffer = await fileContents.arrayBuffer();
 
-export function recordToArray<K extends string | number | symbol, T extends {}>(
-  record: Record<K, T>
-): T[] {
-  return filterNull(Object.keys(record).map((key) => record[key as K]));
-}
+//   const buffer = Buffer.from(arrayBuffer);
 
-export function arrayToRecord<K extends string | number | symbol, T extends {}>(
-  array: T[],
-  key: (value: T) => K
-): Record<K, T> {
-  return array.reduce((acc, value) => {
-    return {
-      ...acc,
-      [key(value)]: value,
-    };
-  }, {} as Record<K, T>);
-}
+//   await fs.promises.writeFile(cachePath, buffer);
 
-export function sortEntitesByDate(
-  entities: Record<string, Entity>
-): OrderedEntities {
-  const entityOrder = recordToArray(entities)
-    .map((entity) => entity.id)
-    .sort((a, b) => {
-      const aDate = new Date((entities[a] as any).date);
-      const bDate = new Date((entities[b] as any).date);
-      return bDate.getTime() - aDate.getTime();
-    });
-  return { entityOrder, entities };
-}
+//   return Ok({ cachePath });
+// }
 
-export function filterOrderedEntitiesBy(
-  orderedEntities: OrderedEntities,
-  predicate: (entity: Entity) => boolean
-): OrderedEntities {
-  let outOrder: OrderedEntities["entityOrder"] = [];
-  let outEntities: OrderedEntities["entities"] = {};
+// // export async function archiveFile(url: string): Promise<string> {}
 
-  for (const id of orderedEntities.entityOrder) {
-    const entity = orderedEntities.entities[id];
-    if (entity && predicate(entity)) {
-      outOrder.push(id);
-      outEntities[id] = entity;
-    }
-  }
+// export function filterNull<T extends {}>(
+//   nullables: (T | null | undefined)[]
+// ): T[] {
+//   return nullables.filter((v) => v != null) as T[];
+// }
 
-  return { entityOrder: outOrder, entities: outEntities };
-}
+// export function recordToArray<K extends string | number | symbol, T extends {}>(
+//   record: Record<K, T>
+// ): T[] {
+//   return filterNull(Object.keys(record).map((key) => record[key as K]));
+// }
+
+// export function arrayToRecord<K extends string | number | symbol, T extends {}>(
+//   array: T[],
+//   key: (value: T) => K
+// ): Record<K, T> {
+//   return array.reduce((acc, value) => {
+//     return {
+//       ...acc,
+//       [key(value)]: value,
+//     };
+//   }, {} as Record<K, T>);
+// }
+
+// export function sortEntitesByDate(
+//   entities: Record<string, Entity>
+// ): OrderedEntities {
+//   const entityOrder = recordToArray(entities)
+//     .map((entity) => entity.id)
+//     .sort((a, b) => {
+//       const aDate = new Date((entities[a] as any).date);
+//       const bDate = new Date((entities[b] as any).date);
+//       return bDate.getTime() - aDate.getTime();
+//     });
+//   return { entityOrder, entities };
+// }
+
+// export function filterOrderedEntitiesBy(
+//   orderedEntities: OrderedEntities,
+//   predicate: (entity: Entity) => boolean
+// ): OrderedEntities {
+//   let outOrder: OrderedEntities["entityOrder"] = [];
+//   let outEntities: OrderedEntities["entities"] = {};
+
+//   for (const id of orderedEntities.entityOrder) {
+//     const entity = orderedEntities.entities[id];
+//     if (entity && predicate(entity)) {
+//       outOrder.push(id);
+//       outEntities[id] = entity;
+//     }
+//   }
+
+//   return { entityOrder: outOrder, entities: outEntities };
+// }

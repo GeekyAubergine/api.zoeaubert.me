@@ -5,34 +5,6 @@ import config from "./config";
 import { exists } from "./lib/utils";
 import { Archive, Entity, LoaderParams } from "./lib/types";
 
-import { loadMastadonToots } from "./lib/loaders/mastodonLoader";
-import { loadBlogPosts } from "./lib/loaders/blogPostsLoader";
-import { loadStatusLol } from "./lib/loaders/statuslolLoader";
-import { loadMicroBlogArchive } from "./lib/loaders/microBlogArchiveLoader";
-import { loadAlbums } from "./lib/loaders/albumsLoader";
-import { loadAbout } from "./lib/loaders/aboutLoader";
-import { loadNow } from "./lib/loaders/nowLoader";
-import { loadFaq } from "./lib/loaders/faqLoader";
-import { loadLinks } from "./lib/loaders/linksLoader";
-import { loadMicros } from "./lib/loaders/microsLoader";
-
-import { writeArchive } from "./lib/writers/archiveWriter";
-import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
-import { writeMicros } from "./lib/writers/microsWriter";
-import { writeTimeline } from "./lib/writers/timelineWriter";
-import { writeMicroBlogs } from "./lib/writers/microBlogWriter";
-import { writeToots } from "./lib/writers/tootsWriter";
-import { writeAlbums } from "./lib/writers/albumsWriter";
-import { writeStatusLols } from "./lib/writers/statuslolWriter";
-import { writeAbout } from "./lib/writers/aboutWriter";
-import { writeNow } from "./lib/writers/nowWriter";
-import { writeTags } from "./lib/writers/tagsWriter";
-import { writeAll } from "./lib/writers/allWriter";
-import { writeYears } from "./lib/writers/yearsWriter";
-import { writePhotos } from "./lib/writers/photosWriter";
-import { writeFaq } from "./lib/writers/faqWriter";
-import { writeLinks } from "./lib/writers/linksWriter";
-
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 
 async function prepFolders() {

@@ -1,154 +1,55 @@
-export type EntityMedia = {
-  type: "image";
-  url: string;
+type EntityType = "media" | "blogPost";
+
+export type Image = {
+  src: string;
   alt: string;
-  date: string;
-  postSlug: string;
   width: number;
   height: number;
 };
 
-type BaseEntity<T, D> = {
+export type EntityMedia = {
+  image: Image;
+  postSlug: string;
+  date: string;
+};
+
+type EntityBase<T extends EntityType, D> = {
   rawDataHash: string;
   type: T;
-  id: string;
+  key: string;
   slug: string;
   date: string;
 } & D;
 
-export type BlogPostEntity = BaseEntity<
+export type BlogPostEntity = EntityBase<
   "blogPost",
   {
     title: string;
     description: string;
     content: string;
     tags: string[];
-    hero: {
-      url: string;
-      alt: string;
-      showHero: boolean;
-      width: number;
-      height: number;
-    } | null;
+    hero: Image | null;
+    showHero: boolean;
     media: EntityMedia[];
   }
 >;
 
-export type MicroEntity = BaseEntity<
-  "micro",
-  {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    excerpt: string;
-  }
->;
+export type Entity = BlogPostEntity | EntityMedia;
 
-export type StatusLolEntity = BaseEntity<
-  "statuslol",
-  {
-    content: string;
-    emoji: string;
-    originalUrl: string;
-    excerpt: string;
-    tags: string[];
-  }
->;
-
-export type MastodonEntity = BaseEntity<
-  "mastodon",
-  {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    originalUrl: string;
-    excerpt: string;
-  }
->;
-
-export type MicroBlogEntity = BaseEntity<
-  "microblog",
-  {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    excerpt: string;
-  }
->;
-
-export type PhotoEntity = BaseEntity<
-  "photo",
-  {
-    id: string;
-    description: string;
-    alt: string;
-    tags: string[];
-    featured: boolean;
-    orientation: "landscape" | "portrait" | "square";
-    thumbnailSmall: {
-      url: string;
-      width: number;
-      height: number;
-    };
-    thumbnailLarge: {
-      url: string;
-      width: number;
-      height: number;
-    };
-    fullSize: {
-      url: string;
-      width: number;
-      height: number;
-    };
-    albumSlug: string;
-    albumTotalPhotos: number;
-    indexString: string;
-    previous: string | null;
-    next: string | null;
-    albumTitle: string;
-    date: string;
-  }
->;
-
-export type AlbumData = {
-  title: string;
-  slug: string;
-  description: string | null;
-  date: string;
-  photoOrder: string[];
-};
-
-export type AlbumEntity = BaseEntity<
-  "album",
-  AlbumData & {
-    tags: string[];
-    coverPhotos: string[];
-  }
->;
-
-export type Entity =
-  | BlogPostEntity
-  | MicroEntity
-  | StatusLolEntity
-  | MastodonEntity
-  | MicroBlogEntity
-  | AlbumEntity
-  | PhotoEntity;
-
-export type OrderedEntities = {
-  entities: Record<string, Entity>;
+export type OrderedEntities<E extends Entity> = {
   entityOrder: string[];
+  entities: Record<string, E>;
 };
 
-export type Archive = OrderedEntities & {
-  lastUpdated: string;
-  about: string;
-  now: string;
-  faq: string;
-  links: string;
+export type BlogPosts = OrderedEntities<BlogPostEntity>;
+export type Media = OrderedEntities<EntityMedia>;
+
+export type Archive = {
+  blogPosts: BlogPosts;
+  media: Media;
 };
 
-export type LoaderParams = {
-  archive: Archive;
-  cacheDirectory: string;
+export type LoaderParams<E extends Entity> = {
+  orderedEntities: OrderedEntities<E>;
+  cacheDir: string;
 };
