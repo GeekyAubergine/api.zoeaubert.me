@@ -1,9 +1,10 @@
-import fs from "fs";
+import fs from "fs-extra";
 import md5 from "md5";
-import S3 from "aws-sdk/clients/s3.js";
+// import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
-import { Entity, EntityMedia, Image, OrderedEntities } from "./types";
+import { Entity, OrderedEntities } from "./types";
 import { ProjectError } from "./error";
+import imageSize from "image-size";
 
 export type Ok<T> = { ok: true; value: T };
 
@@ -23,14 +24,24 @@ export function exhaust(value: never): never {
   throw new Error(`Unhandled value: ${value}`);
 }
 
-export function getImageSize(
+export async function getImageSize(
   url: string
-): Result<{ width: number; height: number }> {
-  const img = new Image();
-  img.src = url;
+): Promise<Result<{ width: number; height: number }>> {
+  const contentZip = await fetch(url);
 
-  if (img.complete) {
-    return Ok({ width: img.width, height: img.height });
+  const contentBlob = await contentZip.blob();
+
+  const arrayBuffer = await contentBlob.arrayBuffer();
+
+  const buffer = Buffer.from(arrayBuffer);
+
+  const size = imageSize(buffer);
+
+  if (size.width && size.height) {
+    return Ok({
+      width: size.width,
+      height: size.height,
+    });
   }
 
   return Err({
@@ -47,6 +58,100 @@ export function cleanTag(tag: string): string {
   return tag.replace(/ |-/g, "-");
 }
 
+export async function getFilesRecursive(path: string, ext: string) {
+  const files = await fs.promises.readdir(path);
+  const result: string[] = [];
+  for (const file of files) {
+    const filePath = `${path}/${file}`;
+    const stats = await fs.promises.stat(filePath);
+    if (stats.isDirectory()) {
+      result.push(...(await getFilesRecursive(filePath, ext)));
+    } else if (stats.isFile() && filePath.endsWith(ext)) {
+      result.push(filePath);
+    }
+  }
+  return result;
+}
+
+export function entitiesToOrderedEntities<E extends Entity>(
+  entities: E[]
+): OrderedEntities<E> {
+  const entityOrder = entities
+    .sort((a, b) => {
+      const aDate = new Date(a.date);
+      const bDate = new Date(b.date);
+      return bDate.getTime() - aDate.getTime();
+    })
+    .map((entity) => entity.key);
+
+  const record = entities.reduce<Record<string, E>>((acc, entity) => {
+    acc[entity.key] = entity;
+    return acc;
+  }, {});
+
+  return {
+    entities: record,
+    entityOrder,
+  };
+}
+
+export async function exists(path: string): Promise<Result<boolean>> {
+  return fs.promises
+    .stat(path)
+    .then(() => Ok(true))
+    .catch(() =>
+      Err({
+        type: "UNABLE_TO_READ_FILE_SYSTEM",
+        url: path,
+      })
+    );
+}
+
+export async function downloadAndCacheFile(url: string): Promise<
+  Result<{
+    cachePath: string;
+  }>
+> {
+  const fileExtension = url.split(".").pop();
+
+  if (!fileExtension) {
+    return Err({
+      type: "UNABLE_TO_GET_FILE_EXTENSION",
+      url,
+    });
+  }
+
+  const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
+
+  if (await exists(cachePath)) {
+    return Ok({ cachePath });
+  }
+
+  const folder = cachePath.slice(0, cachePath.lastIndexOf("/"));
+
+  if (!(await exists(folder))) {
+    await fs.promises.mkdir(folder, { recursive: true });
+  }
+
+  const file = await fetch(url);
+
+  if (!file.ok) {
+    return Err({
+      type: "UNABLE_TO_DOWNLOAD_FILE",
+      url,
+    });
+  }
+
+  const fileContents = await file.blob();
+
+  const arrayBuffer = await fileContents.arrayBuffer();
+
+  const buffer = Buffer.from(arrayBuffer);
+
+  await fs.promises.writeFile(cachePath, buffer);
+
+  return Ok({ cachePath });
+}
 
 // export const CONTENT_TO_FILTER_OUT =
 //   /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
@@ -94,13 +199,6 @@ export function cleanTag(tag: string): string {
 //   return result;
 // }
 
-// export async function exists(path: string): Promise<ZResult<boolean>> {
-//   return fs.promises
-//     .stat(path)
-//     .then(() => Ok(true))
-//     .catch(() => Err(ZErrorBasic.UNABLE_TO_READ_FILE_SYSTEM));
-// }
-
 // export function cdnPathForFileNameAndDate(
 //   fileName: string,
 //   date: string
@@ -137,52 +235,6 @@ export function cleanTag(tag: string): string {
 //       uploadPath: url,
 //     });
 //   }
-// }
-
-// export async function downloadAndCacheFile(url: string): Promise<
-//   ZResult<{
-//     cachePath: string;
-//   }>
-// > {
-//   const fileExtension = url.split(".").pop();
-
-//   if (!fileExtension) {
-//     return Err({
-//       type: "UNABLE_TO_GET_FILE_EXTENSION",
-//       url,
-//     });
-//   }
-
-//   const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
-
-//   if (await exists(cachePath)) {
-//     return Ok({ cachePath });
-//   }
-
-//   const folder = cachePath.slice(0, cachePath.lastIndexOf("/"));
-
-//   if (!(await exists(folder))) {
-//     await fs.promises.mkdir(folder, { recursive: true });
-//   }
-
-//   const file = await fetch(url);
-
-//   if (!file.ok) {
-//     return Err({
-//       type: "UNABLE_TO_DOWNLOAD_FILE",
-//       url,
-//     });
-//   }
-
-//   const fileContents = await file.blob();
-
-//   const arrayBuffer = await fileContents.arrayBuffer();
-
-//   const buffer = Buffer.from(arrayBuffer);
-
-//   await fs.promises.writeFile(cachePath, buffer);
-
-//   return Ok({ cachePath });
 // }
 
 // // export async function archiveFile(url: string): Promise<string> {}

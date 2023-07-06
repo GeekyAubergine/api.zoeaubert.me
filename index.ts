@@ -1,11 +1,25 @@
-import fs from "fs";
+import fs from "fs-extra";
 import path from "path";
 import config from "./config";
 
-import { exists } from "./lib/utils";
-import { Archive, Entity, LoaderParams } from "./lib/types";
+import { Err, Ok, Result, exists } from "./lib/utils";
+import Archive from "./lib/types";
+import extract from "extract-zip";
+import { loadData } from "./lib/loaders/loaders";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
+const CACHE_DIR = path.join(__dirname, "./.cache");
+const CONTENT_DIR = path.join(__dirname, "./.content");
+
+const DEFAULT_ARCHIVE: Archive = {
+  blogPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+};
+
+const CONTENT_URL =
+  "https://github.com/GeekyAubergine/zoeaubert.me-content/archive/refs/heads/main.zip";
 
 async function prepFolders() {
   if (!(await exists(PUBLIC_DIR))) {
@@ -16,25 +30,56 @@ async function prepFolders() {
   }
 }
 
-async function loadArchive(): Promise<Archive> {
+async function loadArchive(): Promise<Result<Archive>> {
   try {
     const archiveFile = await fs.promises.readFile(
       path.join(PUBLIC_DIR, "archive.json"),
       "utf-8"
     );
 
-    return JSON.parse(archiveFile);
+    return Ok(JSON.parse(archiveFile));
   } catch (e) {
-    // TODO Try loading from github archive
-    return {
-      entities: {},
-      entityOrder: [],
-      lastUpdated: "1970-00-00T00:00:00.000Z",
-      about: "",
-      now: "",
-      faq: "",
-      links: "",
-    };
+    // TODO Try loading from backup
+    return Err({
+      type: "UNABLE_TO_LOAD_ARCHIVE",
+    });
+  }
+}
+
+async function downloadContent(): Promise<Result<undefined>> {
+  try {
+    const contentDirExists = await exists(CONTENT_DIR);
+
+    if (contentDirExists.ok && contentDirExists.value) {
+      await fs.rm(CONTENT_DIR, { recursive: true });
+    }
+
+    const contentZip = await fetch(CONTENT_URL);
+
+    const contentBlob = await contentZip.blob();
+
+    const arrayBuffer = await contentBlob.arrayBuffer();
+
+    const buffer = Buffer.from(arrayBuffer);
+
+    await fs.writeFile(path.join(config.cacheDir, "temp.zip"), buffer);
+
+    await extract(path.join(config.cacheDir, "temp.zip"), {
+      dir: path.join(__dirname, "content-temp"),
+    });
+
+    await fs.copy(path.join(__dirname, "content-temp/zoeaubert.me-content-main"), CONTENT_DIR);
+
+    await fs.rm(path.join(config.cacheDir, "temp.zip"), { recursive: true });
+
+    await fs.rm(path.join(__dirname, "content-temp"), { recursive: true });
+
+    return Ok(undefined);
+  } catch (e) {
+    console.error(e);
+    return Err({
+      type: "UNABLE_TO_DOWNLOAD_CONTENT",
+    });
   }
 }
 
@@ -43,99 +88,112 @@ async function main() {
 
   await prepFolders();
 
-  const archive = await loadArchive();
+  const archiveResult = await loadArchive();
 
-  const loaderParams: LoaderParams = {
-    archive,
-    cacheDirectory: "",
-  };
+  const archive = archiveResult.ok ? archiveResult.value : DEFAULT_ARCHIVE;
 
-  const basicLoaders = [
-    loadAbout(loaderParams),
-    loadNow(loaderParams),
-    loadFaq(loaderParams),
-    loadLinks(loaderParams),
-  ] as const;
+  console.log({ archive });
 
-  const entityLoaders = [
-    loadBlogPosts(loaderParams),
-    loadStatusLol(loaderParams),
-    loadMastadonToots(loaderParams),
-    loadMicroBlogArchive(loaderParams),
-    loadAlbums(loaderParams),
-    loadMicros(loaderParams),
-  ] as const;
+  const contentDownloadResult = await downloadContent();
 
-  console.log("Loading data");
+  if (!contentDownloadResult.ok) {
+    console.error(contentDownloadResult.error);
+    return;
+  }
 
-  const loadStart = Date.now();
+  const newArchiveResult = await loadData(archive, CACHE_DIR, CONTENT_DIR);
 
-  const basicResults = await Promise.all(basicLoaders);
+  if (!newArchiveResult.ok) {
+    console.error(newArchiveResult.error);
+    return;
+  }
 
-  const entityResults: Record<string, Entity>[] = await Promise.all(
-    entityLoaders
-  );
+  // const basicLoaders = [
+  //   loadAbout(loaderParams),
+  //   loadNow(loaderParams),
+  //   loadFaq(loaderParams),
+  //   loadLinks(loaderParams),
+  // ] as const;
 
-  const loadEnd = Date.now();
+  // const entityLoaders = [
+  //   loadBlogPosts(loaderParams),
+  //   loadStatusLol(loaderParams),
+  //   loadMastadonToots(loaderParams),
+  //   loadMicroBlogArchive(loaderParams),
+  //   loadAlbums(loaderParams),
+  //   loadMicros(loaderParams),
+  // ] as const;
 
-  console.log(`Loaded in ${loadEnd - loadStart}ms`);
+  // console.log("Loading data");
 
-  const [about, now, faq, links] = basicResults;
+  // const loadStart = Date.now();
 
-  const entitiesMap: Record<string, Entity> = entityResults.reduce(
-    (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
-    archive.entities
-  );
+  // const basicResults = await Promise.all(basicLoaders);
 
-  const entityIdDatePairs = Object.entries(entitiesMap).map(([id, entity]) => ({
-    id,
-    date: new Date(entity.date),
-  }));
+  // const entityResults: Record<string, Entity>[] = await Promise.all(
+  //   entityLoaders
+  // );
 
-  const sortedIdDatePairs = entityIdDatePairs.sort(
-    (a, b) => b.date.getTime() - a.date.getTime()
-  );
+  // const loadEnd = Date.now();
 
-  const entityOrder = sortedIdDatePairs.map((pair) => pair.id);
+  // console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const newArchive: Archive = {
-    entities: entitiesMap,
-    entityOrder,
-    lastUpdated: new Date().toISOString(),
-    about,
-    now,
-    faq,
-    links,
-  };
+  // const [about, now, faq, links] = basicResults;
 
-  const writers = [
-    writeArchive(PUBLIC_DIR, newArchive),
-    writeBlogPosts(PUBLIC_DIR, newArchive),
-    writeMicros(PUBLIC_DIR, newArchive),
-    writeTimeline(PUBLIC_DIR, newArchive),
-    writeMicroBlogs(PUBLIC_DIR, newArchive),
-    writeToots(PUBLIC_DIR, newArchive),
-    writeAlbums(PUBLIC_DIR, newArchive),
-    writeStatusLols(PUBLIC_DIR, newArchive),
-    writeAbout(PUBLIC_DIR, newArchive),
-    writeNow(PUBLIC_DIR, newArchive),
-    writeTags(PUBLIC_DIR, newArchive),
-    writeAll(PUBLIC_DIR, newArchive),
-    writeYears(PUBLIC_DIR, newArchive),
-    writePhotos(PUBLIC_DIR, newArchive),
-    writeFaq(PUBLIC_DIR, newArchive),
-    writeLinks(PUBLIC_DIR, newArchive),
-  ];
+  // const entitiesMap: Record<string, Entity> = entityResults.reduce(
+  //   (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
+  //   archive.entities
+  // );
 
-  console.log("Writing data");
+  // const entityIdDatePairs = Object.entries(entitiesMap).map(([id, entity]) => ({
+  //   id,
+  //   date: new Date(entity.date),
+  // }));
 
-  const writeStart = Date.now();
+  // const sortedIdDatePairs = entityIdDatePairs.sort(
+  //   (a, b) => b.date.getTime() - a.date.getTime()
+  // );
 
-  await Promise.all(writers);
+  // const entityOrder = sortedIdDatePairs.map((pair) => pair.id);
 
-  const writeEnd = Date.now();
+  // const newArchive: Archive = {
+  //   entities: entitiesMap,
+  //   entityOrder,
+  //   lastUpdated: new Date().toISOString(),
+  //   about,
+  //   now,
+  //   faq,
+  //   links,
+  // };
 
-  console.log(`Wrote in ${writeEnd - writeStart}ms`);
+  // const writers = [
+  //   writeArchive(PUBLIC_DIR, newArchive),
+  //   writeBlogPosts(PUBLIC_DIR, newArchive),
+  //   writeMicros(PUBLIC_DIR, newArchive),
+  //   writeTimeline(PUBLIC_DIR, newArchive),
+  //   writeMicroBlogs(PUBLIC_DIR, newArchive),
+  //   writeToots(PUBLIC_DIR, newArchive),
+  //   writeAlbums(PUBLIC_DIR, newArchive),
+  //   writeStatusLols(PUBLIC_DIR, newArchive),
+  //   writeAbout(PUBLIC_DIR, newArchive),
+  //   writeNow(PUBLIC_DIR, newArchive),
+  //   writeTags(PUBLIC_DIR, newArchive),
+  //   writeAll(PUBLIC_DIR, newArchive),
+  //   writeYears(PUBLIC_DIR, newArchive),
+  //   writePhotos(PUBLIC_DIR, newArchive),
+  //   writeFaq(PUBLIC_DIR, newArchive),
+  //   writeLinks(PUBLIC_DIR, newArchive),
+  // ];
+
+  // console.log("Writing data");
+
+  // const writeStart = Date.now();
+
+  // await Promise.all(writers);
+
+  // const writeEnd = Date.now();
+
+  // console.log(`Wrote in ${writeEnd - writeStart}ms`);
 
   console.log("Done");
 }

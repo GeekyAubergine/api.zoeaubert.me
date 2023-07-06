@@ -1,5 +1,3 @@
-import { Result } from "./utils";
-
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
   localPath: string;
@@ -61,6 +59,19 @@ type ImageMissingAlt = {
   url: string;
 };
 
+type UnableToReadFileSystem = {
+  type: "UNABLE_TO_READ_FILE_SYSTEM";
+  url: string;
+};
+
+type UnableToLoadArchive = {
+  type: "UNABLE_TO_LOAD_ARCHIVE";
+};
+
+type UnableToDownloadContent = {
+  type: "UNABLE_TO_DOWNLOAD_CONTENT";
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -73,4 +84,7 @@ export type ProjectError =
   | BlogPostHeroMissingWidthOrHeight
   | UnableToGetImageSize
   | ImageMissingSrc
-  | ImageMissingAlt;
+  | ImageMissingAlt
+  | UnableToReadFileSystem
+  | UnableToLoadArchive
+  | UnableToDownloadContent;

@@ -34,7 +34,7 @@ export type BlogPostEntity = EntityBase<
   }
 >;
 
-export type Entity = BlogPostEntity | EntityMedia;
+export type Entity = BlogPostEntity;
 
 export type OrderedEntities<E extends Entity> = {
   entityOrder: string[];
@@ -42,12 +42,12 @@ export type OrderedEntities<E extends Entity> = {
 };
 
 export type BlogPosts = OrderedEntities<BlogPostEntity>;
-export type Media = OrderedEntities<EntityMedia>;
+// export type Media = OrderedEntities<EntityMedia>;
 
-export type Archive = {
+type Archive = {
   blogPosts: BlogPosts;
-  media: Media;
 };
+export default Archive;
 
 export type LoaderParams<E extends Entity> = {
   orderedEntities: OrderedEntities<E>;

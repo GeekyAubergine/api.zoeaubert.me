@@ -1,9 +1,23 @@
-import fs from "fs";
-import path from "path";
+import fs from "fs-extra";
 import frontMatterParser from "front-matter";
 
-import { BlogPostEntity, EntityMedia, Image, LoaderParams } from "lib/types";
-import { Err, Ok, Result, cleanTag, getImageSize, hash } from "lib/utils";
+import {
+  BlogPostEntity,
+  BlogPosts,
+  EntityMedia,
+  Image,
+  LoaderParams,
+} from "../types";
+import {
+  Err,
+  Ok,
+  Result,
+  cleanTag,
+  entitiesToOrderedEntities,
+  getFilesRecursive,
+  getImageSize,
+  hash,
+} from "../utils";
 
 const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
 
@@ -40,7 +54,10 @@ function parseHeroImage(
   });
 }
 
-function parseImages(filePath: string, body: string): Result<Image[]> {
+async function parseImages(
+  filePath: string,
+  body: string
+): Promise<Result<Image[]>> {
   const images: Image[] = [];
 
   for (const match of body.matchAll(IMAGE_REGEX)) {
@@ -60,7 +77,7 @@ function parseImages(filePath: string, body: string): Result<Image[]> {
       });
     }
 
-    const imageSize = getImageSize(filePath);
+    const imageSize = await getImageSize(src);
 
     if (!imageSize.ok) {
       return imageSize;
@@ -207,4 +224,25 @@ async function loadBlogPost(
     media,
     rawDataHash,
   });
+}
+
+export async function loadBlogPosts(
+  loaderParams: LoaderParams<BlogPostEntity>,
+  postsDir: string
+): Promise<Result<BlogPosts>> {
+  const paths = await getFilesRecursive(postsDir, ".md");
+
+  const blogPosts: BlogPostEntity[] = [];
+
+  for (const filePath of paths) {
+    const result = await loadBlogPost(loaderParams, filePath);
+
+    if (!result.ok) {
+      return result;
+    }
+
+    blogPosts.push(result.value);
+  }
+
+  return Ok(entitiesToOrderedEntities<BlogPostEntity>(blogPosts));
 }
