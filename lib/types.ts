@@ -46,6 +46,7 @@ export type BlogPosts = OrderedEntities<BlogPostEntity>;
 
 type Archive = {
   blogPosts: BlogPosts;
+  lastUpdated: string;
 };
 export default Archive;
 

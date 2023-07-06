@@ -72,6 +72,10 @@ type UnableToDownloadContent = {
   type: "UNABLE_TO_DOWNLOAD_CONTENT";
 };
 
+type UNABLE_TO_WRITE_ARCHIVE = {
+  type: "UNABLE_TO_WRITE_ARCHIVE";
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -87,4 +91,5 @@ export type ProjectError =
   | ImageMissingAlt
   | UnableToReadFileSystem
   | UnableToLoadArchive
-  | UnableToDownloadContent;
+  | UnableToDownloadContent
+  | UNABLE_TO_WRITE_ARCHIVE;

@@ -25,5 +25,6 @@ export async function loadData(
 
   return Ok({
     blogPosts,
+    lastUpdated: new Date().toISOString(),
   });
 }

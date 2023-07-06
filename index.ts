@@ -6,6 +6,7 @@ import { Err, Ok, Result, exists } from "./lib/utils";
 import Archive from "./lib/types";
 import extract from "extract-zip";
 import { loadData } from "./lib/loaders/loaders";
+import { writeData } from "./lib/writers/writers";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
@@ -16,6 +17,7 @@ const DEFAULT_ARCHIVE: Archive = {
     entityOrder: [],
     entities: {},
   },
+  lastUpdated: "",
 };
 
 const CONTENT_URL =
@@ -68,7 +70,10 @@ async function downloadContent(): Promise<Result<undefined>> {
       dir: path.join(__dirname, "content-temp"),
     });
 
-    await fs.copy(path.join(__dirname, "content-temp/zoeaubert.me-content-main"), CONTENT_DIR);
+    await fs.copy(
+      path.join(__dirname, "content-temp/zoeaubert.me-content-main"),
+      CONTENT_DIR
+    );
 
     await fs.rm(path.join(config.cacheDir, "temp.zip"), { recursive: true });
 
@@ -101,6 +106,10 @@ async function main() {
     return;
   }
 
+  console.log("Loading data");
+
+  const loadStart = Date.now();
+
   const newArchiveResult = await loadData(archive, CACHE_DIR, CONTENT_DIR);
 
   if (!newArchiveResult.ok) {
@@ -108,63 +117,13 @@ async function main() {
     return;
   }
 
-  // const basicLoaders = [
-  //   loadAbout(loaderParams),
-  //   loadNow(loaderParams),
-  //   loadFaq(loaderParams),
-  //   loadLinks(loaderParams),
-  // ] as const;
+  const newArchive = newArchiveResult.value;
 
-  // const entityLoaders = [
-  //   loadBlogPosts(loaderParams),
-  //   loadStatusLol(loaderParams),
-  //   loadMastadonToots(loaderParams),
-  //   loadMicroBlogArchive(loaderParams),
-  //   loadAlbums(loaderParams),
-  //   loadMicros(loaderParams),
-  // ] as const;
+  newArchive.lastUpdated = new Date().toISOString();
 
-  // console.log("Loading data");
+  const loadEnd = Date.now();
 
-  // const loadStart = Date.now();
-
-  // const basicResults = await Promise.all(basicLoaders);
-
-  // const entityResults: Record<string, Entity>[] = await Promise.all(
-  //   entityLoaders
-  // );
-
-  // const loadEnd = Date.now();
-
-  // console.log(`Loaded in ${loadEnd - loadStart}ms`);
-
-  // const [about, now, faq, links] = basicResults;
-
-  // const entitiesMap: Record<string, Entity> = entityResults.reduce(
-  //   (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
-  //   archive.entities
-  // );
-
-  // const entityIdDatePairs = Object.entries(entitiesMap).map(([id, entity]) => ({
-  //   id,
-  //   date: new Date(entity.date),
-  // }));
-
-  // const sortedIdDatePairs = entityIdDatePairs.sort(
-  //   (a, b) => b.date.getTime() - a.date.getTime()
-  // );
-
-  // const entityOrder = sortedIdDatePairs.map((pair) => pair.id);
-
-  // const newArchive: Archive = {
-  //   entities: entitiesMap,
-  //   entityOrder,
-  //   lastUpdated: new Date().toISOString(),
-  //   about,
-  //   now,
-  //   faq,
-  //   links,
-  // };
+  console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
   // const writers = [
   //   writeArchive(PUBLIC_DIR, newArchive),
@@ -185,15 +144,20 @@ async function main() {
   //   writeLinks(PUBLIC_DIR, newArchive),
   // ];
 
-  // console.log("Writing data");
+  console.log("Writing data");
 
-  // const writeStart = Date.now();
+  const writeStart = Date.now();
 
-  // await Promise.all(writers);
+  const writingResult = await writeData(newArchive, PUBLIC_DIR);
 
-  // const writeEnd = Date.now();
+  if (!writingResult.ok) {
+    console.error(writingResult.error);
+    return;
+  }
 
-  // console.log(`Wrote in ${writeEnd - writeStart}ms`);
+  const writeEnd = Date.now();
+
+  console.log(`Wrote in ${writeEnd - writeStart}ms`);
 
   console.log("Done");
 }
