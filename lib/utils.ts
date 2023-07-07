@@ -2,9 +2,12 @@ import fs from "fs-extra";
 import md5 from "md5";
 // import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
-import { Entity, OrderedEntities } from "./types";
+import { Entity, Image, OrderedEntities } from "./types";
 import { ProjectError } from "./error";
 import imageSize from "image-size";
+
+export const CONTENT_TO_FILTER_OUT =
+  /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
 
 export type Ok<T> = { ok: true; value: T };
 
@@ -105,6 +108,59 @@ export async function exists(path: string): Promise<Result<boolean>> {
         url: path,
       })
     );
+}
+
+const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
+
+export async function parseImagesFromMarkdown(
+  filePath: string,
+  body: string
+): Promise<Result<Image[]>> {
+  const images: Image[] = [];
+
+  for (const match of body.matchAll(IMAGE_REGEX)) {
+    const [, alt, src] = match;
+
+    if (!src) {
+      return Err({
+        type: "IMAGE_MISSING_SRC",
+        url: filePath,
+      });
+    }
+
+    if (!alt) {
+      return Err({
+        type: "IMAGE_MISSING_ALT",
+        url: filePath,
+      });
+    }
+
+    const imageSize = await getImageSize(src);
+
+    if (!imageSize.ok) {
+      return imageSize;
+    }
+
+    const { width, height } = imageSize.value;
+
+    images.push({
+      src,
+      alt,
+      width,
+      height,
+    });
+  }
+
+  return Ok(images);
+}
+
+export function formatDateAsSlugPart(date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year.toString().padStart(4, "0")}/${month
+    .toString()
+    .padStart(2, "0")}/${day.toString().padStart(2, "0")}`;
 }
 
 export async function downloadAndCacheFile(url: string): Promise<

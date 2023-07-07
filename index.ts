@@ -17,6 +17,15 @@ const DEFAULT_ARCHIVE: Archive = {
     entityOrder: [],
     entities: {},
   },
+  microBlogs: {
+    entityOrder: [],
+    entities: {},
+  },
+  microPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+  about: "",
   lastUpdated: "",
 };
 
@@ -89,15 +98,13 @@ async function downloadContent(): Promise<Result<undefined>> {
 }
 
 async function main() {
-  console.log("Hello World");
+  console.log("Building api.zoeaubert.me data");
 
   await prepFolders();
 
   const archiveResult = await loadArchive();
 
   const archive = archiveResult.ok ? archiveResult.value : DEFAULT_ARCHIVE;
-
-  console.log({ archive });
 
   const contentDownloadResult = await downloadContent();
 
@@ -124,25 +131,6 @@ async function main() {
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
-
-  // const writers = [
-  //   writeArchive(PUBLIC_DIR, newArchive),
-  //   writeBlogPosts(PUBLIC_DIR, newArchive),
-  //   writeMicros(PUBLIC_DIR, newArchive),
-  //   writeTimeline(PUBLIC_DIR, newArchive),
-  //   writeMicroBlogs(PUBLIC_DIR, newArchive),
-  //   writeToots(PUBLIC_DIR, newArchive),
-  //   writeAlbums(PUBLIC_DIR, newArchive),
-  //   writeStatusLols(PUBLIC_DIR, newArchive),
-  //   writeAbout(PUBLIC_DIR, newArchive),
-  //   writeNow(PUBLIC_DIR, newArchive),
-  //   writeTags(PUBLIC_DIR, newArchive),
-  //   writeAll(PUBLIC_DIR, newArchive),
-  //   writeYears(PUBLIC_DIR, newArchive),
-  //   writePhotos(PUBLIC_DIR, newArchive),
-  //   writeFaq(PUBLIC_DIR, newArchive),
-  //   writeLinks(PUBLIC_DIR, newArchive),
-  // ];
 
   console.log("Writing data");
 

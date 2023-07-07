@@ -15,11 +15,9 @@ import {
   cleanTag,
   entitiesToOrderedEntities,
   getFilesRecursive,
-  getImageSize,
   hash,
+  parseImagesFromMarkdown,
 } from "../utils";
-
-const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
 
 function parseHeroImage(
   filePath: string,
@@ -52,48 +50,6 @@ function parseHeroImage(
     width: heroWidth,
     height: heroHeight,
   });
-}
-
-async function parseImages(
-  filePath: string,
-  body: string
-): Promise<Result<Image[]>> {
-  const images: Image[] = [];
-
-  for (const match of body.matchAll(IMAGE_REGEX)) {
-    const [, alt, src] = match;
-
-    if (!src) {
-      return Err({
-        type: "IMAGE_MISSING_SRC",
-        url: filePath,
-      });
-    }
-
-    if (!alt) {
-      return Err({
-        type: "IMAGE_MISSING_ALT",
-        url: filePath,
-      });
-    }
-
-    const imageSize = await getImageSize(src);
-
-    if (!imageSize.ok) {
-      return imageSize;
-    }
-
-    const { width, height } = imageSize.value;
-
-    images.push({
-      src,
-      alt,
-      width,
-      height,
-    });
-  }
-
-  return Ok(images);
 }
 
 async function loadBlogPost(
@@ -191,10 +147,10 @@ async function loadBlogPost(
 
   const heroImage = heroImageResult.value;
 
-  const postSlug = `/blog/${slug}`;
+  const permalink = `/blog/${slug}`;
   const dateString = new Date(date).toISOString();
 
-  const mediaResult = await parseImages(filePath, body);
+  const mediaResult = await parseImagesFromMarkdown(filePath, body);
 
   if (!mediaResult.ok) {
     return mediaResult;
@@ -203,7 +159,7 @@ async function loadBlogPost(
   const media: EntityMedia[] = mediaResult.value.map(
     (image): EntityMedia => ({
       image,
-      postSlug,
+      parentPermalink: permalink,
       date,
     })
   );
@@ -213,7 +169,7 @@ async function loadBlogPost(
   return Ok({
     type: "blogPost",
     key,
-    slug: postSlug,
+    permalink,
     title,
     date: dateString,
     description,
@@ -244,5 +200,5 @@ export async function loadBlogPosts(
     blogPosts.push(result.value);
   }
 
-  return Ok(entitiesToOrderedEntities<BlogPostEntity>(blogPosts));
+  return Ok(entitiesToOrderedEntities(blogPosts));
 }

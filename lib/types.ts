@@ -1,4 +1,4 @@
-type EntityType = "media" | "blogPost";
+type EntityType = "media" | "blogPost" | "microBlog" | "microPost";
 
 export type Image = {
   src: string;
@@ -9,7 +9,7 @@ export type Image = {
 
 export type EntityMedia = {
   image: Image;
-  postSlug: string;
+  parentPermalink: string;
   date: string;
 };
 
@@ -17,7 +17,7 @@ type EntityBase<T extends EntityType, D> = {
   rawDataHash: string;
   type: T;
   key: string;
-  slug: string;
+  permalink: string;
   date: string;
 } & D;
 
@@ -34,7 +34,27 @@ export type BlogPostEntity = EntityBase<
   }
 >;
 
-export type Entity = BlogPostEntity;
+export type MicroBlogEntity = EntityBase<
+  "microBlog",
+  {
+    content: string;
+    tags: string[];
+    media: EntityMedia[];
+    description: string;
+  }
+>;
+
+export type MicroPostEntity = EntityBase<
+  "microPost",
+  {
+    content: string;
+    tags: string[];
+    media: EntityMedia[];
+    description: string;
+  }
+>;
+
+export type Entity = BlogPostEntity | MicroBlogEntity | MicroPostEntity;
 
 export type OrderedEntities<E extends Entity> = {
   entityOrder: string[];
@@ -42,10 +62,14 @@ export type OrderedEntities<E extends Entity> = {
 };
 
 export type BlogPosts = OrderedEntities<BlogPostEntity>;
-// export type Media = OrderedEntities<EntityMedia>;
+export type MicroBlogs = OrderedEntities<MicroBlogEntity>;
+export type MicroPosts = OrderedEntities<MicroPostEntity>;
 
 type Archive = {
   blogPosts: BlogPosts;
+  microBlogs: MicroBlogs;
+  microPosts: MicroPosts;
+  about: string;
   lastUpdated: string;
 };
 export default Archive;

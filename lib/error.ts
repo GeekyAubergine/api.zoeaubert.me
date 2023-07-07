@@ -72,8 +72,27 @@ type UnableToDownloadContent = {
   type: "UNABLE_TO_DOWNLOAD_CONTENT";
 };
 
-type UNABLE_TO_WRITE_ARCHIVE = {
+type UnableToWriteArchive = {
   type: "UNABLE_TO_WRITE_ARCHIVE";
+};
+
+type UnableToLoadAboutData = {
+  type: "UNABLE_TO_LOAD_ABOUT";
+};
+
+type UnableToReadFile = {
+  type: "UNABLE_TO_READ_FILE";
+  path: string;
+};
+
+export type MicroPostMissingDate = {
+  type: "MICRO_POST_MISSING_DATE";
+  url: string;
+};
+
+export type MicroPostMissingTags = {
+  type: "MICRO_POST_MISSING_TAGS";
+  url: string;
 };
 
 export type ProjectError =
@@ -92,4 +111,8 @@ export type ProjectError =
   | UnableToReadFileSystem
   | UnableToLoadArchive
   | UnableToDownloadContent
-  | UNABLE_TO_WRITE_ARCHIVE;
+  | UnableToWriteArchive
+  | UnableToLoadAboutData
+  | UnableToReadFile
+  | MicroPostMissingDate
+  | MicroPostMissingTags;
