@@ -6,10 +6,16 @@ import { loadBlogPosts } from "./blogPostLoader";
 import { loadMicroBlogArchive } from "./microBlogArchiveLoader";
 import { loadMicroPosts } from "./microsLoader";
 import { loadMastodonPosts } from "./mastodonLoader";
+import { loadStatusLolPosts } from "./statuslolLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
 const MICRO_POSTS_DIR = "micros";
+
+const DEFAULT_ORDERED_ENTITIES = {
+  entityOrder: [],
+  entities: {},
+};
 
 export async function loadData(
   archive: Archive,
@@ -18,7 +24,7 @@ export async function loadData(
 ): Promise<Result<Archive>> {
   const blogPostsRequest = loadBlogPosts(
     {
-      orderedEntities: archive.blogPosts,
+      orderedEntities: archive.blogPosts ?? DEFAULT_ORDERED_ENTITIES,
       cacheDir,
     },
     path.join(contentDir, POSTS_DIR)
@@ -32,16 +38,18 @@ export async function loadData(
 
   const microPostsRequest = loadMicroPosts(
     {
-      orderedEntities: archive.microPosts,
+      orderedEntities: archive.microPosts ?? DEFAULT_ORDERED_ENTITIES,
       cacheDir,
     },
     path.join(contentDir, MICRO_POSTS_DIR)
   );
 
-  const masterRequest = loadMastodonPosts({
-    orderedEntities: archive.mastodonPosts,
+  const mastodonRequest = loadMastodonPosts({
+    orderedEntities: archive.mastodonPosts ?? DEFAULT_ORDERED_ENTITIES,
     cacheDir,
   });
+
+  const statusLolRequest = loadStatusLolPosts();
 
   const [
     blogPostsResult,
@@ -49,12 +57,14 @@ export async function loadData(
     microBlogArchiveResult,
     microPostsResult,
     mastodonResult,
+    statusLolResult,
   ] = await Promise.all([
     blogPostsRequest,
     aboutRequest,
     microblogPostsRequest,
     microPostsRequest,
-    masterRequest,
+    mastodonRequest,
+    statusLolRequest,
   ]);
 
   if (!blogPostsResult.ok) {
@@ -77,11 +87,16 @@ export async function loadData(
     return mastodonResult;
   }
 
+  if (!statusLolResult.ok) {
+    return statusLolResult;
+  }
+
   return Ok({
     blogPosts: blogPostsResult.value,
     microBlogs: microBlogArchiveResult.value,
     microPosts: microPostsResult.value,
     mastodonPosts: mastodonResult.value,
+    statusLolPosts: statusLolResult.value,
     about: aboutResult.value,
     lastUpdated: new Date().toISOString(),
   });

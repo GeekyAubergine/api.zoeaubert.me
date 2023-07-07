@@ -29,6 +29,10 @@ const DEFAULT_ARCHIVE: Archive = {
     entityOrder: [],
     entities: {},
   },
+  statusLolPosts: {
+    entityOrder: [],
+    entities: {},
+  },
   about: "",
   lastUpdated: "",
 };
