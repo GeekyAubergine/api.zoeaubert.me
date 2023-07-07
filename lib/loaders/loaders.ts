@@ -5,6 +5,7 @@ import { loadAbout } from "./aboutLoader";
 import { loadBlogPosts } from "./blogPostLoader";
 import { loadMicroBlogArchive } from "./microBlogArchiveLoader";
 import { loadMicroPosts } from "./microsLoader";
+import { loadMastodonPosts } from "./mastodonLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
@@ -37,16 +38,23 @@ export async function loadData(
     path.join(contentDir, MICRO_POSTS_DIR)
   );
 
+  const masterRequest = loadMastodonPosts({
+    orderedEntities: archive.mastodonPosts,
+    cacheDir,
+  });
+
   const [
     blogPostsResult,
     aboutResult,
     microBlogArchiveResult,
     microPostsResult,
+    mastodonResult,
   ] = await Promise.all([
     blogPostsRequest,
     aboutRequest,
     microblogPostsRequest,
     microPostsRequest,
+    masterRequest,
   ]);
 
   if (!blogPostsResult.ok) {
@@ -65,10 +73,15 @@ export async function loadData(
     return microPostsResult;
   }
 
+  if (!mastodonResult.ok) {
+    return mastodonResult;
+  }
+
   return Ok({
     blogPosts: blogPostsResult.value,
     microBlogs: microBlogArchiveResult.value,
     microPosts: microPostsResult.value,
+    mastodonPosts: mastodonResult.value,
     about: aboutResult.value,
     lastUpdated: new Date().toISOString(),
   });

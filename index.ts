@@ -25,6 +25,10 @@ const DEFAULT_ARCHIVE: Archive = {
     entityOrder: [],
     entities: {},
   },
+  mastodonPosts: {
+    entityOrder: [],
+    entities: {},
+  },
   about: "",
   lastUpdated: "",
 };

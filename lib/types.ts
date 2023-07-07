@@ -1,4 +1,4 @@
-type EntityType = "media" | "blogPost" | "microBlog" | "microPost";
+type EntityType = "media" | "blogPost" | "microBlog" | "microPost" | "mastodon";
 
 export type Image = {
   src: string;
@@ -19,42 +19,31 @@ type EntityBase<T extends EntityType, D> = {
   key: string;
   permalink: string;
   date: string;
+  content: string;
+  tags: string[];
+  media: EntityMedia[];
+  description: string;
 } & D;
 
 export type BlogPostEntity = EntityBase<
   "blogPost",
   {
     title: string;
-    description: string;
-    content: string;
-    tags: string[];
     hero: Image | null;
     showHero: boolean;
-    media: EntityMedia[];
   }
 >;
 
-export type MicroBlogEntity = EntityBase<
-  "microBlog",
-  {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    description: string;
-  }
->;
 
-export type MicroPostEntity = EntityBase<
-  "microPost",
-  {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    description: string;
-  }
->;
+export type MicroBlogEntity = EntityBase<"microBlog", {}>;
 
-export type Entity = BlogPostEntity | MicroBlogEntity | MicroPostEntity;
+export type MicroPostEntity = EntityBase<"microPost", {}>;
+
+export type MastodonPostEntity = EntityBase<"mastodon", {
+  originalUrl: string;
+}>;
+
+export type Entity = BlogPostEntity | MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
 
 export type OrderedEntities<E extends Entity> = {
   entityOrder: string[];
@@ -64,11 +53,13 @@ export type OrderedEntities<E extends Entity> = {
 export type BlogPosts = OrderedEntities<BlogPostEntity>;
 export type MicroBlogs = OrderedEntities<MicroBlogEntity>;
 export type MicroPosts = OrderedEntities<MicroPostEntity>;
+export type MastodonPosts = OrderedEntities<MastodonPostEntity>;
 
 type Archive = {
   blogPosts: BlogPosts;
   microBlogs: MicroBlogs;
   microPosts: MicroPosts;
+  mastodonPosts: MastodonPosts;
   about: string;
   lastUpdated: string;
 };

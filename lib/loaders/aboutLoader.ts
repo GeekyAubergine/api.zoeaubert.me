@@ -17,7 +17,8 @@ export async function loadAbout(): Promise<Result<string>> {
     return Ok(content);
   } catch (e) {
     return Err({
-      type: "UNABLE_TO_LOAD_ABOUT",
+      type: "UNABLE_TO_FETCH_URL",
+      url: URL,
     });
   }
 }

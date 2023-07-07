@@ -15,8 +15,8 @@ import {
   formatDateAsSlugPart,
   hash,
   parseImagesFromMarkdown,
-  cleanTag,
   getFilesRecursive,
+  cleanTags,
 } from "../utils";
 
 async function loadMicroPost(
@@ -82,7 +82,7 @@ async function loadMicroPost(
     permalink,
     date,
     content: body,
-    tags: (tags ?? []).map(cleanTag),
+    tags: cleanTags(tags ?? []),
     media,
     description: firstLine ?? "",
     rawDataHash,

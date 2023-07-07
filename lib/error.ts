@@ -85,14 +85,24 @@ type UnableToReadFile = {
   path: string;
 };
 
-export type MicroPostMissingDate = {
+type MicroPostMissingDate = {
   type: "MICRO_POST_MISSING_DATE";
   url: string;
 };
 
-export type MicroPostMissingTags = {
+type MicroPostMissingTags = {
   type: "MICRO_POST_MISSING_TAGS";
   url: string;
+};
+
+type UnableToFetchUrl = {
+  type: "UNABLE_TO_FETCH_URL";
+  url: string;
+};
+
+type UnableToWriteFile = {
+  type: "UNABLE_TO_WRITE_FILE";
+  path: string;
 };
 
 export type ProjectError =
@@ -115,4 +125,6 @@ export type ProjectError =
   | UnableToLoadAboutData
   | UnableToReadFile
   | MicroPostMissingDate
-  | MicroPostMissingTags;
+  | MicroPostMissingTags
+  | UnableToFetchUrl
+  | UnableToWriteFile;

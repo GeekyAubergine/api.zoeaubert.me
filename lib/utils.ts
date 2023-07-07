@@ -1,13 +1,22 @@
 import fs from "fs-extra";
 import md5 from "md5";
-// import S3 from "aws-sdk/clients/s3.js";
+import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
 import { Entity, Image, OrderedEntities } from "./types";
 import { ProjectError } from "./error";
 import imageSize from "image-size";
 
+const TAGS_TO_FILTER_OUT = ["WarhammerCommunity"];
+
 export const CONTENT_TO_FILTER_OUT =
   /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
+
+const s3 = new S3({
+  endpoint: `${config.cdn.endpoint}`,
+  accessKeyId: `${config.cdn.key}`,
+  secretAccessKey: `${config.cdn.secret}`,
+  signatureVersion: "v4",
+});
 
 export type Ok<T> = { ok: true; value: T };
 
@@ -57,8 +66,14 @@ export function hash(data: {}): string {
   return md5(JSON.stringify(data));
 }
 
-export function cleanTag(tag: string): string {
+function cleanTag(tag: string): string {
   return tag.replace(/ |-/g, "-");
+}
+
+export function cleanTags(tags: string[] | null | undefined): string[] {
+  return (tags ?? [])
+    .map(cleanTag)
+    .filter((tag) => !TAGS_TO_FILTER_OUT.includes(tag));
 }
 
 export async function getFilesRecursive(path: string, ext: string) {
@@ -99,15 +114,16 @@ export function entitiesToOrderedEntities<E extends Entity>(
 }
 
 export async function exists(path: string): Promise<Result<boolean>> {
-  return fs.promises
-    .stat(path)
-    .then(() => Ok(true))
-    .catch(() =>
-      Err({
-        type: "UNABLE_TO_READ_FILE_SYSTEM",
-        url: path,
-      })
-    );
+  try {
+    const stat = await fs.exists(path);
+
+    return Ok(stat);
+  } catch (error) {
+    return Err({
+      type: "UNABLE_TO_READ_FILE_SYSTEM",
+      url: path,
+    });
+  }
 }
 
 const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
@@ -179,7 +195,13 @@ export async function downloadAndCacheFile(url: string): Promise<
 
   const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
 
-  if (await exists(cachePath)) {
+  const cacheExists = await exists(cachePath);
+
+  if (!cacheExists.ok) {
+    return cacheExists;
+  }
+
+  if (cacheExists.value) {
     return Ok({ cachePath });
   }
 
@@ -204,32 +226,70 @@ export async function downloadAndCacheFile(url: string): Promise<
 
   const buffer = Buffer.from(arrayBuffer);
 
-  await fs.promises.writeFile(cachePath, buffer);
+  try {
+    await fs.promises.writeFile(cachePath, buffer);
 
-  return Ok({ cachePath });
+    return Ok({ cachePath });
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_WRITE_FILE",
+      path: cachePath,
+    });
+  }
 }
 
-// export const CONTENT_TO_FILTER_OUT =
-//   /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
+export function cdnPathForFileNameAndDate(
+  fileName: string,
+  date: string
+): string {
+  const cleanedFilePath = fileName.replace(`${config.cacheDir}/`, "");
+  const slugPart = formatDateAsSlugPart(new Date(date));
+  return `/${slugPart}/${cleanedFilePath}`;
+}
 
-// const s3 = new S3({
-//   endpoint: `${config.cdn.endpoint}`,
-//   accessKeyId: `${config.cdn.key}`,
-//   secretAccessKey: `${config.cdn.secret}`,
-//   signatureVersion: "v4",
-// });
+function stripDoubleSlashes(url: string): string {
+  return url.replace(/\/\//g, "/");
+}
 
-// export function stripDoubleSlashes(url: string): string {
-//   return url.replace(/\/\//g, "/");
-// }
+function trimLeadingSlash(url: string): string {
+  return url.replace(/^\//, "");
+}
 
-// export function trimLeadingSlash(url: string): string {
-//   return url.replace(/^\//, "");
-// }
+export async function uploadToCDN(
+  filePath: string,
+  url: string,
+  contentType: string | null = null
+): Promise<Result<S3.ManagedUpload.SendData>> {
+  const ContentType =
+    contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
 
-// export function cleanTag(tag: string): string {
-//   return tag.replace(/ |-/g, "-");
-// }
+  try {
+    const x = await s3
+      .upload({
+        Bucket: config.cdn.bucket,
+        Key: trimLeadingSlash(stripDoubleSlashes(url)),
+        Body: fs.createReadStream(stripDoubleSlashes(filePath)),
+        ACL: "public-read",
+        ContentType,
+      })
+      .promise();
+
+    return Ok(x);
+  } catch (e) {
+    if (e.code === "ENOENT") {
+      return Err({
+        type: "UNABLE_TO_READ_FILE",
+        path: filePath,
+      });
+    }
+
+    return Err({
+      type: "UNABLE_TO_UPLOAD_FILE_TO_CDN",
+      localPath: filePath,
+      uploadPath: url,
+    });
+  }
+}
 
 // export function formatDateAsSlugPart(date: Date): string {
 //   const year = date.getFullYear();

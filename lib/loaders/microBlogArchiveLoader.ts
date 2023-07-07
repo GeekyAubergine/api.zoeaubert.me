@@ -5,7 +5,7 @@ import {
   Err,
   Ok,
   Result,
-  cleanTag,
+  cleanTags,
   entitiesToOrderedEntities,
   hash,
 } from "../utils";
@@ -58,7 +58,7 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
     content,
     description: firstLine ?? "",
     media,
-    tags: (microBlog.tags ?? []).map(cleanTag),
+    tags: cleanTags(microBlog.tags ?? []),
   };
 
   const rawDataHash = hash(data);
