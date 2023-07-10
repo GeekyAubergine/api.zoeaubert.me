@@ -42,6 +42,8 @@ const DEFAULT_ARCHIVE: Archive = {
     entities: {},
   },
   about: "",
+  faq: "",
+  now: "",
   lastUpdated: "",
 };
 

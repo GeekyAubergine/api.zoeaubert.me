@@ -118,6 +118,8 @@ type Archive = {
   albums: Albums;
   albumPhotos: AlbumPhotos;
   about: string;
+  faq: string;
+  now: string;
   lastUpdated: string;
 };
 export default Archive;

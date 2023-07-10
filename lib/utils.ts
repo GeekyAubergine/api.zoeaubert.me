@@ -5,6 +5,7 @@ import config from "../config";
 import { Entity, Image, OrderedEntities } from "./types";
 import { ProjectError } from "./error";
 import imageSize from "image-size";
+import frontMatterParser from "front-matter";
 
 const TAGS_TO_FILTER_OUT = ["WarhammerCommunity"];
 
@@ -303,121 +304,17 @@ export async function uploadToCDN(
   }
 }
 
-// export function formatDateAsSlugPart(date: Date): string {
-//   const year = date.getFullYear();
-//   const month = date.getMonth() + 1;
-//   const day = date.getDate();
-//   return `${year.toString().padStart(4, "0")}/${month
-//     .toString()
-//     .padStart(2, "0")}/${day.toString().padStart(2, "0")}`;
-// }
+export async function readMarkdownFile(path: string): Promise<Result<string>> {
+  try {
+    const fileContents = await fs.readFile(path, "utf-8");
 
-// export async function getFilesRecursive(path: string, ext: string) {
-//   const files = await fs.promises.readdir(path);
-//   const result: string[] = [];
-//   for (const file of files) {
-//     const filePath = `${path}/${file}`;
-//     const stats = await fs.promises.stat(filePath);
-//     if (stats.isDirectory()) {
-//       result.push(...(await getFilesRecursive(filePath, ext)));
-//     } else if (stats.isFile() && filePath.endsWith(ext)) {
-//       result.push(filePath);
-//     }
-//   }
-//   return result;
-// }
+    const frontMatter = frontMatterParser(fileContents);
 
-// export function cdnPathForFileNameAndDate(
-//   fileName: string,
-//   date: string
-// ): string {
-//   const cleanedFilePath = fileName.replace(`${config.cacheDir}/`, "");
-//   const slugPart = formatDateAsSlugPart(new Date(date));
-//   return `/${slugPart}/${cleanedFilePath}`;
-// }
-
-// export async function uploadToCDN(
-//   filePath: string,
-//   url: string,
-//   contentType: string | null = null
-// ): Promise<ZResult<S3.ManagedUpload.SendData>> {
-//   const ContentType =
-//     contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
-
-//   try {
-//     const x = await s3
-//       .upload({
-//         Bucket: config.cdn.bucket,
-//         Key: trimLeadingSlash(stripDoubleSlashes(url)),
-//         Body: fs.createReadStream(stripDoubleSlashes(filePath)),
-//         ACL: "public-read",
-//         ContentType,
-//       })
-//       .promise();
-
-//     return Ok(x);
-//   } catch (e) {
-//     return Err({
-//       type: "UNABLE_TO_UPLOAD_FILE_TO_CDN",
-//       localPath: filePath,
-//       uploadPath: url,
-//     });
-//   }
-// }
-
-// // export async function archiveFile(url: string): Promise<string> {}
-
-// export function filterNull<T extends {}>(
-//   nullables: (T | null | undefined)[]
-// ): T[] {
-//   return nullables.filter((v) => v != null) as T[];
-// }
-
-// export function recordToArray<K extends string | number | symbol, T extends {}>(
-//   record: Record<K, T>
-// ): T[] {
-//   return filterNull(Object.keys(record).map((key) => record[key as K]));
-// }
-
-// export function arrayToRecord<K extends string | number | symbol, T extends {}>(
-//   array: T[],
-//   key: (value: T) => K
-// ): Record<K, T> {
-//   return array.reduce((acc, value) => {
-//     return {
-//       ...acc,
-//       [key(value)]: value,
-//     };
-//   }, {} as Record<K, T>);
-// }
-
-// export function sortEntitesByDate(
-//   entities: Record<string, Entity>
-// ): OrderedEntities {
-//   const entityOrder = recordToArray(entities)
-//     .map((entity) => entity.id)
-//     .sort((a, b) => {
-//       const aDate = new Date((entities[a] as any).date);
-//       const bDate = new Date((entities[b] as any).date);
-//       return bDate.getTime() - aDate.getTime();
-//     });
-//   return { entityOrder, entities };
-// }
-
-// export function filterOrderedEntitiesBy(
-//   orderedEntities: OrderedEntities,
-//   predicate: (entity: Entity) => boolean
-// ): OrderedEntities {
-//   let outOrder: OrderedEntities["entityOrder"] = [];
-//   let outEntities: OrderedEntities["entities"] = {};
-
-//   for (const id of orderedEntities.entityOrder) {
-//     const entity = orderedEntities.entities[id];
-//     if (entity && predicate(entity)) {
-//       outOrder.push(id);
-//       outEntities[id] = entity;
-//     }
-//   }
-
-//   return { entityOrder: outOrder, entities: outEntities };
-// }
+    return Ok(frontMatter.body);
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_READ_FILE",
+      path,
+    });
+  }
+}

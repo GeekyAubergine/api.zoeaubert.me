@@ -8,6 +8,8 @@ import { loadMicroPosts } from "./microsLoader";
 import { loadMastodonPosts } from "./mastodonLoader";
 import { loadStatusLolPosts } from "./statuslolLoader";
 import { loadAlbumsAndPhotos } from "./albumsAndPhotosLoader";
+import { loadFaq } from "./faqLoader";
+import { loadNow } from "./nowLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
@@ -32,7 +34,7 @@ export async function loadData(
     path.join(contentDir, POSTS_DIR)
   );
 
-  const aboutRequest = loadAbout();
+  const aboutRequest = loadAbout(contentDir);
 
   const microblogPostsRequest = loadMicroBlogArchive(
     path.join(contentDir, MICRO_BLOG_ARCHIVE_FILE)
@@ -59,6 +61,10 @@ export async function loadData(
     path.join(contentDir, ALBUMS_DIR)
   );
 
+  const faqRequest = loadFaq(contentDir);
+
+  const nowLoader = loadNow();
+
   const [
     blogPostsResult,
     aboutResult,
@@ -67,6 +73,8 @@ export async function loadData(
     mastodonResult,
     statusLolResult,
     albumResult,
+    faqResult,
+    nowResult,
   ] = await Promise.all([
     blogPostsRequest,
     aboutRequest,
@@ -75,6 +83,8 @@ export async function loadData(
     mastodonRequest,
     statusLolRequest,
     albumRequest,
+    faqRequest,
+    nowLoader,
   ]);
 
   return Ok({
@@ -96,6 +106,8 @@ export async function loadData(
     albumPhotos: albumResult.ok
       ? albumResult.value.albumPhotos
       : archive.albumPhotos,
+    faq: faqResult.ok ? faqResult.value : archive.faq,
+    now: nowResult.ok ? nowResult.value : archive.now,
     lastUpdated: new Date().toISOString(),
   });
 }
