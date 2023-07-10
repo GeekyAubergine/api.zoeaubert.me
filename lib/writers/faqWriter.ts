@@ -2,11 +2,11 @@ import path from 'path'
 import { Result, writeFile } from "../utils";
 import Archive from "../types";
 
-export async function writeArchive(
+export async function writeFaq(
     outputDir: string,
     archive: Archive,
 ): Promise<Result<undefined>> {
-    const archivePath = path.join(outputDir, "archive.json");
+    const archivePath = path.join(outputDir, "faq.md");
 
-    return writeFile(archivePath, JSON.stringify(archive, null, 2));
+    return writeFile(archivePath, archive.faq);
 }

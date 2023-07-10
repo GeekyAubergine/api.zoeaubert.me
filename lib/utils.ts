@@ -318,3 +318,39 @@ export async function readMarkdownFile(path: string): Promise<Result<string>> {
     });
   }
 }
+
+export async function writeFile(
+  path: string,
+  contents: string
+): Promise<Result<undefined>> {
+  try {
+    await fs.writeFile(path, contents);
+
+    return Ok(undefined);
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_WRITE_FILE",
+      path,
+    });
+  }
+}
+
+export function mergeOrderedEntities<T extends Entity>(orderedEntities: OrderedEntities<T>[]): OrderedEntities<T> {
+  const entities: Record<string, T> = {};
+  const entityOrder: string[] = [];
+
+  for (const orderedEntity of orderedEntities) {
+    for (const key of orderedEntity.entityOrder) {
+      let entity = orderedEntity.entities[key];
+      if (entity) {
+        entities[key] = entity;
+        entityOrder.push(key);
+      }
+    }
+  }
+
+  return {
+    entities,
+    entityOrder,
+  };
+}

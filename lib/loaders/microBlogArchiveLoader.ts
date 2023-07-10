@@ -9,7 +9,7 @@ import {
   entitiesToOrderedEntities,
   hash,
 } from "../utils";
-import { EntityMedia, MicroBlogEntity, MicroBlogs } from "../types";
+import { EntityMedia, MicroBlogEntity, MicroBlogPosts } from "../types";
 
 const REGEX_IMAGES =
   /<img src="(.*?)".*?width="(.*?)".*?height="(.*?)".*?alt="(.*?)"/gm;
@@ -71,7 +71,7 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
 
 export async function loadMicroBlogArchive(
   microBlogArchivePath: string
-): Promise<Result<MicroBlogs>> {
+): Promise<Result<MicroBlogPosts>> {
   try {
     const archiveContents = await fs.readFile(microBlogArchivePath, "utf-8");
 

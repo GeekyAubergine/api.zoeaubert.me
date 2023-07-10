@@ -1,20 +1,32 @@
 import Archive from "../types";
-import { Err, Ok, Result } from "../utils";
+import { Err, Ok, Result, filterErr } from "../utils";
 import { writeArchive } from "./archiveWriter";
-import { ProjectError } from "../error";
+import { writeAbout } from "./aboutWriter";
+import { writeBlogPosts } from "./blogPostsWriter";
+import { writeFaq } from "./faqWriter";
+import { writeMicros } from "./microsWriter";
 
 const WRITERS = [
-    writeArchive,
-]
+  writeArchive,
+  writeAbout,
+  writeBlogPosts,
+  writeFaq,
+  writeMicros,
+];
 
-export async function writeData(archive: Archive, outputDir: string): Promise<Result<undefined>> {
-    const results = await Promise.all(WRITERS.map(writer => writer(outputDir, archive)));
+export async function writeData(
+  archive: Archive,
+  outputDir: string
+): Promise<Result<undefined>> {
+  const results = await Promise.all(
+    WRITERS.map((writer) => writer(outputDir, archive))
+  );
 
-    const firstError = results.find(result => !result.ok) as ProjectError | undefined;
+  const errors = filterErr(results);
 
-    if (firstError) {
-        return Err(firstError);
-    }
+  if (errors.length > 0) {
+    return Err(errors[0]!);
+  }
 
-    return Ok(undefined);
+  return Ok(undefined);
 }

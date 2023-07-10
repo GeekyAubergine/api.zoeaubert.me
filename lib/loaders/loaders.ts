@@ -90,9 +90,9 @@ export async function loadData(
   return Ok({
     blogPosts: blogPostsResult.ok ? blogPostsResult.value : archive.blogPosts,
     about: aboutResult.ok ? aboutResult.value : archive.about,
-    microBlogs: microBlogArchiveResult.ok
+    microBlogsPosts: microBlogArchiveResult.ok
       ? microBlogArchiveResult.value
-      : archive.microBlogs,
+      : archive.microBlogsPosts,
     microPosts: microPostsResult.ok
       ? microPostsResult.value
       : archive.microPosts,

@@ -102,7 +102,7 @@ export type OrderedEntities<E extends Entity> = {
 };
 
 export type BlogPosts = OrderedEntities<BlogPostEntity>;
-export type MicroBlogs = OrderedEntities<MicroBlogEntity>;
+export type MicroBlogPosts = OrderedEntities<MicroBlogEntity>;
 export type MicroPosts = OrderedEntities<MicroPostEntity>;
 export type MastodonPosts = OrderedEntities<MastodonPostEntity>;
 export type StatusLolPosts = OrderedEntities<StatusLolEntity>;
@@ -111,7 +111,7 @@ export type AlbumPhotos = OrderedEntities<AlbumPhotoEntity>;
 
 type Archive = {
   blogPosts: BlogPosts;
-  microBlogs: MicroBlogs;
+  microBlogsPosts: MicroBlogPosts;
   microPosts: MicroPosts;
   mastodonPosts: MastodonPosts;
   statusLolPosts: StatusLolPosts;

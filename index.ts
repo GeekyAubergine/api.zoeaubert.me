@@ -17,7 +17,7 @@ const DEFAULT_ARCHIVE: Archive = {
     entityOrder: [],
     entities: {},
   },
-  microBlogs: {
+  microBlogsPosts: {
     entityOrder: [],
     entities: {},
   },
