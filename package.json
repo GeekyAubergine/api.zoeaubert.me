@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node index.ts",
+    "dev": "ts-node -T index.ts",
     "host": "http-server _public/ -p 8000"
   },
   "repository": {

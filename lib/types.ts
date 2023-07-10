@@ -4,7 +4,9 @@ type EntityType =
   | "microBlog"
   | "microPost"
   | "mastodon"
-  | "statusLol";
+  | "statusLol"
+  | "album"
+  | "albumPhoto";
 
 export type Image = {
   src: string;
@@ -59,12 +61,40 @@ export type StatusLolEntity = EntityBase<
   }
 >;
 
+export type AlbumPhotoEntity = EntityBase<
+  "albumPhoto",
+  {
+    fullSize: Image;
+    thumbnailSmall: Image;
+    thumbnailLarge: Image;
+    orientation: "landscape" | "portrait" | "square";
+    albumPermalink: string;
+    albumTotalPhotos: number;
+    indexString: string;
+    previous: string | null;
+    next: string | null;
+    albumTitle: string;
+    featured: boolean,
+  }
+>;
+
+export type AlbumEntity = EntityBase<
+  "album",
+  {
+    title: string;
+    photoOrder: string[];
+    coverPhotos: string[];
+  }
+>;
+
 export type Entity =
   | BlogPostEntity
   | MicroBlogEntity
   | MicroPostEntity
   | MastodonPostEntity
-  | StatusLolEntity;
+  | StatusLolEntity
+  | AlbumEntity
+  | AlbumPhotoEntity;
 
 export type OrderedEntities<E extends Entity> = {
   entityOrder: string[];
@@ -76,6 +106,8 @@ export type MicroBlogs = OrderedEntities<MicroBlogEntity>;
 export type MicroPosts = OrderedEntities<MicroPostEntity>;
 export type MastodonPosts = OrderedEntities<MastodonPostEntity>;
 export type StatusLolPosts = OrderedEntities<StatusLolEntity>;
+export type Albums = OrderedEntities<AlbumEntity>;
+export type AlbumPhotos = OrderedEntities<AlbumPhotoEntity>;
 
 type Archive = {
   blogPosts: BlogPosts;
@@ -83,6 +115,8 @@ type Archive = {
   microPosts: MicroPosts;
   mastodonPosts: MastodonPosts;
   statusLolPosts: StatusLolPosts;
+  albums: Albums;
+  albumPhotos: AlbumPhotos;
   about: string;
   lastUpdated: string;
 };

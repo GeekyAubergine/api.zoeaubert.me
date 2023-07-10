@@ -32,6 +32,18 @@ export function Err(error: ProjectError): Err {
   return { ok: false, error };
 }
 
+export function filterOk<T>(results: Result<T>[]): T[] {
+  return results
+    .filter((result) => result.ok)
+    .map((result: Ok<T>) => result.value) as T[];
+}
+
+export function filterErr<T>(results: Result<T>[]): ProjectError[] {
+  return results
+    .filter((result) => !result.ok)
+    .map((result: Err) => result.error);
+}
+
 export function exhaust(value: never): never {
   throw new Error(`Unhandled value: ${value}`);
 }

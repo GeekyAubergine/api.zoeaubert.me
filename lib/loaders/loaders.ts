@@ -7,10 +7,12 @@ import { loadMicroBlogArchive } from "./microBlogArchiveLoader";
 import { loadMicroPosts } from "./microsLoader";
 import { loadMastodonPosts } from "./mastodonLoader";
 import { loadStatusLolPosts } from "./statuslolLoader";
+import { loadAlbumsAndPhotos } from "./albumsAndPhotosLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
 const MICRO_POSTS_DIR = "micros";
+const ALBUMS_DIR = "albums";
 
 const DEFAULT_ORDERED_ENTITIES = {
   entityOrder: [],
@@ -51,6 +53,12 @@ export async function loadData(
 
   const statusLolRequest = loadStatusLolPosts();
 
+  const albumRequest = loadAlbumsAndPhotos(
+    archive.albums ?? DEFAULT_ORDERED_ENTITIES,
+    archive.albumPhotos ?? DEFAULT_ORDERED_ENTITIES,
+    path.join(contentDir, ALBUMS_DIR)
+  );
+
   const [
     blogPostsResult,
     aboutResult,
@@ -58,6 +66,7 @@ export async function loadData(
     microPostsResult,
     mastodonResult,
     statusLolResult,
+    albumResult,
   ] = await Promise.all([
     blogPostsRequest,
     aboutRequest,
@@ -65,39 +74,28 @@ export async function loadData(
     microPostsRequest,
     mastodonRequest,
     statusLolRequest,
+    albumRequest,
   ]);
 
-  if (!blogPostsResult.ok) {
-    return blogPostsResult;
-  }
-
-  if (!aboutResult.ok) {
-    return aboutResult;
-  }
-
-  if (!microBlogArchiveResult.ok) {
-    return microBlogArchiveResult;
-  }
-
-  if (!microPostsResult.ok) {
-    return microPostsResult;
-  }
-
-  if (!mastodonResult.ok) {
-    return mastodonResult;
-  }
-
-  if (!statusLolResult.ok) {
-    return statusLolResult;
-  }
-
   return Ok({
-    blogPosts: blogPostsResult.value,
-    microBlogs: microBlogArchiveResult.value,
-    microPosts: microPostsResult.value,
-    mastodonPosts: mastodonResult.value,
-    statusLolPosts: statusLolResult.value,
-    about: aboutResult.value,
+    blogPosts: blogPostsResult.ok ? blogPostsResult.value : archive.blogPosts,
+    about: aboutResult.ok ? aboutResult.value : archive.about,
+    microBlogs: microBlogArchiveResult.ok
+      ? microBlogArchiveResult.value
+      : archive.microBlogs,
+    microPosts: microPostsResult.ok
+      ? microPostsResult.value
+      : archive.microPosts,
+    mastodonPosts: mastodonResult.ok
+      ? mastodonResult.value
+      : archive.mastodonPosts,
+    statusLolPosts: statusLolResult.ok
+      ? statusLolResult.value
+      : archive.statusLolPosts,
+    albums: albumResult.ok ? albumResult.value.albums : archive.albums,
+    albumPhotos: albumResult.ok
+      ? albumResult.value.albumPhotos
+      : archive.albumPhotos,
     lastUpdated: new Date().toISOString(),
   });
 }

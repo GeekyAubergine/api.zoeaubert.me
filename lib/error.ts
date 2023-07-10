@@ -105,6 +105,45 @@ type UnableToWriteFile = {
   path: string;
 };
 
+type InvalidFileName = {
+  type: "INVALID_FILE_NAME";
+  path: string;
+};
+
+type UnableToResizeImage = {
+  type: "UNABLE_TO_RESIZE_IMAGE";
+  path: string;
+};
+
+type AlbumPhotoMissingUrl = {
+  type: "ALBUM_PHOTO_MISSING_URL";
+};
+
+type AlbumPhotoMissingAlt = {
+  type: "ALBUM_PHOTO_MISSING_ALT";
+  url: string;
+};
+
+type AlubmPhotoMissingMetadata = {
+  type: "ALBUM_PHOTO_MISSING_METADATA";
+  url: string;
+};
+
+type AlbumPhotoMissingWidthOrHeight = {
+  type: "ALBUM_PHOTO_MISSING_WIDTH_OR_HEIGHT";
+  url: string;
+};
+
+type AlbumMissingTitle = {
+  type: "ALBUM_MISSING_TITLE";
+  path: string;
+};
+
+type AlbumMissingDate = {
+  type: "ALBUM_MISSING_DATE";
+  path: string;
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -127,4 +166,12 @@ export type ProjectError =
   | MicroPostMissingDate
   | MicroPostMissingTags
   | UnableToFetchUrl
-  | UnableToWriteFile;
+  | UnableToWriteFile
+  | InvalidFileName
+  | UnableToResizeImage
+  | AlbumPhotoMissingUrl
+  | AlbumPhotoMissingAlt
+  | AlubmPhotoMissingMetadata
+  | AlbumPhotoMissingWidthOrHeight
+  | AlbumMissingTitle
+  | AlbumMissingDate;

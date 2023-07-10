@@ -33,6 +33,14 @@ const DEFAULT_ARCHIVE: Archive = {
     entityOrder: [],
     entities: {},
   },
+  albums: {
+    entityOrder: [],
+    entities: {},
+  },
+  albumPhotos: {
+    entityOrder: [],
+    entities: {},
+  },
   about: "",
   lastUpdated: "",
 };
