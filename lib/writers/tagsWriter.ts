@@ -12,9 +12,9 @@ import Data, {
 
 export async function writeTags(
   outputDir: string,
-  archive: Data
+  data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "tags.json");
+  const outputPath = path.join(outputDir, "tags.json");
 
   const entitiesToInclude = mergeOrderedEntities<
     | MicroPostEntity
@@ -24,12 +24,12 @@ export async function writeTags(
     | BlogPostEntity
     | AlbumPhotoEntity
   >([
-    archive.microPosts,
-    archive.mastodonPosts,
-    archive.statusLolPosts,
-    archive.microBlogsPosts,
-    archive.blogPosts,
-    archive.albumPhotos,
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
+    data.blogPosts,
+    data.albumPhotos,
   ]);
 
   const allTags = Array.from(
@@ -84,5 +84,5 @@ export async function writeTags(
     entitiesByTag,
   };
 
-  return writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

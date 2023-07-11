@@ -22,13 +22,13 @@ const DEFAULT_ORDERED_ENTITIES = {
 };
 
 export async function loadData(
-  archive: Data,
+  data: Data,
   cacheDir: string,
   contentDir: string
 ): Promise<Result<Data>> {
   const blogPostsRequest = loadBlogPosts(
     {
-      orderedEntities: archive.blogPosts ?? DEFAULT_ORDERED_ENTITIES,
+      orderedEntities: data.blogPosts ?? DEFAULT_ORDERED_ENTITIES,
       cacheDir,
     },
     path.join(contentDir, POSTS_DIR)
@@ -42,22 +42,22 @@ export async function loadData(
 
   const microPostsRequest = loadMicroPosts(
     {
-      orderedEntities: archive.microPosts ?? DEFAULT_ORDERED_ENTITIES,
+      orderedEntities: data.microPosts ?? DEFAULT_ORDERED_ENTITIES,
       cacheDir,
     },
     path.join(contentDir, MICRO_POSTS_DIR)
   );
 
   const mastodonRequest = loadMastodonPosts({
-    orderedEntities: archive.mastodonPosts ?? DEFAULT_ORDERED_ENTITIES,
+    orderedEntities: data.mastodonPosts ?? DEFAULT_ORDERED_ENTITIES,
     cacheDir,
   });
 
   const statusLolRequest = loadStatusLolPosts();
 
   const albumRequest = loadAlbumsAndPhotos(
-    archive.albums ?? DEFAULT_ORDERED_ENTITIES,
-    archive.albumPhotos ?? DEFAULT_ORDERED_ENTITIES,
+    data.albums ?? DEFAULT_ORDERED_ENTITIES,
+    data.albumPhotos ?? DEFAULT_ORDERED_ENTITIES,
     path.join(contentDir, ALBUMS_DIR)
   );
 
@@ -88,26 +88,26 @@ export async function loadData(
   ]);
 
   return Ok({
-    blogPosts: blogPostsResult.ok ? blogPostsResult.value : archive.blogPosts,
-    about: aboutResult.ok ? aboutResult.value : archive.about,
+    blogPosts: blogPostsResult.ok ? blogPostsResult.value : data.blogPosts,
+    about: aboutResult.ok ? aboutResult.value : data.about,
     microBlogsPosts: microBlogArchiveResult.ok
       ? microBlogArchiveResult.value
-      : archive.microBlogsPosts,
+      : data.microBlogsPosts,
     microPosts: microPostsResult.ok
       ? microPostsResult.value
-      : archive.microPosts,
+      : data.microPosts,
     mastodonPosts: mastodonResult.ok
       ? mastodonResult.value
-      : archive.mastodonPosts,
+      : data.mastodonPosts,
     statusLolPosts: statusLolResult.ok
       ? statusLolResult.value
-      : archive.statusLolPosts,
-    albums: albumResult.ok ? albumResult.value.albums : archive.albums,
+      : data.statusLolPosts,
+    albums: albumResult.ok ? albumResult.value.albums : data.albums,
     albumPhotos: albumResult.ok
       ? albumResult.value.albumPhotos
-      : archive.albumPhotos,
-    faq: faqResult.ok ? faqResult.value : archive.faq,
-    now: nowResult.ok ? nowResult.value : archive.now,
+      : data.albumPhotos,
+    faq: faqResult.ok ? faqResult.value : data.faq,
+    now: nowResult.ok ? nowResult.value : data.now,
     lastUpdated: new Date().toISOString(),
   });
 }

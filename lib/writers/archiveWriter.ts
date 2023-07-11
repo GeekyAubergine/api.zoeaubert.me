@@ -4,9 +4,9 @@ import Data from "../types";
 
 export async function writeArchive(
     outputDir: string,
-    archive: Data,
+    data: Data,
 ): Promise<Result<undefined>> {
-    const archivePath = path.join(outputDir, "archive.json");
+    const outputPath = path.join(outputDir, "archive.json");
 
-    return writeFile(archivePath, JSON.stringify(archive, null, 2));
+    return writeFile(outputPath, JSON.stringify(data, null, 2));
 }

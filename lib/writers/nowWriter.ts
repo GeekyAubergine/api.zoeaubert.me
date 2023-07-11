@@ -4,9 +4,9 @@ import Data from "../types";
 
 export async function writeNow(
   outputDir: string,
-  archive: Data
+  data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "now.md");
+  const outputPath = path.join(outputDir, "now.md");
 
-  return writeFile(archivePath, archive.now);
+  return writeFile(outputPath, data.now);
 }

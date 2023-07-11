@@ -6,7 +6,7 @@ export async function writeAlbumsAndPhoto(
   outputDir: string,
   data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "albums.json");
+  const outputPath = path.join(outputDir, "albums.json");
 
   const albumsByYearMap = data.albums.entityOrder.reduce<
     Record<string, string[]>
@@ -49,5 +49,5 @@ export async function writeAlbumsAndPhoto(
     albumsByYear,
   };
 
-  return writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

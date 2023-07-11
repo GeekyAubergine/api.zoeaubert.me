@@ -4,14 +4,14 @@ import Data from "../types";
 
 export async function writeBlogPosts(
   outputDir: string,
-  archive: Data
+  data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "blog-posts.json");
+  const outputPath = path.join(outputDir, "blog-posts.json");
 
   const out = {
-    ...archive.blogPosts,
-    recentPosts: archive.blogPosts.entityOrder.slice(0, 5),
+    ...data.blogPosts,
+    recentPosts: data.blogPosts.entityOrder.slice(0, 5),
   }
 
-  return writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

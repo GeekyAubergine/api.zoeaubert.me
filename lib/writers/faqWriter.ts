@@ -4,9 +4,9 @@ import Data from "../types";
 
 export async function writeFaq(
     outputDir: string,
-    archive: Data,
+    data: Data,
 ): Promise<Result<undefined>> {
-    const archivePath = path.join(outputDir, "faq.md");
+    const outputPath = path.join(outputDir, "faq.md");
 
-    return writeFile(archivePath, archive.faq);
+    return writeFile(outputPath, data.faq);
 }

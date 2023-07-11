@@ -9,15 +9,15 @@ import Data, {
 
 export async function writeMicros(
   outputDir: string,
-  archive: Data
+  data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "micros.json");
+  const outputPath = path.join(outputDir, "micros.json");
 
   const entites = [
-    archive.microPosts,
-    archive.mastodonPosts,
-    archive.statusLolPosts,
-    archive.microBlogsPosts,
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
   ];
 
   const ordered = mergeOrderedEntities<
@@ -29,5 +29,5 @@ export async function writeMicros(
     recent: ordered.entityOrder.slice(0, 5),
   }
 
-  return writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

@@ -70,10 +70,10 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
 }
 
 export async function loadMicroBlogArchive(
-  microBlogArchivePath: string
+  microBlogoutputPath: string
 ): Promise<Result<MicroBlogPosts>> {
   try {
-    const archiveContents = await fs.readFile(microBlogArchivePath, "utf-8");
+    const archiveContents = await fs.readFile(microBlogoutputPath, "utf-8");
 
     const archive = JSON.parse(archiveContents);
 
@@ -92,7 +92,7 @@ export async function loadMicroBlogArchive(
   } catch (e) {
     return Err({
       type: "UNABLE_TO_READ_FILE",
-      path: microBlogArchivePath,
+      path: microBlogoutputPath,
     });
   }
 }

@@ -12,7 +12,7 @@ const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
 const CONTENT_DIR = path.join(__dirname, "./.content");
 
-const DEFAULT_ARCHIVE: Data = {
+const DEFAULT_DATA: Data = {
   blogPosts: {
     entityOrder: [],
     entities: {},
@@ -122,7 +122,7 @@ async function main() {
 
   const archiveResult = await loadArchive();
 
-  const archive = archiveResult.ok ? archiveResult.value : DEFAULT_ARCHIVE;
+  const archive = archiveResult.ok ? archiveResult.value : DEFAULT_DATA;
 
   const contentDownloadResult = await downloadContent();
 

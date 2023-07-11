@@ -11,9 +11,9 @@ import Data, {
 
 export async function writeYears(
   outputDir: string,
-  archive: Data
+  data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "years.json");
+  const outputPath = path.join(outputDir, "years.json");
 
   const entitiesToInclude = mergeOrderedEntities<
     | MicroPostEntity
@@ -23,12 +23,12 @@ export async function writeYears(
     | BlogPostEntity
     | AlbumPhotoEntity
   >([
-    archive.microPosts,
-    archive.mastodonPosts,
-    archive.statusLolPosts,
-    archive.microBlogsPosts,
-    archive.blogPosts,
-    archive.albumPhotos,
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
+    data.blogPosts,
+    data.albumPhotos,
   ]);
 
   const entitiesByYear = entitiesToInclude.entityOrder.reduce<
@@ -62,5 +62,5 @@ export async function writeYears(
     entitiesByYear,
   };
 
-  return writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

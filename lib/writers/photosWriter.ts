@@ -12,9 +12,9 @@ import Data, {
 
 export async function writePhotos(
   outputDir: string,
-  archive: Data
+  data: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "photos.json");
+  const outputPath = path.join(outputDir, "photos.json");
 
   const entitiesToInclude = mergeOrderedEntities<
     | MicroPostEntity
@@ -24,12 +24,12 @@ export async function writePhotos(
     | BlogPostEntity
     | AlbumEntity
   >([
-    archive.microPosts,
-    archive.mastodonPosts,
-    archive.statusLolPosts,
-    archive.microBlogsPosts,
-    archive.blogPosts,
-    archive.albums,
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
+    data.blogPosts,
+    data.albums,
   ]);
 
   const photos = entitiesToInclude.entityOrder.reduce<EntityMedia[]>(
@@ -45,5 +45,5 @@ export async function writePhotos(
     []
   );
 
-  return writeFile(archivePath, JSON.stringify(photos, null, 2));
+  return writeFile(outputPath, JSON.stringify(photos, null, 2));
 }

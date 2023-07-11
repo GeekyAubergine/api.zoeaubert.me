@@ -27,11 +27,11 @@ const WRITERS = [
 ];
 
 export async function writeData(
-  archive: Data,
+  data: Data,
   outputDir: string
 ): Promise<Result<undefined>> {
   const results = await Promise.all(
-    WRITERS.map((writer) => writer(outputDir, archive))
+    WRITERS.map((writer) => writer(outputDir, data))
   );
 
   const errors = filterErr(results);
