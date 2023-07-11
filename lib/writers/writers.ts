@@ -5,6 +5,9 @@ import { writeAbout } from "./aboutWriter";
 import { writeBlogPosts } from "./blogPostsWriter";
 import { writeFaq } from "./faqWriter";
 import { writeMicros } from "./microsWriter";
+import { writeTags } from "./tagsWriter";
+import { writeTimeline } from "./timelineWriter";
+import { writeYears } from "./yearsWriter";
 
 const WRITERS = [
   writeArchive,
@@ -12,6 +15,9 @@ const WRITERS = [
   writeBlogPosts,
   writeFaq,
   writeMicros,
+  writeTags,
+  writeTimeline,
+  writeYears,
 ];
 
 export async function writeData(

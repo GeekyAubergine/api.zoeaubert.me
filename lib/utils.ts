@@ -335,22 +335,19 @@ export async function writeFile(
   }
 }
 
-export function mergeOrderedEntities<T extends Entity>(orderedEntities: OrderedEntities<T>[]): OrderedEntities<T> {
-  const entities: Record<string, T> = {};
-  const entityOrder: string[] = [];
+export function mergeOrderedEntities<T extends Entity>(
+  orderedEntities: OrderedEntities<T>[]
+): OrderedEntities<T> {
+  const entities: T[] = [];
 
   for (const orderedEntity of orderedEntities) {
     for (const key of orderedEntity.entityOrder) {
       let entity = orderedEntity.entities[key];
       if (entity) {
-        entities[key] = entity;
-        entityOrder.push(key);
+        entities.push(entity);
       }
     }
   }
 
-  return {
-    entities,
-    entityOrder,
-  };
+  return entitiesToOrderedEntities(entities);
 }

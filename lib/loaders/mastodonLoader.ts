@@ -6,6 +6,7 @@ import {
   cleanTags,
   downloadAndCacheFile,
   entitiesToOrderedEntities,
+  hash,
   uploadToCDN,
 } from "../utils";
 import config from "../../config";
@@ -100,7 +101,7 @@ async function processToot(
 ): Promise<Result<MastodonPostEntity>> {
   const key = `mastodon-${toot.id}`;
 
-  const rawDataHash = JSON.stringify(toot);
+  const rawDataHash = hash(toot);
 
   const existing = loaderParams.orderedEntities.entities[key];
 

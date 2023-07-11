@@ -8,5 +8,10 @@ export async function writeBlogPosts(
 ): Promise<Result<undefined>> {
   const archivePath = path.join(outputDir, "blog-posts.json");
 
-  return writeFile(archivePath, JSON.stringify(archive.blogPosts, null, 2));
+  const out = {
+    ...archive.blogPosts,
+    recentPosts: archive.blogPosts.entityOrder.slice(0, 5),
+  }
+
+  return writeFile(archivePath, JSON.stringify(out, null, 2));
 }

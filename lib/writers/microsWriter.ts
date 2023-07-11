@@ -23,6 +23,11 @@ export async function writeMicros(
   const ordered = mergeOrderedEntities<
     MicroPostEntity | MastodonPostEntity | StatusLolEntity | MicroBlogEntity
   >(entites);
+  
+  const out = {
+    ...ordered,
+    recent: ordered.entityOrder.slice(0, 5),
+  }
 
-  return writeFile(archivePath, JSON.stringify(ordered, null, 2));
+  return writeFile(archivePath, JSON.stringify(out, null, 2));
 }
