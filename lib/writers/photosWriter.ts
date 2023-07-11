@@ -3,19 +3,20 @@ import { Result, mergeOrderedEntities, writeFile } from "../utils";
 import Data, {
   AlbumEntity,
   BlogPostEntity,
+  EntityMedia,
   MastodonPostEntity,
   MicroBlogEntity,
   MicroPostEntity,
   StatusLolEntity,
 } from "../types";
 
-export async function writeTimeline(
+export async function writePhotos(
   outputDir: string,
   archive: Data
 ): Promise<Result<undefined>> {
-  const archivePath = path.join(outputDir, "timeline.json");
+  const archivePath = path.join(outputDir, "photos.json");
 
-  const entities = mergeOrderedEntities<
+  const entitiesToInclude = mergeOrderedEntities<
     | MicroPostEntity
     | MastodonPostEntity
     | StatusLolEntity
@@ -31,5 +32,18 @@ export async function writeTimeline(
     archive.albums,
   ]);
 
-  return writeFile(archivePath, JSON.stringify(entities, null, 2));
+  const photos = entitiesToInclude.entityOrder.reduce<EntityMedia[]>(
+    (acc, key) => {
+      const entity = entitiesToInclude.entities[key];
+
+      if (!entity) {
+        return acc;
+      }
+
+      return acc.concat(entity.media);
+    },
+    []
+  );
+
+  return writeFile(archivePath, JSON.stringify(photos, null, 2));
 }

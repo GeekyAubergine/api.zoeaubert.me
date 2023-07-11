@@ -109,7 +109,7 @@ export type StatusLolPosts = OrderedEntities<StatusLolEntity>;
 export type Albums = OrderedEntities<AlbumEntity>;
 export type AlbumPhotos = OrderedEntities<AlbumPhotoEntity>;
 
-type Archive = {
+type Data = {
   blogPosts: BlogPosts;
   microBlogsPosts: MicroBlogPosts;
   microPosts: MicroPosts;
@@ -122,7 +122,7 @@ type Archive = {
   now: string;
   lastUpdated: string;
 };
-export default Archive;
+export default Data;
 
 export type LoaderParams<E extends Entity> = {
   orderedEntities: OrderedEntities<E>;

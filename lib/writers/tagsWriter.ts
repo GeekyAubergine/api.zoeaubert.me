@@ -1,7 +1,7 @@
 import path from "path";
 import natsort from "natsort";
 import { Result, mergeOrderedEntities, writeFile } from "../utils";
-import Archive, {
+import Data, {
   AlbumPhotoEntity,
   BlogPostEntity,
   MastodonPostEntity,
@@ -12,7 +12,7 @@ import Archive, {
 
 export async function writeTags(
   outputDir: string,
-  archive: Archive
+  archive: Data
 ): Promise<Result<undefined>> {
   const archivePath = path.join(outputDir, "tags.json");
 
@@ -32,8 +32,8 @@ export async function writeTags(
     archive.albumPhotos,
   ]);
 
-  const allTags = entitiesToInclude.entityOrder.reduce<Set<string>>(
-    (acc, key) => {
+  const allTags = Array.from(
+    entitiesToInclude.entityOrder.reduce<Set<string>>((acc, key) => {
       const entity = entitiesToInclude.entities[key];
 
       if (entity && entity.tags) {
@@ -41,9 +41,8 @@ export async function writeTags(
       }
 
       return acc;
-    },
-    new Set()
-  );
+    }, new Set())
+  ).sort(natsort());
 
   const entitiesByTag = Array.from(allTags).reduce<Record<string, string[]>>(
     (acc, tag) => {
@@ -65,8 +64,23 @@ export async function writeTags(
     {}
   );
 
+  const tagCounts = Object.keys(entitiesByTag).reduce<Record<string, number>>(
+    (acc, tag) => {
+      const entitiesWithTag = entitiesByTag[tag];
+
+      if (!entitiesWithTag) {
+        return acc;
+      }
+
+      acc[tag] = entitiesWithTag.length;
+      return acc;
+    },
+    {}
+  );
+
   const out = {
     allTags: Array.from(allTags).sort(natsort()),
+    tagCounts,
     entitiesByTag,
   };
 

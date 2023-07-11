@@ -1,6 +1,6 @@
 import path from "path";
 import { Result, mergeOrderedEntities, writeFile } from "../utils";
-import Archive, {
+import Data, {
   MastodonPostEntity,
   MicroBlogEntity,
   MicroPostEntity,
@@ -9,7 +9,7 @@ import Archive, {
 
 export async function writeMicros(
   outputDir: string,
-  archive: Archive
+  archive: Data
 ): Promise<Result<undefined>> {
   const archivePath = path.join(outputDir, "micros.json");
 

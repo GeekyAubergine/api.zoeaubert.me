@@ -3,7 +3,7 @@ import path from "path";
 import config from "./config";
 
 import { Err, Ok, Result, exists } from "./lib/utils";
-import Archive from "./lib/types";
+import Data from "./lib/types";
 import extract from "extract-zip";
 import { loadData } from "./lib/loaders/loaders";
 import { writeData } from "./lib/writers/writers";
@@ -12,7 +12,7 @@ const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
 const CONTENT_DIR = path.join(__dirname, "./.content");
 
-const DEFAULT_ARCHIVE: Archive = {
+const DEFAULT_ARCHIVE: Data = {
   blogPosts: {
     entityOrder: [],
     entities: {},
@@ -59,7 +59,7 @@ async function prepFolders() {
   }
 }
 
-async function loadArchive(): Promise<Result<Archive>> {
+async function loadArchive(): Promise<Result<Data>> {
   try {
     const archiveFile = await fs.promises.readFile(
       path.join(PUBLIC_DIR, "archive.json"),

@@ -1,10 +1,10 @@
 import path from "path";
 import { Result, writeFile } from "../utils";
-import Archive from "../types";
+import Data from "../types";
 
 export async function writeBlogPosts(
   outputDir: string,
-  archive: Archive
+  archive: Data
 ): Promise<Result<undefined>> {
   const archivePath = path.join(outputDir, "blog-posts.json");
 
