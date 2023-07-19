@@ -1,6 +1,7 @@
 import Bottleneck from "bottleneck";
 import fs from "fs-extra";
 import yaml from "js-yaml";
+import path from "path";
 import {
   exists,
   Err,
@@ -107,7 +108,6 @@ function photoPermalink(
 
 async function resizeImage(
   buffer: Buffer,
-  localPath: string,
   slug: string,
   size: "large" | "small",
   orientation: AlbumPhotoEntity["orientation"],
@@ -122,7 +122,9 @@ async function resizeImage(
 
   const sizedPermalink = `${slug.slice(0, -4)}-${size}.jpg`;
 
-  const existsResult = await exists(localPath);
+  const cachePath = `${config.cacheDir}${sizedPermalink}`;
+
+  const existsResult = await exists(cachePath);
 
   if (existsResult.ok && existsResult.value) {
     return Ok({
@@ -136,14 +138,16 @@ async function resizeImage(
     const resized = await sharp(buffer)
       .resize(width, height)
       .jpeg({
-        quality: 80,
+        quality: config.imageQuality[size],
       })
       .toBuffer();
 
-    await fs.writeFile(localPath, resized);
+    await fs.mkdir(path.dirname(cachePath), { recursive: true });
+
+    await fs.writeFile(cachePath, resized);
 
     const uploadResult = await uploadToCDN(
-      localPath,
+      cachePath,
       sizedPermalink,
       "image/jpeg"
     );
@@ -160,7 +164,7 @@ async function resizeImage(
   } catch (e) {
     return Err({
       type: "UNABLE_TO_RESIZE_IMAGE",
-      path: localPath,
+      path: cachePath,
     });
   }
 }
@@ -232,7 +236,6 @@ async function loadPhoto(
 
   const thumbnailLarge = await resizeImage(
     buffer,
-    cached.value.cachePath,
     url,
     "large",
     orientation,
@@ -246,12 +249,10 @@ async function loadPhoto(
 
   const thumbnailSmall = await resizeImage(
     buffer,
-    cached.value.cachePath,
     url,
     "small",
     orientation,
     width,
-
     height
   );
 
