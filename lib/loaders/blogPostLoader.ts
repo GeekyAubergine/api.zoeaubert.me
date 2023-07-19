@@ -49,6 +49,7 @@ function parseHeroImage(
     alt: heroAlt,
     width: heroWidth,
     height: heroHeight,
+    title: heroAlt,
   });
 }
 
@@ -179,6 +180,7 @@ async function loadBlogPost(
     showHero: showHero || false,
     media,
     rawDataHash,
+    firstLine: body.split("\n")[0] ?? "",
   });
 }
 

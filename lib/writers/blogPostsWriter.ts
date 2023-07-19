@@ -7,11 +7,6 @@ export async function writeBlogPosts(
   data: Data
 ): Promise<Result<undefined>> {
   const outputPath = path.join(outputDir, "blog-posts.json");
-
-  const out = {
-    ...data.blogPosts,
-    recentPosts: data.blogPosts.entityOrder.slice(0, 5),
-  }
-
-  return writeFile(outputPath, JSON.stringify(out, null, 2));
+  
+  return writeFile(outputPath, JSON.stringify(data.blogPosts, null, 2));
 }

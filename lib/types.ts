@@ -11,6 +11,7 @@ type EntityType =
 export type Image = {
   src: string;
   alt: string;
+  title: string;
   width: number;
   height: number;
 };
@@ -39,6 +40,7 @@ export type BlogPostEntity = EntityBase<
     title: string;
     hero: Image | null;
     showHero: boolean;
+    firstLine: string;
   }
 >;
 

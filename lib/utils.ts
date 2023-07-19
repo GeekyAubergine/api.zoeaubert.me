@@ -177,6 +177,7 @@ export async function parseImagesFromMarkdown(
       alt,
       width,
       height,
+      title: alt,
     });
   }
 
@@ -350,4 +351,8 @@ export function mergeOrderedEntities<T extends Entity>(
   }
 
   return entitiesToOrderedEntities(entities);
+}
+
+export function contentContainsContentToFilterOut(content: string): boolean {
+  return CONTENT_TO_FILTER_OUT.test(content);
 }

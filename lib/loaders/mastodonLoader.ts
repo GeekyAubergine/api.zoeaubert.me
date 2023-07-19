@@ -4,6 +4,7 @@ import {
   Result,
   cdnPathForFileNameAndDate,
   cleanTags,
+  contentContainsContentToFilterOut,
   downloadAndCacheFile,
   entitiesToOrderedEntities,
   hash,
@@ -89,6 +90,7 @@ async function processAttachment(
       alt: attachment.description,
       width: attachment.meta.original.width,
       height: attachment.meta.original.height,
+      title: attachment.description,
     },
     parentPermalink: postPermalink,
     date: dateString,
@@ -101,7 +103,15 @@ async function processToot(
 ): Promise<Result<MastodonPostEntity>> {
   const key = `mastodon-${toot.id}`;
 
-  const rawDataHash = hash(toot);
+  const hashable = {
+    date: toot.created_at,
+    content: toot.content,
+    tags: toot.tags,
+    media: toot.media_attachments,
+    originalUrl: toot.url,
+  };
+
+  const rawDataHash = hash(hashable);
 
   const existing = loaderParams.orderedEntities.entities[key];
 
@@ -192,6 +202,14 @@ export async function loadMastodonPosts(
   const entities: MastodonPostEntity[] = [];
 
   for (const toot of tootsResponse.value) {
+    if (
+      toot.application?.name === "Micro.blog" ||
+      toot.application?.name === "status.lol" ||
+      contentContainsContentToFilterOut(toot.content)
+    ) {
+      continue;
+    }
+
     const entityResult = await processToot(loaderParams, toot);
 
     if (!entityResult.ok) {

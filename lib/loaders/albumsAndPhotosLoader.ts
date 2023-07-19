@@ -270,6 +270,7 @@ async function loadPhoto(
     width: thumbnailSmall.value.width,
     height: thumbnailSmall.value.height,
     alt,
+    title: alt,
   };
 
   return Ok({
@@ -287,12 +288,14 @@ async function loadPhoto(
       width,
       height,
       alt,
+      title: alt,
     },
     thumbnailLarge: {
       src: thumbnailLarge.value.url,
       width: thumbnailLarge.value.width,
       height: thumbnailLarge.value.height,
       alt,
+      title: alt,
     },
     thumbnailSmall: smallThumbnail,
     media: [

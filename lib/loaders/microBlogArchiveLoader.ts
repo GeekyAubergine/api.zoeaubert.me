@@ -42,6 +42,7 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
         alt,
         width: parseInt(width, 10),
         height: parseInt(height, 10),
+        title: alt,
       },
       date,
       parentPermalink: permalink,
