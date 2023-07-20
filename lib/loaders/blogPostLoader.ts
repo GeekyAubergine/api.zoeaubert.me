@@ -15,6 +15,7 @@ import {
   cleanTags,
   entitiesToOrderedEntities,
   getFilesRecursive,
+  getImageOrientation,
   hash,
   parseImagesFromMarkdown,
 } from "../utils";
@@ -50,6 +51,7 @@ function parseHeroImage(
     width: heroWidth,
     height: heroHeight,
     title: heroAlt,
+    orientation: getImageOrientation(heroWidth, heroHeight),
   });
 }
 

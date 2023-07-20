@@ -11,6 +11,7 @@ import { writeYears } from "./yearsWriter";
 import { writePhotos } from "./photosWriter";
 import { writeAlbumsAndPhoto } from "./albumsAndPhotosWriter";
 import { writeNow } from "./nowWriter";
+import { writeAllPosts } from "./allPostsWriter";
 
 const WRITERS = [
   writeArchive,
@@ -24,6 +25,7 @@ const WRITERS = [
   writePhotos,
   writeAlbumsAndPhoto,
   writeNow,
+  writeAllPosts,
 ];
 
 export async function writeData(

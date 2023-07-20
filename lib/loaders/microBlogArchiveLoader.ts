@@ -7,6 +7,7 @@ import {
   Result,
   cleanTags,
   entitiesToOrderedEntities,
+  getImageOrientation,
   hash,
 } from "../utils";
 import { EntityMedia, MicroBlogEntity, MicroBlogPosts } from "../types";
@@ -43,6 +44,10 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
         width: parseInt(width, 10),
         height: parseInt(height, 10),
         title: alt,
+        orientation: getImageOrientation(
+          parseInt(width, 10),
+          parseInt(height, 10)
+        ),
       },
       date,
       parentPermalink: permalink,

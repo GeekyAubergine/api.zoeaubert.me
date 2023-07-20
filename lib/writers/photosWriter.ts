@@ -45,5 +45,23 @@ export async function writePhotos(
     []
   );
 
+  // const entityOrder = photos
+  //   .sort((a, b) => {
+  //     const aDate = new Date(a.date);
+  //     const bDate = new Date(b.date);
+  //     return bDate.getTime() - aDate.getTime();
+  //   })
+  //   .map((entity) => entity.image.src);
+
+  // const record = photos.reduce<Record<string, EntityMedia>>((acc, entity) => {
+  //   acc[entity.image.src] = entity;
+  //   return acc;
+  // }, {});
+
+  // const out = {
+  //   allPhotos: record,
+  //   allPhotosOrder: entityOrder,
+  // };
+
   return writeFile(outputPath, JSON.stringify(photos, null, 2));
 }

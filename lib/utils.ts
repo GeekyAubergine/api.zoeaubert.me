@@ -2,7 +2,7 @@ import fs from "fs-extra";
 import md5 from "md5";
 import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
-import { Entity, Image, OrderedEntities } from "./types";
+import { Entity, Image, ImageOrientation, OrderedEntities } from "./types";
 import { ProjectError } from "./error";
 import imageSize from "image-size";
 import frontMatterParser from "front-matter";
@@ -73,6 +73,21 @@ export async function getImageSize(
     type: "UNABLE_TO_GET_IMAGE_SIZE",
     url,
   });
+}
+
+export function getImageOrientation(
+  width: number,
+  height: number
+): ImageOrientation {
+  if (width > height) {
+    return "landscape";
+  }
+
+  if (height > width) {
+    return "portrait";
+  }
+
+  return "square";
 }
 
 export function hash(data: {}): string {
@@ -178,6 +193,7 @@ export async function parseImagesFromMarkdown(
       width,
       height,
       title: alt,
+      orientation: getImageOrientation(width, height),
     });
   }
 

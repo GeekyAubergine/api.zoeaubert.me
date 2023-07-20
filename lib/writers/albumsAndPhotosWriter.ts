@@ -38,8 +38,7 @@ export async function writeAlbumsAndPhoto(
     .map((year) => ({
       year,
       albums: albumsByYearMap[year]!,
-    }))
-    .reverse();
+    }));
 
   const out = {
     albums: data.albums.entities,

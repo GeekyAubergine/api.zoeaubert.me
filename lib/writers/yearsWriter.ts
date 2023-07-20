@@ -1,7 +1,7 @@
 import path from "path";
 import { Result, mergeOrderedEntities, writeFile } from "../utils";
 import Data, {
-  AlbumPhotoEntity,
+  AlbumEntity,
   BlogPostEntity,
   MastodonPostEntity,
   MicroBlogEntity,
@@ -21,14 +21,14 @@ export async function writeYears(
     | StatusLolEntity
     | MicroBlogEntity
     | BlogPostEntity
-    | AlbumPhotoEntity
+    | AlbumEntity
   >([
     data.microPosts,
     data.mastodonPosts,
     data.statusLolPosts,
     data.microBlogsPosts,
     data.blogPosts,
-    data.albumPhotos,
+    data.albums,
   ]);
 
   const entitiesByYear = entitiesToInclude.entityOrder.reduce<

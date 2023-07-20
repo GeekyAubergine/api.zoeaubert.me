@@ -44,7 +44,7 @@ export async function writeTags(
     }, new Set())
   ).sort(natsort());
 
-  const entitiesByTag = Array.from(allTags).reduce<Record<string, string[]>>(
+  const postsByTag = Array.from(allTags).reduce<Record<string, string[]>>(
     (acc, tag) => {
       const entitiesWithTag = entitiesToInclude.entityOrder.filter((id) => {
         const entity = entitiesToInclude.entities[id];
@@ -64,9 +64,9 @@ export async function writeTags(
     {}
   );
 
-  const tagCounts = Object.keys(entitiesByTag).reduce<Record<string, number>>(
+  const tagCounts = Object.keys(postsByTag).reduce<Record<string, number>>(
     (acc, tag) => {
-      const entitiesWithTag = entitiesByTag[tag];
+      const entitiesWithTag = postsByTag[tag];
 
       if (!entitiesWithTag) {
         return acc;
@@ -81,7 +81,7 @@ export async function writeTags(
   const out = {
     allTags: Array.from(allTags).sort(natsort()),
     tagCounts,
-    entitiesByTag,
+    postsByTag,
   };
 
   return writeFile(outputPath, JSON.stringify(out, null, 2));

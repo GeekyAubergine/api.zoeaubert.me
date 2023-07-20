@@ -7,6 +7,7 @@ import {
   contentContainsContentToFilterOut,
   downloadAndCacheFile,
   entitiesToOrderedEntities,
+  getImageOrientation,
   hash,
   uploadToCDN,
 } from "../utils";
@@ -91,6 +92,10 @@ async function processAttachment(
       width: attachment.meta.original.width,
       height: attachment.meta.original.height,
       title: attachment.description,
+      orientation: getImageOrientation(
+        attachment.meta.original.width,
+        attachment.meta.original.height
+      ),
     },
     parentPermalink: postPermalink,
     date: dateString,

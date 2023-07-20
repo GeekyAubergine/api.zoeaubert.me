@@ -20,6 +20,7 @@ import {
   AlbumPhotoEntity,
   AlbumPhotos,
   Albums,
+  ImageOrientation,
   OrderedEntities,
 } from "../types";
 import sharp from "sharp";
@@ -54,7 +55,7 @@ function orientationFromMetadata({
 }: {
   width?: number | undefined;
   height?: number | undefined;
-}): AlbumPhotoEntity["orientation"] {
+}): ImageOrientation {
   if (!height || !width) {
     throw new Error("No height or width found");
   }
@@ -110,7 +111,7 @@ async function resizeImage(
   buffer: Buffer,
   slug: string,
   size: "large" | "small",
-  orientation: AlbumPhotoEntity["orientation"],
+  orientation: ImageOrientation,
   originalWidth: number,
   originalHeight: number
 ): Promise<Result<{ url: string; width: number; height: number }>> {
@@ -272,6 +273,7 @@ async function loadPhoto(
     height: thumbnailSmall.value.height,
     alt,
     title: alt,
+    orientation,
   };
 
   return Ok({
@@ -283,13 +285,13 @@ async function loadPhoto(
     content: description ?? alt,
     tags: cleanTags(tags),
     featured: featured ?? false,
-    orientation,
     fullSize: {
       src: url,
       width,
       height,
       alt,
       title: alt,
+      orientation,
     },
     thumbnailLarge: {
       src: thumbnailLarge.value.url,
@@ -297,6 +299,7 @@ async function loadPhoto(
       height: thumbnailLarge.value.height,
       alt,
       title: alt,
+      orientation,
     },
     thumbnailSmall: smallThumbnail,
     media: [
@@ -317,16 +320,16 @@ function calculateCoverPhotosForAlbum(photos: AlbumPhotoEntity[]): string[] {
   const otherPhotos = photos.filter((photo) => !photo.featured);
 
   const featuredPortraitPhotos = featuredPhotos
-    .filter((photo) => photo.orientation !== "landscape")
+    .filter((photo) => photo.fullSize.orientation !== "landscape")
     .map((photo) => photo.key);
   const featuredLandscapePhotos = featuredPhotos
-    .filter((photo) => photo.orientation === "landscape")
+    .filter((photo) => photo.fullSize.orientation === "landscape")
     .map((photo) => photo.key);
   const otherPortraitPhotos = otherPhotos
-    .filter((photo) => photo.orientation !== "landscape")
+    .filter((photo) => photo.fullSize.orientation !== "landscape")
     .map((photo) => photo.key);
   const otherLandscapePhotos = otherPhotos
-    .filter((photo) => photo.orientation === "landscape")
+    .filter((photo) => photo.fullSize.orientation === "landscape")
     .map((photo) => photo.key);
 
   // If featured landscape, use that

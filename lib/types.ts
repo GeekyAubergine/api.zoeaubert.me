@@ -8,12 +8,15 @@ type EntityType =
   | "album"
   | "albumPhoto";
 
+export type ImageOrientation = "landscape" | "portrait" | "square";
+
 export type Image = {
   src: string;
   alt: string;
   title: string;
   width: number;
   height: number;
+  orientation: ImageOrientation;
 };
 
 export type EntityMedia = {
@@ -69,14 +72,13 @@ export type AlbumPhotoEntity = EntityBase<
     fullSize: Image;
     thumbnailSmall: Image;
     thumbnailLarge: Image;
-    orientation: "landscape" | "portrait" | "square";
     albumPermalink: string;
     albumTotalPhotos: number;
     indexString: string;
     previous: string | null;
     next: string | null;
     albumTitle: string;
-    featured: boolean,
+    featured: boolean;
   }
 >;
 
