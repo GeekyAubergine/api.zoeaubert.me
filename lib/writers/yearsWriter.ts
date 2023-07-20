@@ -1,36 +1,57 @@
-import fs from "fs";
-import { filterOrderedEntitiesBy } from "../utils";
 import path from "path";
-import { Archive } from "../types";
+import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import Data, {
+  AlbumEntity,
+  BlogPostEntity,
+  MastodonPostEntity,
+  MicroBlogEntity,
+  MicroPostEntity,
+  StatusLolEntity,
+} from "../types";
 
 export async function writeYears(
   outputDir: string,
-  archive: Archive
-): Promise<void> {
-  const archivePath = path.join(outputDir, "years.json");
+  data: Data
+): Promise<Result<undefined>> {
+  const outputPath = path.join(outputDir, "years.json");
 
-  const { entities, entityOrder } = filterOrderedEntitiesBy(
-    archive,
-    (entity) => entity.type !== "photo" && entity.type !== "album"
-  );
+  const entitiesToInclude = mergeOrderedEntities<
+    | MicroPostEntity
+    | MastodonPostEntity
+    | StatusLolEntity
+    | MicroBlogEntity
+    | BlogPostEntity
+    | AlbumEntity
+  >([
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
+    data.blogPosts,
+    data.albums,
+  ]);
 
-  const entitiesByYear = entityOrder.reduce<Record<string, string[]>>(
-    (acc, id) => {
-      const entity = entities[id];
-      if (!entity) {
-        return acc;
-      }
+  const entitiesByYear = entitiesToInclude.entityOrder.reduce<
+    Record<string, string[]>
+  >((acc, key) => {
+    const entity = entitiesToInclude.entities[key];
 
-      const { date } = entity;
-
-      const year = new Date(date).getFullYear();
-
-      acc[year] = (acc[year] ?? []).concat(id);
-
+    if (!entity) {
       return acc;
-    },
-    {}
-  );
+    }
+
+    const { date } = entity;
+
+    const year = new Date(date).getFullYear();
+
+    if (!acc[year]) {
+      acc[year] = [];
+    }
+
+    acc[year]!.push(key);
+
+    return acc;
+  }, {});
 
   const years = Object.keys(entitiesByYear).sort((a, b) => {
     return parseInt(b) - parseInt(a);
@@ -41,5 +62,5 @@ export async function writeYears(
     entitiesByYear,
   };
 
-  return fs.promises.writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

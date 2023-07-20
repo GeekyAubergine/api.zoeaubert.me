@@ -1,39 +1,54 @@
-import fs from "fs";
+import fs from "fs-extra";
 import path from "path";
 import config from "./config";
 
-import { exists } from "./lib/utils";
-import { Archive, Entity, LoaderParams } from "./lib/types";
-
-import { loadMastadonToots } from "./lib/loaders/mastodonLoader";
-import { loadBlogPosts } from "./lib/loaders/blogPostsLoader";
-import { loadStatusLol } from "./lib/loaders/statuslolLoader";
-import { loadMicroBlogArchive } from "./lib/loaders/microBlogArchiveLoader";
-import { loadAlbums } from "./lib/loaders/albumsLoader";
-import { loadAbout } from "./lib/loaders/aboutLoader";
-import { loadNow } from "./lib/loaders/nowLoader";
-import { loadFaq } from "./lib/loaders/faqLoader";
-import { loadLinks } from "./lib/loaders/linksLoader";
-import { loadMicros } from "./lib/loaders/microsLoader";
-
-import { writeArchive } from "./lib/writers/archiveWriter";
-import { writeBlogPosts } from "./lib/writers/blogPostsWriter";
-import { writeMicros } from "./lib/writers/microsWriter";
-import { writeTimeline } from "./lib/writers/timelineWriter";
-import { writeMicroBlogs } from "./lib/writers/microBlogWriter";
-import { writeToots } from "./lib/writers/tootsWriter";
-import { writeAlbums } from "./lib/writers/albumsWriter";
-import { writeStatusLols } from "./lib/writers/statuslolWriter";
-import { writeAbout } from "./lib/writers/aboutWriter";
-import { writeNow } from "./lib/writers/nowWriter";
-import { writeTags } from "./lib/writers/tagsWriter";
-import { writeAll } from "./lib/writers/allWriter";
-import { writeYears } from "./lib/writers/yearsWriter";
-import { writePhotos } from "./lib/writers/photosWriter";
-import { writeFaq } from "./lib/writers/faqWriter";
-import { writeLinks } from "./lib/writers/linksWriter";
+import { Err, Ok, Result, exists } from "./lib/utils";
+import Data from "./lib/types";
+import extract from "extract-zip";
+import { loadData } from "./lib/loaders/loaders";
+import { writeData } from "./lib/writers/writers";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
+const CACHE_DIR = path.join(__dirname, "./.cache");
+const CONTENT_DIR = path.join(__dirname, "./.content");
+
+const DEFAULT_DATA: Data = {
+  blogPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+  microBlogsPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+  microPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+  mastodonPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+  statusLolPosts: {
+    entityOrder: [],
+    entities: {},
+  },
+  albums: {
+    entityOrder: [],
+    entities: {},
+  },
+  albumPhotos: {
+    entityOrder: [],
+    entities: {},
+  },
+  about: "",
+  faq: "",
+  now: "",
+  lastUpdated: "",
+};
+
+const CONTENT_URL =
+  "https://github.com/GeekyAubergine/zoeaubert.me-content/archive/refs/heads/main.zip";
 
 async function prepFolders() {
   if (!(await exists(PUBLIC_DIR))) {
@@ -44,122 +59,107 @@ async function prepFolders() {
   }
 }
 
-async function loadArchive(): Promise<Archive> {
+async function loadArchive(): Promise<Result<Data>> {
   try {
     const archiveFile = await fs.promises.readFile(
       path.join(PUBLIC_DIR, "archive.json"),
       "utf-8"
     );
 
-    return JSON.parse(archiveFile);
+    return Ok(JSON.parse(archiveFile));
   } catch (e) {
-    // TODO Try loading from github archive
-    return {
-      entities: {},
-      entityOrder: [],
-      lastUpdated: "1970-00-00T00:00:00.000Z",
-      about: "",
-      now: "",
-      faq: "",
-      links: "",
-    };
+    // TODO Try loading from backup
+    return Err({
+      type: "UNABLE_TO_LOAD_ARCHIVE",
+    });
+  }
+}
+
+async function downloadContent(): Promise<Result<undefined>> {
+  try {
+    const contentDirExists = await exists(CONTENT_DIR);
+
+    if (contentDirExists.ok && contentDirExists.value) {
+      await fs.rm(CONTENT_DIR, { recursive: true });
+    }
+
+    const contentZip = await fetch(CONTENT_URL);
+
+    const contentBlob = await contentZip.blob();
+
+    const arrayBuffer = await contentBlob.arrayBuffer();
+
+    const buffer = Buffer.from(arrayBuffer);
+
+    await fs.writeFile(path.join(config.cacheDir, "temp.zip"), buffer);
+
+    await extract(path.join(config.cacheDir, "temp.zip"), {
+      dir: path.join(__dirname, "content-temp"),
+    });
+
+    await fs.copy(
+      path.join(__dirname, "content-temp/zoeaubert.me-content-main"),
+      CONTENT_DIR
+    );
+
+    await fs.rm(path.join(config.cacheDir, "temp.zip"), { recursive: true });
+
+    await fs.rm(path.join(__dirname, "content-temp"), { recursive: true });
+
+    return Ok(undefined);
+  } catch (e) {
+    console.error(e);
+    return Err({
+      type: "UNABLE_TO_DOWNLOAD_CONTENT",
+    });
   }
 }
 
 async function main() {
-  console.log("Hello World");
+  console.log("Building api.zoeaubert.me data");
 
   await prepFolders();
 
-  const archive = await loadArchive();
+  const archiveResult = await loadArchive();
 
-  const loaderParams: LoaderParams = {
-    archive,
-    cacheDirectory: "",
-  };
+  const archive = archiveResult.ok ? archiveResult.value : DEFAULT_DATA;
 
-  const basicLoaders = [
-    loadAbout(loaderParams),
-    loadNow(loaderParams),
-    loadFaq(loaderParams),
-    loadLinks(loaderParams),
-  ] as const;
+  const contentDownloadResult = await downloadContent();
 
-  const entityLoaders = [
-    loadBlogPosts(loaderParams),
-    loadStatusLol(loaderParams),
-    loadMastadonToots(loaderParams),
-    loadMicroBlogArchive(loaderParams),
-    loadAlbums(loaderParams),
-    loadMicros(loaderParams),
-  ] as const;
+  if (!contentDownloadResult.ok) {
+    console.error(contentDownloadResult.error);
+    return;
+  }
 
   console.log("Loading data");
 
   const loadStart = Date.now();
 
-  const basicResults = await Promise.all(basicLoaders);
+  const newArchiveResult = await loadData(archive, CACHE_DIR, CONTENT_DIR);
 
-  const entityResults: Record<string, Entity>[] = await Promise.all(
-    entityLoaders
-  );
+  if (!newArchiveResult.ok) {
+    console.error(newArchiveResult.error);
+    return;
+  }
+
+  const newArchive = newArchiveResult.value;
+
+  newArchive.lastUpdated = new Date().toISOString();
 
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const [about, now, faq, links] = basicResults;
-
-  const entitiesMap: Record<string, Entity> = entityResults.reduce(
-    (acc, result: Record<string, Entity>) => ({ ...acc, ...result }),
-    archive.entities
-  );
-
-  const entityIdDatePairs = Object.entries(entitiesMap).map(([id, entity]) => ({
-    id,
-    date: new Date(entity.date),
-  }));
-
-  const sortedIdDatePairs = entityIdDatePairs.sort(
-    (a, b) => b.date.getTime() - a.date.getTime()
-  );
-
-  const entityOrder = sortedIdDatePairs.map((pair) => pair.id);
-
-  const newArchive: Archive = {
-    entities: entitiesMap,
-    entityOrder,
-    lastUpdated: new Date().toISOString(),
-    about,
-    now,
-    faq,
-    links,
-  };
-
-  const writers = [
-    writeArchive(PUBLIC_DIR, newArchive),
-    writeBlogPosts(PUBLIC_DIR, newArchive),
-    writeMicros(PUBLIC_DIR, newArchive),
-    writeTimeline(PUBLIC_DIR, newArchive),
-    writeMicroBlogs(PUBLIC_DIR, newArchive),
-    writeToots(PUBLIC_DIR, newArchive),
-    writeAlbums(PUBLIC_DIR, newArchive),
-    writeStatusLols(PUBLIC_DIR, newArchive),
-    writeAbout(PUBLIC_DIR, newArchive),
-    writeNow(PUBLIC_DIR, newArchive),
-    writeTags(PUBLIC_DIR, newArchive),
-    writeAll(PUBLIC_DIR, newArchive),
-    writeYears(PUBLIC_DIR, newArchive),
-    writePhotos(PUBLIC_DIR, newArchive),
-    writeFaq(PUBLIC_DIR, newArchive),
-    writeLinks(PUBLIC_DIR, newArchive),
-  ];
-
   console.log("Writing data");
 
   const writeStart = Date.now();
 
-  await Promise.all(writers);
+  const writingResult = await writeData(newArchive, PUBLIC_DIR);
+
+  if (!writingResult.ok) {
+    console.error(writingResult.error);
+    return;
+  }
 
   const writeEnd = Date.now();
 

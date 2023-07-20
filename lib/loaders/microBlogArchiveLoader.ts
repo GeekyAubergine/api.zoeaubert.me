@@ -1,16 +1,24 @@
-import fs from "fs";
-import { arrayToRecord, cleanTag, CONTENT_TO_FILTER_OUT, hash } from "../utils";
+import fs from "fs-extra";
 
-import { EntityMedia, LoaderParams, MicroBlogEntity } from "../types";
+import {
+  CONTENT_TO_FILTER_OUT,
+  Err,
+  Ok,
+  Result,
+  cleanTags,
+  entitiesToOrderedEntities,
+  getImageOrientation,
+  hash,
+} from "../utils";
+import { EntityMedia, MicroBlogEntity, MicroBlogPosts } from "../types";
 
 const REGEX_IMAGES =
   /<img src="(.*?)".*?width="(.*?)".*?height="(.*?)".*?alt="(.*?)"/gm;
 
 function mapMicroBlog(microBlog: any): MicroBlogEntity {
-  const slug = microBlog.id.replace(
-    "http://geekyaubergine.micro.blog/",
-    "/micros/"
-  ).replace('.html', '');
+  const permalink = microBlog.id
+    .replace("http://geekyaubergine.micro.blog/", "/micros/")
+    .replace(".html", "");
 
   const date = new Date(microBlog.date_published).toISOString();
 
@@ -24,32 +32,39 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
   const media: EntityMedia[] = [];
 
   for (const match of imagesMatch) {
-    const [, url, width, height, alt] = match;
-    if (!url || !alt || !width || !height) {
+    const [, src, width, height, alt] = match;
+    // No need to throw error as we trust this data as it's been previously validated and is never updated
+    if (!src || !alt || !width || !height) {
       continue;
     }
     media.push({
-      type: "image",
-      url,
-      alt,
+      image: {
+        src,
+        alt,
+        width: parseInt(width, 10),
+        height: parseInt(height, 10),
+        title: alt,
+        orientation: getImageOrientation(
+          parseInt(width, 10),
+          parseInt(height, 10)
+        ),
+      },
       date,
-      postSlug: slug,
-      width: parseInt(width, 10),
-      height: parseInt(height, 10),
+      parentPermalink: permalink,
     });
   }
 
   const firstLine = content.split("\n")[0];
 
   const data: Omit<MicroBlogEntity, "rawDataHash"> = {
-    type: "microblog",
-    id: slug,
-    slug,
+    type: "microBlog",
+    key: permalink,
+    permalink,
     date,
     content,
-    excerpt: firstLine ?? "",
+    description: firstLine ?? "",
     media,
-    tags: (microBlog.tags ?? []).map(cleanTag),
+    tags: cleanTags(microBlog.tags ?? []),
   };
 
   const rawDataHash = hash(data);
@@ -61,25 +76,29 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
 }
 
 export async function loadMicroBlogArchive(
-  _: LoaderParams
-): Promise<Record<string, MicroBlogEntity>> {
-  const archiveContents = await fs.promises.readFile(
-    "./microBlog/feed.json",
-    "utf8"
-  );
+  microBlogoutputPath: string
+): Promise<Result<MicroBlogPosts>> {
+  try {
+    const archiveContents = await fs.readFile(microBlogoutputPath, "utf-8");
 
-  const archive = JSON.parse(archiveContents);
+    const archive = JSON.parse(archiveContents);
 
-  const mapped: MicroBlogEntity[] = archive.items
-    .map(mapMicroBlog)
-    .filter(
-      (micro: MicroBlogEntity) =>
-        !CONTENT_TO_FILTER_OUT.test(micro.content) &&
-        !micro.tags.includes("status") &&
-        !micro.tags.includes("Status") &&
-        !micro.tags.includes("photography") &&
-        !micro.tags.includes("Photography")
-    );
+    const mapped: MicroBlogEntity[] = archive.items
+      .map(mapMicroBlog)
+      .filter(
+        (micro: MicroBlogEntity) =>
+          !CONTENT_TO_FILTER_OUT.test(micro.content) &&
+          !micro.tags.includes("status") &&
+          !micro.tags.includes("Status") &&
+          !micro.tags.includes("photography") &&
+          !micro.tags.includes("Photography")
+      );
 
-  return arrayToRecord(mapped, (micro) => micro.id);
+    return Ok(entitiesToOrderedEntities(mapped));
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_READ_FILE",
+      path: microBlogoutputPath,
+    });
+  }
 }

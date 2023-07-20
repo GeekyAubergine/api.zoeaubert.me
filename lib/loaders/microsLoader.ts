@@ -1,24 +1,28 @@
 import fs from "fs";
 import path from "path";
 import frontMatterParser from "front-matter";
-import { Archive, EntityMedia, LoaderParams, MicroEntity } from "../types";
-
 import {
-  arrayToRecord,
-  cleanTag,
+  EntityMedia,
+  LoaderParams,
+  MicroPostEntity,
+  MicroPosts,
+} from "../types";
+import {
+  Err,
+  Ok,
+  Result,
+  entitiesToOrderedEntities,
   formatDateAsSlugPart,
-  getFilesRecursive,
   hash,
+  parseImagesFromMarkdown,
+  getFilesRecursive,
+  cleanTags,
 } from "../utils";
 
-const POSTS_DIR = path.join(__dirname, "../../micros");
-
-const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
-
-async function loadMicro(
-  archive: Archive,
+async function loadMicroPost(
+  loaderParams: LoaderParams<MicroPostEntity>,
   filePath: string
-): Promise<MicroEntity> {
+): Promise<Result<MicroPostEntity>> {
   const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
   const frontMatter = frontMatterParser(fileContents);
@@ -28,84 +32,80 @@ async function loadMicro(
     tags: string[] | undefined;
   };
 
-  const slug = path.basename(filePath).replace(".md", "");
-
   if (!date) {
-    throw new Error(`Blog post is missing required attributes: ${filePath}`);
-  }
-
-  const postSlug = `/micros/${formatDateAsSlugPart(new Date(date))}/${slug}`;
-  const dateString = new Date(date).toISOString();
-
-  const imagesMatch = body.matchAll(IMAGE_REGEX);
-
-  const media: EntityMedia[] = [];
-
-  for (const image of imagesMatch) {
-    const [, alt, url] = image;
-
-    if (!alt) {
-      throw new Error(
-        `Blog post is missing alt text for image: ${url} in ${filePath}`
-      );
-    }
-
-    if (!url) {
-      throw new Error(
-        `Blog post is missing url for image: ${alt} in ${filePath}`
-      );
-    }
-
-    media.push({
-      url,
-      alt,
-      postSlug,
-      type: "image",
-      date: dateString,
-      width: 2000,
-      height: 2000,
+    return Err({
+      type: "MICRO_POST_MISSING_DATE",
+      url: filePath,
     });
   }
 
-  const firstLine = body.split(/\/n/)[0]?.replace(/\[(.*?)]\(.*?\)/g, "$1");
+  const title = path.basename(filePath).replace(".md", "");
 
-  const data: Omit<MicroEntity, "rawDataHash"> = {
-    type: "micro",
-    id: postSlug,
-    slug: postSlug,
-    date: dateString,
-    content: body,
-    tags: (tags ?? []).map(cleanTag),
-    media,
-    excerpt: firstLine ?? ''
-  };
+  const key = `${title}-${date}`;
 
-  const rawDataHash = hash(data);
+  const rawDataHash = hash({
+    key,
+    date,
+    tags: (tags ?? []).join(","),
+    body,
+  });
 
-  const existingEntity = archive.entities[data.id];
+  const permalink = `/micros/${formatDateAsSlugPart(new Date(date))}/${title}`;
 
-  if (existingEntity && existingEntity.rawDataHash === rawDataHash) {
-    return existingEntity as MicroEntity;
+  const existingPost = loaderParams.orderedEntities.entities[key];
+
+  if (existingPost && existingPost.rawDataHash === rawDataHash) {
+    return Ok(existingPost);
   }
 
-  console.log(`Updating micro post: ${data.id} (${data.slug})`);
+  const mediaResult = await parseImagesFromMarkdown(filePath, body);
 
-  return {
-    ...data,
-    rawDataHash,
-  };
-}
+  if (!mediaResult.ok) {
+    return mediaResult;
+  }
 
-export async function loadMicros(
-  loaderParams: LoaderParams
-): Promise<Record<string, MicroEntity>> {
-  const { archive } = loaderParams;
-
-  const paths = await getFilesRecursive(POSTS_DIR, ".md");
-
-  const posts = await Promise.all(
-    paths.map((path) => loadMicro(archive, path))
+  const media: EntityMedia[] = mediaResult.value.map(
+    (image): EntityMedia => ({
+      image,
+      parentPermalink: permalink,
+      date,
+    })
   );
 
-  return arrayToRecord(posts, (post) => post.id);
+  const firstLine = body.split(/\/n/)[0]?.replace(/\[(.*?)]\(.*?\)/g, "$1");
+
+  console.log(`Updating micro post: ${key} (${date})`);
+
+  return Ok({
+    type: "microPost",
+    key,
+    permalink,
+    date,
+    content: body,
+    tags: cleanTags(tags ?? []),
+    media,
+    description: firstLine ?? "",
+    rawDataHash,
+  });
+}
+
+export async function loadMicroPosts(
+  loaderParams: LoaderParams<MicroPostEntity>,
+  microsDir: string
+): Promise<Result<MicroPosts>> {
+  const paths = await getFilesRecursive(microsDir, ".md");
+
+  const microPosts: MicroPostEntity[] = [];
+
+  for (const filePath of paths) {
+    const result = await loadMicroPost(loaderParams, filePath);
+
+    if (!result.ok) {
+      return result;
+    }
+
+    microPosts.push(result.value);
+  }
+
+  return Ok(entitiesToOrderedEntities(microPosts));
 }

@@ -1,50 +1,67 @@
-import fs from "fs";
-import { exhaust } from "../utils";
 import path from "path";
-import { Archive, EntityMedia } from "../types";
+import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import Data, {
+  AlbumEntity,
+  BlogPostEntity,
+  EntityMedia,
+  MastodonPostEntity,
+  MicroBlogEntity,
+  MicroPostEntity,
+  StatusLolEntity,
+} from "../types";
 
 export async function writePhotos(
   outputDir: string,
-  archive: Archive
-): Promise<void> {
-  const archivePath = path.join(outputDir, "photos.json");
+  data: Data
+): Promise<Result<undefined>> {
+  const outputPath = path.join(outputDir, "photos.json");
 
-  const { entities, entityOrder } = archive;
+  const entitiesToInclude = mergeOrderedEntities<
+    | MicroPostEntity
+    | MastodonPostEntity
+    | StatusLolEntity
+    | MicroBlogEntity
+    | BlogPostEntity
+    | AlbumEntity
+  >([
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
+    data.blogPosts,
+    data.albums,
+  ]);
 
-  const photos = entityOrder.reduce<EntityMedia[]>((acc, id) => {
-    const entity = entities[id];
+  const photos = entitiesToInclude.entityOrder.reduce<EntityMedia[]>(
+    (acc, key) => {
+      const entity = entitiesToInclude.entities[key];
 
-    if (!entity) {
-      return acc;
-    }
-
-    const { type } = entity;
-
-    switch (type) {
-      case "photo":
-        return acc.concat([
-          {
-            type: "image",
-            url: entity.thumbnailSmall.url,
-            alt: entity.alt,
-            date: entity.date,
-            postSlug: entity.slug,
-            width: entity.thumbnailSmall.width,
-            height: entity.thumbnailSmall.height,
-          },
-        ]);
-      case "blogPost":
-      case "mastodon":
-      case "microblog":
-      case "micro":
-        return acc.concat(entity.media);
-      case "album":
-      case "statuslol":
+      if (!entity) {
         return acc;
-      default:
-        return exhaust(type);
-    }
-  }, []);
+      }
 
-  return fs.promises.writeFile(archivePath, JSON.stringify(photos, null, 2));
+      return acc.concat(entity.media);
+    },
+    []
+  );
+
+  // const entityOrder = photos
+  //   .sort((a, b) => {
+  //     const aDate = new Date(a.date);
+  //     const bDate = new Date(b.date);
+  //     return bDate.getTime() - aDate.getTime();
+  //   })
+  //   .map((entity) => entity.image.src);
+
+  // const record = photos.reduce<Record<string, EntityMedia>>((acc, entity) => {
+  //   acc[entity.image.src] = entity;
+  //   return acc;
+  // }, {});
+
+  // const out = {
+  //   allPhotos: record,
+  //   allPhotosOrder: entityOrder,
+  // };
+
+  return writeFile(outputPath, JSON.stringify(photos, null, 2));
 }

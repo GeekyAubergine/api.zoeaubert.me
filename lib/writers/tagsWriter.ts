@@ -1,81 +1,88 @@
-import fs from "fs";
-import { exhaust, filterOrderedEntitiesBy } from "../utils";
 import path from "path";
-import { Archive } from "../types";
 import natsort from "natsort";
+import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import Data, {
+  AlbumPhotoEntity,
+  BlogPostEntity,
+  MastodonPostEntity,
+  MicroBlogEntity,
+  MicroPostEntity,
+  StatusLolEntity,
+} from "../types";
 
 export async function writeTags(
   outputDir: string,
-  archive: Archive
-): Promise<void> {
-  const archivePath = path.join(outputDir, "tags.json");
+  data: Data
+): Promise<Result<undefined>> {
+  const outputPath = path.join(outputDir, "tags.json");
 
-  const { entities, entityOrder } = filterOrderedEntitiesBy(
-    archive,
-    (entity) => entity.type !== "photo" && entity.type !== "album"
+  const entitiesToInclude = mergeOrderedEntities<
+    | MicroPostEntity
+    | MastodonPostEntity
+    | StatusLolEntity
+    | MicroBlogEntity
+    | BlogPostEntity
+    | AlbumPhotoEntity
+  >([
+    data.microPosts,
+    data.mastodonPosts,
+    data.statusLolPosts,
+    data.microBlogsPosts,
+    data.blogPosts,
+    data.albumPhotos,
+  ]);
+
+  const allTags = Array.from(
+    entitiesToInclude.entityOrder.reduce<Set<string>>((acc, key) => {
+      const entity = entitiesToInclude.entities[key];
+
+      if (entity && entity.tags) {
+        entity.tags.forEach((tag) => acc.add(tag));
+      }
+
+      return acc;
+    }, new Set())
+  ).sort(natsort());
+
+  const postsByTag = Array.from(allTags).reduce<Record<string, string[]>>(
+    (acc, tag) => {
+      const entitiesWithTag = entitiesToInclude.entityOrder.filter((id) => {
+        const entity = entitiesToInclude.entities[id];
+
+        if (!entity) {
+          return false;
+        }
+
+        return entity.tags.includes(tag);
+      });
+
+      return {
+        ...acc,
+        [tag]: entitiesWithTag,
+      };
+    },
+    {}
   );
 
-  const allTags = Object.values(entities).reduce<string[]>((acc, entity) => {
-    const { type } = entity;
-    switch (type) {
-      case "blogPost":
-      case "statuslol":
-      case "micro":
-      case "mastodon":
-      case "microblog": {
-        const { tags } = entity;
-        const newTags = [];
-        for (const tag of tags) {
-          if (!acc.includes(tag)) {
-            newTags.push(tag);
-          }
-        }
-        return acc.concat(newTags);
-      }
-      case "album":
-      case "photo":
+  const tagCounts = Object.keys(postsByTag).reduce<Record<string, number>>(
+    (acc, tag) => {
+      const entitiesWithTag = postsByTag[tag];
+
+      if (!entitiesWithTag) {
         return acc;
-      default:
-        return exhaust(type);
-    }
-  }, []);
-
-  const entitiesByTag = allTags.reduce<Record<string, string[]>>((acc, tag) => {
-    const entitiesWithTag = entityOrder.filter((id) => {
-      const entity = entities[id];
-
-      if (!entity) {
-        return false;
       }
 
-      const { type } = entity;
-      switch (type) {
-        case "statuslol":
-        case "blogPost":
-        case "micro":
-        case "mastodon":
-        case "microblog": {
-          const { tags } = entity;
-          return tags.includes(tag);
-        }
-        case "album":
-        case "photo":
-          return false;
-        default:
-          return exhaust(type);
-      }
-    });
-
-    return {
-      ...acc,
-      [tag]: entitiesWithTag,
-    };
-  }, {});
+      acc[tag] = entitiesWithTag.length;
+      return acc;
+    },
+    {}
+  );
 
   const out = {
-    entitiesByTag,
-    allTags: allTags.sort(natsort()),
+    allTags: Array.from(allTags).sort(natsort()),
+    tagCounts,
+    postsByTag,
   };
 
-  return fs.promises.writeFile(archivePath, JSON.stringify(out, null, 2));
+  return writeFile(outputPath, JSON.stringify(out, null, 2));
 }

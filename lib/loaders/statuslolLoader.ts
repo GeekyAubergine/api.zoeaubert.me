@@ -1,36 +1,36 @@
-import { arrayToRecord, formatDateAsSlugPart, hash } from "../utils";
-import fetch from "node-fetch";
-
-import { LoaderParams, StatusLolEntity } from "../types";
+import {
+  Err,
+  Ok,
+  Result,
+  entitiesToOrderedEntities,
+  formatDateAsSlugPart,
+  hash,
+} from "../utils";
+import { StatusLolEntity, StatusLolPosts } from "../types";
 
 const URL = "https://api.omg.lol/address/geekyaubergine/statuses/";
 
 function mapStatusLol(status: any): StatusLolEntity {
+  const rawDataHash = hash(status);
+
   const date = new Date(status.created * 1000);
 
-  const data: Omit<StatusLolEntity, "rawDataHash"> = {
-    type: "statuslol",
-    id: `statuslol-${status.id}`,
-    slug: `/micros/${formatDateAsSlugPart(date)}/${status.id}`,
+  return {
+    type: "statusLol",
+    key: `statuslol-${status.id}`,
+    permalink: `/micros/${formatDateAsSlugPart(date)}/${status.id}`,
     originalUrl: `https://geekyaubergine.status.lol/${status.id}`,
     date: new Date(status.created * 1000).toISOString(),
     content: status.content,
     emoji: status.emoji,
-    excerpt: `${status.emoji} ${status.content}`,
-    tags: ['Status'],
-  };
-
-  const rawDataHash = hash(data);
-
-  return {
-    ...data,
+    description: `${status.emoji} ${status.content}`,
+    tags: ["Status"],
     rawDataHash,
+    media: [],
   };
 }
 
-export async function loadStatusLol(
-  _: LoaderParams
-): Promise<Record<string, StatusLolEntity>> {
+export async function loadStatusLolPosts(): Promise<Result<StatusLolPosts>> {
   try {
     const request = await fetch(URL);
     const data: any = await request.json();
@@ -39,9 +39,11 @@ export async function loadStatusLol(
 
     const mapped: StatusLolEntity[] = statuses.map(mapStatusLol);
 
-    return arrayToRecord(mapped, (status) => status.id);
+    return Ok(entitiesToOrderedEntities(mapped));
   } catch (e) {
-    console.error(e);
-    return {};
+    return Err({
+      type: "UNABLE_TO_FETCH_URL",
+      url: URL,
+    });
   }
 }

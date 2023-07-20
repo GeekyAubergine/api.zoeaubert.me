@@ -1,154 +1,134 @@
-export type EntityMedia = {
-  type: "image";
-  url: string;
+type EntityType =
+  | "media"
+  | "blogPost"
+  | "microBlog"
+  | "microPost"
+  | "mastodon"
+  | "statusLol"
+  | "album"
+  | "albumPhoto";
+
+export type ImageOrientation = "landscape" | "portrait" | "square";
+
+export type Image = {
+  src: string;
   alt: string;
-  date: string;
-  postSlug: string;
+  title: string;
   width: number;
   height: number;
+  orientation: ImageOrientation;
 };
 
-type BaseEntity<T, D> = {
+export type EntityMedia = {
+  image: Image;
+  parentPermalink: string;
+  date: string;
+};
+
+type EntityBase<T extends EntityType, D> = {
   rawDataHash: string;
   type: T;
-  id: string;
-  slug: string;
+  key: string;
+  permalink: string;
   date: string;
+  content: string;
+  tags: string[];
+  media: EntityMedia[];
+  description: string;
 } & D;
 
-export type BlogPostEntity = BaseEntity<
+export type BlogPostEntity = EntityBase<
   "blogPost",
   {
     title: string;
-    description: string;
-    content: string;
-    tags: string[];
-    hero: {
-      url: string;
-      alt: string;
-      showHero: boolean;
-      width: number;
-      height: number;
-    } | null;
-    media: EntityMedia[];
+    hero: Image | null;
+    showHero: boolean;
+    firstLine: string;
   }
 >;
 
-export type MicroEntity = BaseEntity<
-  "micro",
-  {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    excerpt: string;
-  }
->;
+export type MicroBlogEntity = EntityBase<"microBlog", {}>;
 
-export type StatusLolEntity = BaseEntity<
-  "statuslol",
-  {
-    content: string;
-    emoji: string;
-    originalUrl: string;
-    excerpt: string;
-    tags: string[];
-  }
->;
+export type MicroPostEntity = EntityBase<"microPost", {}>;
 
-export type MastodonEntity = BaseEntity<
+export type MastodonPostEntity = EntityBase<
   "mastodon",
   {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
     originalUrl: string;
-    excerpt: string;
   }
 >;
 
-export type MicroBlogEntity = BaseEntity<
-  "microblog",
+export type StatusLolEntity = EntityBase<
+  "statusLol",
   {
-    content: string;
-    tags: string[];
-    media: EntityMedia[];
-    excerpt: string;
+    emoji: string;
+    originalUrl: string;
   }
 >;
 
-export type PhotoEntity = BaseEntity<
-  "photo",
+export type AlbumPhotoEntity = EntityBase<
+  "albumPhoto",
   {
-    id: string;
-    description: string;
-    alt: string;
-    tags: string[];
-    featured: boolean;
-    orientation: "landscape" | "portrait" | "square";
-    thumbnailSmall: {
-      url: string;
-      width: number;
-      height: number;
-    };
-    thumbnailLarge: {
-      url: string;
-      width: number;
-      height: number;
-    };
-    fullSize: {
-      url: string;
-      width: number;
-      height: number;
-    };
-    albumSlug: string;
+    fullSize: Image;
+    thumbnailSmall: Image;
+    thumbnailLarge: Image;
+    albumPermalink: string;
     albumTotalPhotos: number;
     indexString: string;
     previous: string | null;
     next: string | null;
     albumTitle: string;
-    date: string;
+    featured: boolean;
   }
 >;
 
-export type AlbumData = {
-  title: string;
-  slug: string;
-  description: string | null;
-  date: string;
-  photoOrder: string[];
-};
-
-export type AlbumEntity = BaseEntity<
+export type AlbumEntity = EntityBase<
   "album",
-  AlbumData & {
-    tags: string[];
+  {
+    title: string;
+    photoOrder: string[];
     coverPhotos: string[];
   }
 >;
 
 export type Entity =
   | BlogPostEntity
-  | MicroEntity
-  | StatusLolEntity
-  | MastodonEntity
   | MicroBlogEntity
+  | MicroPostEntity
+  | MastodonPostEntity
+  | StatusLolEntity
   | AlbumEntity
-  | PhotoEntity;
+  | AlbumPhotoEntity;
 
-export type OrderedEntities = {
-  entities: Record<string, Entity>;
+export type OrderedEntities<E extends Entity> = {
   entityOrder: string[];
+  entities: Record<string, E>;
 };
 
-export type Archive = OrderedEntities & {
-  lastUpdated: string;
+export type BlogPosts = OrderedEntities<BlogPostEntity>;
+export type MicroBlogPosts = OrderedEntities<MicroBlogEntity>;
+export type MicroPosts = OrderedEntities<MicroPostEntity>;
+export type MastodonPosts = OrderedEntities<MastodonPostEntity>;
+export type StatusLolPosts = OrderedEntities<StatusLolEntity>;
+export type Albums = OrderedEntities<AlbumEntity>;
+export type AlbumPhotos = OrderedEntities<AlbumPhotoEntity>;
+
+type Data = {
+  blogPosts: BlogPosts;
+  microBlogsPosts: MicroBlogPosts;
+  microPosts: MicroPosts;
+  mastodonPosts: MastodonPosts;
+  statusLolPosts: StatusLolPosts;
+  albums: Albums;
+  albumPhotos: AlbumPhotos;
   about: string;
-  now: string;
   faq: string;
-  links: string;
+  now: string;
+  lastUpdated: string;
 };
+export default Data;
 
-export type LoaderParams = {
-  archive: Archive;
-  cacheDirectory: string;
+export type LoaderParams<E extends Entity> = {
+  orderedEntities: OrderedEntities<E>;
+  cacheDir: string;
 };

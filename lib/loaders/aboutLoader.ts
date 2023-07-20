@@ -1,22 +1,8 @@
-import { LoaderParams } from "../types";
+import { Result, readMarkdownFile } from "../utils";
+import path from "path";
 
-const URL = "https://api.omg.lol/address/geekyaubergine/pastebin/web-about.txt";
+const FILE_NAME = "about.md";
 
-export async function loadAbout({ archive }: LoaderParams): Promise<string> {
-  try {
-    const request = await fetch(URL);
-
-    const json = await request.json();
-
-    const { response } = json;
-
-    const { paste } = response;
-
-    const { content } = paste;
-
-    return content;
-  } catch (e) {
-    console.error(e);
-    return archive.about;
-  }
+export async function loadAbout(contentDir: string): Promise<Result<string>> {
+  return readMarkdownFile(path.join(contentDir, FILE_NAME));
 }

@@ -2,6 +2,7 @@ import path from "path";
 import { Result, mergeOrderedEntities, writeFile } from "../utils";
 import Data, {
   AlbumEntity,
+  AlbumPhotoEntity,
   BlogPostEntity,
   MastodonPostEntity,
   MicroBlogEntity,
@@ -9,11 +10,11 @@ import Data, {
   StatusLolEntity,
 } from "../types";
 
-export async function writeTimeline(
+export async function writeAllPosts(
   outputDir: string,
   data: Data
 ): Promise<Result<undefined>> {
-  const outputPath = path.join(outputDir, "timeline.json");
+  const outputPath = path.join(outputDir, "all-posts.json");
 
   const entities = mergeOrderedEntities<
     | MicroPostEntity
@@ -22,6 +23,7 @@ export async function writeTimeline(
     | MicroBlogEntity
     | BlogPostEntity
     | AlbumEntity
+    | AlbumPhotoEntity
   >([
     data.microPosts,
     data.mastodonPosts,
@@ -29,6 +31,7 @@ export async function writeTimeline(
     data.microBlogsPosts,
     data.blogPosts,
     data.albums,
+    data.albumPhotos,
   ]);
 
   return writeFile(outputPath, JSON.stringify(entities, null, 2));

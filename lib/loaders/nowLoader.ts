@@ -1,8 +1,8 @@
-import { LoaderParams } from "../types";
+import { Err, Ok, Result } from "../utils";
 
 const URL = "https://api.omg.lol/address/geekyaubergine/pastebin/web-now.txt";
 
-export async function loadNow({ archive }: LoaderParams): Promise<string> {
+export async function loadNow(): Promise<Result<string>> {
   try {
     const request = await fetch(URL);
 
@@ -14,9 +14,11 @@ export async function loadNow({ archive }: LoaderParams): Promise<string> {
 
     const { content } = paste;
 
-    return content;
+    return Ok(content);
   } catch (e) {
-    console.error(e);
-    return archive.now;
+    return Err({
+      type: "UNABLE_TO_FETCH_URL",
+      url: URL,
+    });
   }
 }
