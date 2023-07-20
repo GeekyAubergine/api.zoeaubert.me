@@ -30,7 +30,7 @@ import { getFilesRecursive } from "../utils";
 const FILE_NAME_REGEX = /([\w,\s-]+)\.[A-Za-z]{3}$/;
 
 const photoLimiter = new Bottleneck({
-  maxConcurrent: 8,
+  maxConcurrent: 2,
 });
 
 type AlbumData = {
