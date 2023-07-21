@@ -41,11 +41,8 @@ const DEFAULT_DATA: Data = {
     entityOrder: [],
     entities: {},
   },
-  lego: {
-    sets: {},
-    setKeys: [],
-    totalPieces: 0,
-  },
+  lego: {},
+  games: {},
   about: "",
   faq: "",
   now: "",

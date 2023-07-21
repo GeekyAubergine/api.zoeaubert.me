@@ -1,7 +1,7 @@
 import { Err, Ok, Result } from "../utils";
 
 import config from "../../config";
-import { Lego, LegoSet, LegoSets } from "../types";
+import { Lego, LegoSet } from "../types";
 
 const LOGIN_URL = "https://brickset.com/api/v3.asmx/login";
 const GET_SET_URL = "https://brickset.com/api/v3.asmx/getSets";
@@ -55,7 +55,7 @@ export async function loadLegoSets(): Promise<Result<Lego>> {
 
   const rawSets = setsResult.value.sets;
 
-  const sets: LegoSets = {};
+  const lego: Lego = {};
 
   for (const rawSet of rawSets) {
     const set: LegoSet = {
@@ -73,26 +73,7 @@ export async function loadLegoSets(): Promise<Result<Lego>> {
       quantity: rawSet.collection.qtyOwned,
     };
 
-    sets[set.key] = set;
+    lego[set.key] = set;
   }
-
-  console.log({ sets })
-
-  const setKeys = Object.keys(sets).sort((a, b) => {
-    const setA = sets[a]!;
-    const setB = sets[b]!;
-
-    return setB.pieces - setA.pieces;
-  });
-
-  const totalPieces = Object.values(sets).reduce(
-    (total, set) => total + set.pieces * set.quantity,
-    0
-  );
-
-  return Ok({
-    sets,
-    setKeys,
-    totalPieces,
-  });
+  return Ok(lego);
 }

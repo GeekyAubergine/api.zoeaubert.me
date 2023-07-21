@@ -120,21 +120,35 @@ export type LegoSet = {
   pieces: number;
   image: {
     src: string;
-  },
+  };
   thumbnail: {
     src: string;
-  }
+  };
   bricksetUrl: string;
   quantity: number;
 };
 
-export type LegoSets = Record<string, LegoSet>;
+export type Lego = Record<string, LegoSet>;
 
-export type Lego = {
-  sets: LegoSets;
-  setKeys: string[];
-  totalPieces: number;
+export type Game = {
+  appid: number;
+  name: string;
+  played: boolean;
+  playtime: {
+    minutes: number;
+    hours: number;
+  };
+  lastPlayed: {
+    date: string;
+    timestamp: number;
+  };
+  link: string;
+  headerImage: {
+    src: string;
+  };
 };
+
+export type Games = Record<string, Game>
 
 type Data = {
   blogPosts: BlogPosts;
@@ -148,6 +162,7 @@ type Data = {
   faq: string;
   now: string;
   lego: Lego;
+  games: Games;
   lastUpdated: string;
 };
 export default Data;

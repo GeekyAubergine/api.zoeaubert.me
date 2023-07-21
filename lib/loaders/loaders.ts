@@ -11,6 +11,7 @@ import { loadAlbumsAndPhotos } from "./albumsAndPhotosLoader";
 import { loadFaq } from "./faqLoader";
 import { loadNow } from "./nowLoader";
 import { loadLegoSets } from "./legoLoader";
+import { loadGames } from "./gamesLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
@@ -68,6 +69,8 @@ export async function loadData(
 
   const legoSetsRequest = loadLegoSets();
 
+  const gamesRequest = loadGames();
+
   const [
     blogPostsResult,
     aboutResult,
@@ -79,6 +82,7 @@ export async function loadData(
     faqResult,
     nowResult,
     legoSetsResult,
+    gamesResult,
   ] = await Promise.all([
     blogPostsRequest,
     aboutRequest,
@@ -90,6 +94,7 @@ export async function loadData(
     faqRequest,
     nowRequest,
     legoSetsRequest,
+    gamesRequest,
   ]);
 
   return Ok({
@@ -112,6 +117,7 @@ export async function loadData(
     faq: faqResult.ok ? faqResult.value : data.faq,
     now: nowResult.ok ? nowResult.value : data.now,
     lego: legoSetsResult.ok ? legoSetsResult.value : data.lego,
+    games: gamesResult.ok ? gamesResult.value : data.games,
     lastUpdated: new Date().toISOString(),
   });
 }
