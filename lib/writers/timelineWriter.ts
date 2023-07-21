@@ -1,5 +1,5 @@
 import path from "path";
-import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import { Result, mergeOrderedEntities, writeJSONFile } from "../utils";
 import Data, {
   AlbumEntity,
   BlogPostEntity,
@@ -31,5 +31,5 @@ export async function writeTimeline(
     data.albums,
   ]);
 
-  return writeFile(outputPath, JSON.stringify(entities, null, 2));
+  return writeJSONFile(outputPath, entities);
 }

@@ -1,6 +1,6 @@
 import path from "path";
 import natsort from "natsort";
-import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import { Result, mergeOrderedEntities, writeJSONFile } from "../utils";
 import Data, {
   AlbumPhotoEntity,
   BlogPostEntity,
@@ -84,5 +84,5 @@ export async function writeTags(
     postsByTag,
   };
 
-  return writeFile(outputPath, JSON.stringify(out, null, 2));
+  return writeJSONFile(outputPath, out);
 }

@@ -10,6 +10,7 @@ import { loadStatusLolPosts } from "./statuslolLoader";
 import { loadAlbumsAndPhotos } from "./albumsAndPhotosLoader";
 import { loadFaq } from "./faqLoader";
 import { loadNow } from "./nowLoader";
+import { loadLegoSets } from "./legoLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
@@ -63,7 +64,9 @@ export async function loadData(
 
   const faqRequest = loadFaq(contentDir);
 
-  const nowLoader = loadNow();
+  const nowRequest = loadNow();
+
+  const legoSetsRequest = loadLegoSets();
 
   const [
     blogPostsResult,
@@ -75,6 +78,7 @@ export async function loadData(
     albumResult,
     faqResult,
     nowResult,
+    legoSetsResult,
   ] = await Promise.all([
     blogPostsRequest,
     aboutRequest,
@@ -84,7 +88,8 @@ export async function loadData(
     statusLolRequest,
     albumRequest,
     faqRequest,
-    nowLoader,
+    nowRequest,
+    legoSetsRequest,
   ]);
 
   return Ok({
@@ -93,9 +98,7 @@ export async function loadData(
     microBlogsPosts: microBlogArchiveResult.ok
       ? microBlogArchiveResult.value
       : data.microBlogsPosts,
-    microPosts: microPostsResult.ok
-      ? microPostsResult.value
-      : data.microPosts,
+    microPosts: microPostsResult.ok ? microPostsResult.value : data.microPosts,
     mastodonPosts: mastodonResult.ok
       ? mastodonResult.value
       : data.mastodonPosts,
@@ -108,6 +111,7 @@ export async function loadData(
       : data.albumPhotos,
     faq: faqResult.ok ? faqResult.value : data.faq,
     now: nowResult.ok ? nowResult.value : data.now,
+    lego: legoSetsResult.ok ? legoSetsResult.value : data.lego,
     lastUpdated: new Date().toISOString(),
   });
 }

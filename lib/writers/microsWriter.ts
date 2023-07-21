@@ -1,5 +1,5 @@
 import path from "path";
-import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import { Result, mergeOrderedEntities, writeJSONFile } from "../utils";
 import Data, {
   MastodonPostEntity,
   MicroBlogEntity,
@@ -29,5 +29,5 @@ export async function writeMicros(
     recent: ordered.entityOrder.slice(0, 5),
   }
 
-  return writeFile(outputPath, JSON.stringify(out, null, 2));
+  return writeJSONFile(outputPath, out);
 }

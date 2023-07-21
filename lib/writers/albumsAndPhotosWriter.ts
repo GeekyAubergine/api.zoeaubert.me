@@ -1,5 +1,5 @@
 import path from "path";
-import { Result, writeFile } from "../utils";
+import { Result, writeJSONFile } from "../utils";
 import Data from "../types";
 
 export async function writeAlbumsAndPhoto(
@@ -48,5 +48,5 @@ export async function writeAlbumsAndPhoto(
     albumsByYear,
   };
 
-  return writeFile(outputPath, JSON.stringify(out, null, 2));
+  return writeJSONFile(outputPath, out);
 }

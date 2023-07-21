@@ -107,3 +107,5 @@ config.json
 config.ts
 _public
 .content
+
+/build
