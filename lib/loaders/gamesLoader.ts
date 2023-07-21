@@ -45,7 +45,7 @@ export async function loadGames(): Promise<Result<Games>> {
       },
       link: `https://store.steampowered.com/app/${
         rawGame.appid
-      }/${rawGame.name.replace(" ", "_")}`,
+      }/${rawGame.name.replace(/ /g, "_")}`,
       headerImage: {
         src: `https://steamcdn-a.akamaihd.net/steam/apps/${rawGame.appid}/header.jpg`,
       },

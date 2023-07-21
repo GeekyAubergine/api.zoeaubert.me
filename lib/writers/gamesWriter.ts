@@ -36,7 +36,7 @@ export async function writeGames(
     0
   );
 
-  const totalPlaytime = (totalPlaytimeMinutes / 60).toFixed(1);
+  const totalPlaytime = parseFloat((totalPlaytimeMinutes / 60).toFixed(1))
 
   const out = {
     games,
