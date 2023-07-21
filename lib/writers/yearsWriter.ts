@@ -1,5 +1,5 @@
 import path from "path";
-import { Result, mergeOrderedEntities, writeFile } from "../utils";
+import { Result, mergeOrderedEntities, writeJSONFile } from "../utils";
 import Data, {
   AlbumEntity,
   BlogPostEntity,
@@ -62,5 +62,5 @@ export async function writeYears(
     entitiesByYear,
   };
 
-  return writeFile(outputPath, JSON.stringify(out, null, 2));
+  return writeJSONFile(outputPath, out);
 }

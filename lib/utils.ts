@@ -19,6 +19,10 @@ const s3 = new S3({
   signatureVersion: "v4",
 });
 
+export async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export type Ok<T> = { ok: true; value: T };
 
 export type Err = { ok: false; error: ProjectError };
@@ -321,19 +325,29 @@ export async function uploadToCDN(
   }
 }
 
-export async function readMarkdownFile(path: string): Promise<Result<string>> {
+export async function readFile(path: string): Promise<Result<string>> {
   try {
     const fileContents = await fs.readFile(path, "utf-8");
 
-    const frontMatter = frontMatterParser(fileContents);
-
-    return Ok(frontMatter.body);
+    return Ok(fileContents);
   } catch (e) {
     return Err({
       type: "UNABLE_TO_READ_FILE",
       path,
     });
   }
+}
+
+export async function readMarkdownFile(path: string): Promise<Result<string>> {
+  const fileContents = await readFile(path);
+
+  if (!fileContents.ok) {
+    return fileContents;
+  }
+
+  const frontMatter = frontMatterParser(fileContents.value);
+
+  return Ok(frontMatter.body);
 }
 
 export async function writeFile(
@@ -350,6 +364,15 @@ export async function writeFile(
       path,
     });
   }
+}
+
+export async function writeJSONFile(
+  path: string,
+  contents: {}
+): Promise<Result<undefined>> {
+  const json = JSON.stringify(contents, null, 2);
+
+  return writeFile(path, json);
 }
 
 export function mergeOrderedEntities<T extends Entity>(

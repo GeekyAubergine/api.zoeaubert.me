@@ -113,6 +113,29 @@ export type StatusLolPosts = OrderedEntities<StatusLolEntity>;
 export type Albums = OrderedEntities<AlbumEntity>;
 export type AlbumPhotos = OrderedEntities<AlbumPhotoEntity>;
 
+export type LegoSet = {
+  key: string;
+  name: string;
+  number: string;
+  pieces: number;
+  image: {
+    src: string;
+  },
+  thumbnail: {
+    src: string;
+  }
+  bricksetUrl: string;
+  quantity: number;
+};
+
+export type LegoSets = Record<string, LegoSet>;
+
+export type Lego = {
+  sets: LegoSets;
+  setKeys: string[];
+  totalPieces: number;
+};
+
 type Data = {
   blogPosts: BlogPosts;
   microBlogsPosts: MicroBlogPosts;
@@ -124,6 +147,7 @@ type Data = {
   about: string;
   faq: string;
   now: string;
+  lego: Lego;
   lastUpdated: string;
 };
 export default Data;
