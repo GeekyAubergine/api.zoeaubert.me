@@ -1,3 +1,5 @@
+import { MastodonPostEntity, MicroBlogEntity, MicroPostEntity } from "./types";
+
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
   localPath: string;
@@ -144,6 +146,11 @@ type AlbumMissingDate = {
   path: string;
 };
 
+type UnableToParseMoviePost = {
+  type: "UNABLE_TO_PARSE_MOVIE_POST";
+  post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -174,4 +181,5 @@ export type ProjectError =
   | AlubmPhotoMissingMetadata
   | AlbumPhotoMissingWidthOrHeight
   | AlbumMissingTitle
-  | AlbumMissingDate;
+  | AlbumMissingDate
+  | UnableToParseMoviePost;

@@ -1,14 +1,22 @@
-import { Err, Ok, Result } from "../utils";
+import { Err, Ok, Result, fetchUrl } from "../utils";
 
 const URL = "https://api.omg.lol/address/geekyaubergine/pastebin/web-now.txt";
 
 export async function loadNow(): Promise<Result<string>> {
   try {
-    const request = await fetch(URL);
+    const request = await fetchUrl<{
+      response: {
+        paste: {
+          content: string;
+        };
+      };
+    }>(URL);
 
-    const json = await request.json();
+    if (!request.ok) {
+      return request;
+    }
 
-    const { response } = json;
+    const { response } = request.value;
 
     const { paste } = response;
 

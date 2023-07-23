@@ -1,4 +1,4 @@
-import { Err, Ok, Result } from "../utils";
+import { Ok, Result, fetchUrl } from "../utils";
 
 import config from "../../config";
 import { Lego, LegoSet } from "../types";
@@ -7,37 +7,17 @@ const LOGIN_URL = "https://brickset.com/api/v3.asmx/login";
 const GET_SET_URL = "https://brickset.com/api/v3.asmx/getSets";
 
 async function fetchUserHash(): Promise<Result<string>> {
-  try {
-    const loginResponse = await fetch(
-      `${LOGIN_URL}?apiKey=${config.brickset.apiKey}&username=${config.brickset.username}&password=${config.brickset.password}`
-    );
+  const loginResponse = await fetchUrl<{
+    hash: string;
+  }>(
+    `${LOGIN_URL}?apiKey=${config.brickset.apiKey}&username=${config.brickset.username}&password=${config.brickset.password}`
+  );
 
-    const loginData = await loginResponse.json();
-
-    return Ok(loginData.hash);
-  } catch (e) {
-    return Err({
-      type: "UNABLE_TO_FETCH_URL",
-      url: LOGIN_URL,
-    });
+  if (!loginResponse.ok) {
+    return loginResponse;
   }
-}
 
-async function fetchSets(userHash: string): Promise<Result<any>> {
-  try {
-    const getSetsResponse = await fetch(
-      `${GET_SET_URL}?apiKey=${config.brickset.apiKey}&userHash=${userHash}&params={"owned":1}`
-    );
-
-    const getSetsData = await getSetsResponse.json();
-
-    return Ok(getSetsData);
-  } catch (e) {
-    return Err({
-      type: "UNABLE_TO_FETCH_URL",
-      url: GET_SET_URL,
-    });
-  }
+  return Ok(loginResponse.value.hash);
 }
 
 export async function loadLegoSets(): Promise<Result<Lego>> {
@@ -47,7 +27,9 @@ export async function loadLegoSets(): Promise<Result<Lego>> {
     return userHashResult;
   }
 
-  const setsResult = await fetchSets(userHashResult.value);
+  const setsResult = await fetchUrl<any>(
+    `${GET_SET_URL}?apiKey=${config.brickset.apiKey}&userHash=${userHashResult.value}&params={"owned":1}`
+  );
 
   if (!setsResult.ok) {
     return setsResult;

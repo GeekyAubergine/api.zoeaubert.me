@@ -1,5 +1,4 @@
 import {
-  Err,
   Ok,
   Result,
   cdnPathForFileNameAndDate,
@@ -7,6 +6,7 @@ import {
   contentContainsContentToFilterOut,
   downloadAndCacheFile,
   entitiesToOrderedEntities,
+  fetchUrl,
   getImageOrientation,
   hash,
   uploadToCDN,
@@ -172,16 +172,13 @@ async function fetchAllToots(): Promise<Result<any[]>> {
   while (true) {
     const url = `${URL}${maxId ? `&max_id=${maxId}` : ""}`;
 
-    const result = await fetch(url);
+    const result = await fetchUrl<any[]>(url);
 
     if (!result.ok) {
-      return Err({
-        type: "UNABLE_TO_FETCH_URL",
-        url,
-      });
+      return result;
     }
 
-    const data = await result.json();
+    const data = result.value;
 
     if (!data.length) {
       break;

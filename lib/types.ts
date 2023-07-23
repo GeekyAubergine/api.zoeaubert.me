@@ -148,7 +148,7 @@ export type Game = {
   };
 };
 
-export type Games = Record<string, Game>
+export type Games = Record<string, Game>;
 
 type Data = {
   blogPosts: BlogPosts;
