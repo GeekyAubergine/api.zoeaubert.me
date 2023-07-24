@@ -1,6 +1,6 @@
 import path from 'path'
 import { Result, writeFile } from "../utils";
-import Data from "../types";
+import { Data } from "../types";
 
 export async function writeFaq(
     outputDir: string,

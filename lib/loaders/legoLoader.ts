@@ -28,7 +28,7 @@ export async function loadLegoSets(): Promise<Result<Lego>> {
   }
 
   const setsResult = await fetchUrl<any>(
-    `${GET_SET_URL}?apiKey=${config.brickset.apiKey}&userHash=${userHashResult.value}&params={"owned":1}`
+    `${GET_SET_URL}?apiKey=${config.brickset.apiKey}&userHash=${userHashResult.value}&params={"owned":1, "pageSize": 500}`
   );
 
   if (!setsResult.ok) {

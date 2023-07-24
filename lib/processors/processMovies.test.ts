@@ -1,8 +1,8 @@
 import { describe, expect, it } from "@jest/globals";
 
 import { MastodonPostEntity, MicroBlogEntity, MicroPostEntity } from "../types";
-import { PostParts, parsePost } from "./moviesWriter";
 import { Ok } from "../utils";
+import { MoviePostParts, parsePost } from "./processsMovies";
 
 describe("moviesWriter", () => {
   describe("#parsePost", () => {
@@ -25,7 +25,8 @@ describe("moviesWriter", () => {
 
       const result = parsePost(post);
 
-      const expected: PostParts = {
+      const expected: MoviePostParts = {
+        key: "Chicken Little-2005",
         title: "Chicken Little",
         year: 2005,
         rating: {
@@ -34,6 +35,7 @@ describe("moviesWriter", () => {
         },
         review: "Nice easy watch, some good moments and laughs",
         date: "2022-10-05T21:00:00.000Z",
+        postPermalink: "/micros/2022/10/05/chicken-little-nice",
       };
 
       expect(result).toEqual(Ok(expected));
@@ -56,7 +58,8 @@ describe("moviesWriter", () => {
 
       const result = parsePost(post);
 
-      const expected: PostParts = {
+      const expected: MoviePostParts = {
+        key: "Desert Hearts-1985",
         title: "Desert Hearts",
         year: 1985,
         rating: {
@@ -65,6 +68,7 @@ describe("moviesWriter", () => {
         },
         review: null,
         date: "2022-12-06T23:00:00.000Z",
+        postPermalink: "/micros/2022/12/06/desert-hearts",
       };
 
       expect(result).toEqual(Ok(expected));
@@ -89,7 +93,8 @@ describe("moviesWriter", () => {
 
       const result = parsePost(post);
 
-      const expected: PostParts = {
+      const expected: MoviePostParts = {
+        key: "The Blues Brothers-1980",
         title: "The Blues Brothers",
         year: 1980,
         rating: {
@@ -98,6 +103,7 @@ describe("moviesWriter", () => {
         },
         review: "This film gets better every time I watch it.",
         date: "2022-12-22T23:01:45.000Z",
+        postPermalink: "/micros/2022/12/22/the-blues-brothers",
       };
 
       expect(result).toEqual(Ok(expected));
@@ -120,7 +126,8 @@ describe("moviesWriter", () => {
 
       const result = parsePost(post);
 
-      const expected: PostParts = {
+      const expected: MoviePostParts = {
+        key: "All Quiet on the Western Front-2022",
         title: "All Quiet on the Western Front",
         year: 2022,
         rating: {
@@ -130,6 +137,7 @@ describe("moviesWriter", () => {
         review:
           "I see why others enjoyed it, but a lot of it felt like gore for the sake of gore. The performances are great.",
         date: "2023-02-04T20:04",
+        postPermalink: "/micros/2023/02/04/all-quiet",
       };
 
       expect(result).toEqual(Ok(expected));
@@ -152,7 +160,8 @@ describe("moviesWriter", () => {
 
       const result = parsePost(post);
 
-      const expected: PostParts = {
+      const expected: MoviePostParts = {
+        key: "The Menu-2022",
         title: "The Menu",
         year: 2022,
         rating: {
@@ -161,6 +170,7 @@ describe("moviesWriter", () => {
         },
         review: "Interesting, but not for me",
         date: "2023-06-10T19:40:19.551Z",
+        postPermalink: "/micros/2023/06/110521615616918604",
       };
 
       expect(result).toEqual(Ok(expected));
@@ -182,7 +192,8 @@ describe("moviesWriter", () => {
 
       const result = parsePost(post);
 
-      const expected: PostParts = {
+      const expected: MoviePostParts = {
+        key: "Yentl-1983",
         title: "Yentl",
         year: 1983,
         rating: {
@@ -191,6 +202,7 @@ describe("moviesWriter", () => {
         },
         review: null,
         date: "2023-02-27T22:23:15.822Z",
+        postPermalink: "/micros/2023/02/109939038343455006",
       };
 
       expect(result).toEqual(Ok(expected));

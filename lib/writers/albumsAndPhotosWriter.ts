@@ -1,6 +1,6 @@
 import path from "path";
 import { Result, writeJSONFile } from "../utils";
-import Data from "../types";
+import { Data } from "../types";
 
 export async function writeAlbumsAndPhoto(
   outputDir: string,

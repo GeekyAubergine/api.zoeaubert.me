@@ -1,4 +1,4 @@
-import Data from "../types";
+import { Data } from "../types";
 import { Err, Ok, Result, filterErr } from "../utils";
 import { writeArchive } from "./archiveWriter";
 import { writeAbout } from "./aboutWriter";

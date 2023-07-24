@@ -150,7 +150,7 @@ export type Game = {
 
 export type Games = Record<string, Game>;
 
-type Data = {
+export type LoaderData = {
   blogPosts: BlogPosts;
   microBlogsPosts: MicroBlogPosts;
   microPosts: MicroPosts;
@@ -163,9 +163,29 @@ type Data = {
   now: string;
   lego: Lego;
   games: Games;
+};
+
+export type Movie = {
+  key: string;
+  title: string;
+  year: number;
+  rating: {
+    score: number;
+    max: number;
+  };
+  review: string | null;
+  posterUrl: string;
+  date: string;
+  postPermalink: string;
+  rawDataHash: string;
+};
+
+export type Movies = Record<string, Movie>;
+
+export type Data = LoaderData & {
+  movies: Movies;
   lastUpdated: string;
 };
-export default Data;
 
 export type LoaderParams<E extends Entity> = {
   orderedEntities: OrderedEntities<E>;

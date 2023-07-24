@@ -1,5 +1,5 @@
 import path from "path";
-import Data from "../types";
+import { LoaderData } from "../types";
 import { Ok, Result } from "../utils";
 import { loadAbout } from "./aboutLoader";
 import { loadBlogPosts } from "./blogPostLoader";
@@ -24,10 +24,10 @@ const DEFAULT_ORDERED_ENTITIES = {
 };
 
 export async function loadData(
-  data: Data,
+  data: LoaderData,
   cacheDir: string,
   contentDir: string
-): Promise<Result<Data>> {
+): Promise<Result<LoaderData>> {
   const blogPostsRequest = loadBlogPosts(
     {
       orderedEntities: data.blogPosts ?? DEFAULT_ORDERED_ENTITIES,

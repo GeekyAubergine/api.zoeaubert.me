@@ -1,5 +1,5 @@
+import { MoviePostParts } from "./processors/processsMovies";
 import { MastodonPostEntity, MicroBlogEntity, MicroPostEntity } from "./types";
-import { PostParts } from "./writers/moviesWriter";
 
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
@@ -154,7 +154,7 @@ type UnableToParseMoviePost = {
 
 type CouldNotFindMovie = {
   type: "COULD_NOT_FIND_MOVIE";
-  post: PostParts;
+  post: MoviePostParts;
 };
 
 export type ProjectError =

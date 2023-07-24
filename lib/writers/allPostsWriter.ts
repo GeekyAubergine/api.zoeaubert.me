@@ -1,6 +1,7 @@
 import path from "path";
 import { Result, mergeOrderedEntities, writeJSONFile } from "../utils";
-import Data, {
+import {
+  Data,
   AlbumEntity,
   AlbumPhotoEntity,
   BlogPostEntity,

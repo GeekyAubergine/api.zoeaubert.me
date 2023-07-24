@@ -3,10 +3,11 @@ import path from "path";
 import config from "./config";
 
 import { Err, Ok, Result, exists } from "./lib/utils";
-import Data from "./lib/types";
+import { Data } from "./lib/types";
 import extract from "extract-zip";
 import { loadData } from "./lib/loaders/loaders";
 import { writeData } from "./lib/writers/writers";
+import { generateData } from "./lib/processors/processors";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
@@ -46,6 +47,7 @@ const DEFAULT_DATA: Data = {
   about: "",
   faq: "",
   now: "",
+  movies: {},
   lastUpdated: "",
 };
 
@@ -137,26 +139,44 @@ async function main() {
 
   const loadStart = Date.now();
 
-  const newArchiveResult = await loadData(archive, CACHE_DIR, CONTENT_DIR);
+  const loadDataResult = await loadData(archive, CACHE_DIR, CONTENT_DIR);
 
-  if (!newArchiveResult.ok) {
-    console.error(newArchiveResult.error);
+  if (!loadDataResult.ok) {
+    console.error(loadDataResult.error);
     return;
   }
 
-  const newArchive = newArchiveResult.value;
+  const loaderData = loadDataResult.value;
 
-  newArchive.lastUpdated = new Date().toISOString();
+  const archiveWithNewData = {
+    ...archive,
+    ...loaderData,
+  };
 
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
+  const transformStart = Date.now();
+
+  console.log("Transforming data");
+
+  const processedData = await generateData(archiveWithNewData);
+
+  const transformEnd = Date.now();
+
+  console.log(`Transformed in ${transformEnd - transformStart}ms`);
+
+  if (!processedData.ok) {
+    console.error(processedData.error);
+    return;
+  }
+
   console.log("Writing data");
 
   const writeStart = Date.now();
 
-  const writingResult = await writeData(newArchive, PUBLIC_DIR);
+  const writingResult = await writeData(processedData.value, PUBLIC_DIR);
 
   if (!writingResult.ok) {
     console.error(writingResult.error);
