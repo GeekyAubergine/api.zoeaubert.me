@@ -1,4 +1,5 @@
 import { MastodonPostEntity, MicroBlogEntity, MicroPostEntity } from "./types";
+import { PostParts } from "./writers/moviesWriter";
 
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
@@ -151,6 +152,11 @@ type UnableToParseMoviePost = {
   post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
 };
 
+type CouldNotFindMovie = {
+  type: "COULD_NOT_FIND_MOVIE";
+  post: PostParts;
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -182,4 +188,5 @@ export type ProjectError =
   | AlbumPhotoMissingWidthOrHeight
   | AlbumMissingTitle
   | AlbumMissingDate
-  | UnableToParseMoviePost;
+  | UnableToParseMoviePost
+  | CouldNotFindMovie;

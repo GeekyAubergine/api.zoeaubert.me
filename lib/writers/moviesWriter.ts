@@ -9,6 +9,8 @@ import {
   Result,
   exhaust,
   fetchUrl,
+  filterErr,
+  filterOk,
   mergeOrderedEntities,
   writeJSONFile,
 } from "../utils";
@@ -23,6 +25,10 @@ const LINK_TITLE_REGEX = /\[(.*)\]/;
 const MOVIE_YEAR_REGEX = /\((\d+)(.*\))?/;
 const REVIEW_REGEX = /- (.+)$/;
 const SCORE_AND_MAX_REGEX = /(\d+)\/(\d+)/;
+
+function movieTitleToSearch(title: string): string {
+  return title.replace(/[&]/g, "").replace(/\s+/g, "+").toLowerCase();
+}
 
 type Movie = {
   title: string;
@@ -197,9 +203,46 @@ export function parsePost(
   }
 }
 
-// async function findMoveFromPost(post: PostParts): Promise<Result<Movie>> {
+async function findMovieFromPost(post: PostParts): Promise<Result<Movie>> {
+  const serachQuery = movieTitleToSearch(post.title);
 
-// }
+  const response = await fetchUrl<{
+    results: {
+      id: number;
+      title: string;
+      release_date: string;
+      poster_path: string;
+    }[];
+  }>(`${URL}?api_key=${config.movieDB.apiKey}&query=${serachQuery}`);
+
+  if (!response.ok) {
+    return response;
+  }
+
+  const { results } = response.value;
+
+  const movie = results.find((movie) =>
+    movie.release_date.startsWith(post.year.toString())
+  );
+
+  console.log({ movie });
+
+  if (!movie) {
+    return Err({
+      type: "COULD_NOT_FIND_MOVIE",
+      post,
+    });
+  }
+
+  return Ok({
+    title: post.title,
+    year: post.year,
+    rating: post.rating,
+    review: post.review,
+    posterUrl: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+    date: post.date,
+  });
+}
 
 export async function writeMovies(
   outputDir: string,
@@ -224,7 +267,7 @@ export async function writeMovies(
     );
   });
 
-  const movies = moviePosts.reduce<Movies>((acc, id) => {
+  const movieParts = moviePosts.reduce<PostParts[]>((acc, id) => {
     const entity = potentialMoviePosts.entities[id];
 
     if (!entity) {
@@ -238,14 +281,29 @@ export async function writeMovies(
       return acc;
     }
 
+    return acc.concat([post.value]);
+  }, []);
+
+  const movieResults = await Promise.all(
+    Object.values(movieParts).map((movie) => findMovieFromPost(movie))
+  );
+
+  const errors = filterErr(movieResults);
+
+  if (errors.length) {
+    errors.forEach((error) => console.error(error));
+  }
+
+  const moviesArray = filterOk(movieResults);
+
+  const movies = moviesArray.reduce<Movies>((acc, movie) => {
+    acc[movie.title] = movie;
     return acc;
   }, {});
 
-  const test = await fetchUrl<any>(
-    `${URL}?api_key=${config.movieDB.apiKey}&query=the+avengers`
-  );
+  const out = {
+    movies,
+  };
 
-  console.log({ test });
-
-  return writeJSONFile(outputPath, movies);
+  return writeJSONFile(outputPath, out);
 }
