@@ -19,11 +19,6 @@ import {
 } from "../utils";
 import config from "../../config";
 
-export type MoviePostParts = Omit<
-  Movie,
-  "posterUrl" | "rawDataHash" | "themoviedbId"
->;
-
 export type MovieTitleAndYear = {
   title: string;
   year: number;
@@ -58,8 +53,6 @@ function movieKey(movie: MovieTitleAndYear): string {
 function makePermalink(movie: MovieTitleAndYear) {
   return `/hobbies/movies/${movieKey(movie)}`;
 }
-
-// TODO Movies have multiple reviews, so we need to handle that
 
 function parseMicroblogPost(post: MicroBlogEntity): Result<ReviewForMovie> {
   const { content, date } = post;

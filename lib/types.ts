@@ -185,21 +185,21 @@ export type Movie = {
 
 export type Movies = Record<string, Movie>;
 
+export type TvShowSeason = {
+  season: number;
+  reviews: MediaReview[];
+  postPermalink: string;
+  averageScore: number;
+}
+
 export type TvShow = {
   key: string;
   title: string;
-  seasons: {
-    number: number;
-    rating: {
-      score: number;
-      max: number;
-    };
-    review: string | null;
-    postPermalink: string;
-    posterUrl: string;
-  }[];
-  date: string;
-  rawDataHash: string;
+  seasons: TvShowSeason[];
+  permalink: string;
+  averageScore: number;
+  posterUrl: string;
+  themoviedbId: number;
 };
 
 export type TvShows = Record<string, TvShow>;

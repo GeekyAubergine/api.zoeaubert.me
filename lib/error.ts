@@ -1,5 +1,9 @@
-import { MoviePostParts } from "./processors/processsMovies";
-import { MastodonPostEntity, MicroBlogEntity, MicroPostEntity } from "./types";
+import {
+  MastodonPostEntity,
+  MicroBlogEntity,
+  MicroPostEntity,
+  TvShowSeason,
+} from "./types";
 
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
@@ -160,6 +164,25 @@ type CouldNotFindMovie = {
   };
 };
 
+type CouldNotParseSeason = {
+  type: "COULD_NOT_PARSE_SEASON";
+  season: string;
+};
+
+type UnableToParseTvShowPost = {
+  type: "UNABLE_TO_PARSE_TV_SHOW_POST";
+  post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
+};
+
+type CouldNotFindTvShowFromEmptySeasons = {
+  type: "COULD_NOT_FIND_TV_SHOW_FROM_EMPTY_SEASONS";
+};
+
+type CouldNotFindTvShowByTitle = {
+  type: "COULD_NOT_FIND_TV_SHOW_BY_TITLE";
+  title: string;
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -192,4 +215,8 @@ export type ProjectError =
   | AlbumMissingTitle
   | AlbumMissingDate
   | UnableToParseMoviePost
-  | CouldNotFindMovie;
+  | CouldNotFindMovie
+  | CouldNotParseSeason
+  | UnableToParseTvShowPost
+  | CouldNotFindTvShowFromEmptySeasons
+  | CouldNotFindTvShowByTitle;

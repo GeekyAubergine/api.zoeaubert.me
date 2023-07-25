@@ -15,6 +15,7 @@ import { writeAllPosts } from "./allPostsWriter";
 import { writeLego } from "./legoWriter";
 import { writeGames } from "./gamesWriter";
 import { writeMovies } from "./moviesWriter";
+import { writeTv } from "./tvWriter";
 
 const WRITERS = [
   writeArchive,
@@ -32,6 +33,7 @@ const WRITERS = [
   writeLego,
   writeGames,
   writeMovies,
+  writeTv,
 ];
 
 export async function writeData(
