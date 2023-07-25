@@ -154,7 +154,10 @@ type UnableToParseMoviePost = {
 
 type CouldNotFindMovie = {
   type: "COULD_NOT_FIND_MOVIE";
-  post: MoviePostParts;
+  movie: {
+    title: string;
+    year: number;
+  };
 };
 
 export type ProjectError =

@@ -48,6 +48,7 @@ const DEFAULT_DATA: Data = {
   faq: "",
   now: "",
   movies: {},
+  tvShows: {},
   lastUpdated: "",
 };
 

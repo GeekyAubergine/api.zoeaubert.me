@@ -165,25 +165,48 @@ export type LoaderData = {
   games: Games;
 };
 
+export type MediaReview = {
+  score: number;
+  review: string | null;
+  postPermalink: string;
+  date: string;
+};
+
 export type Movie = {
   key: string;
   title: string;
   year: number;
-  rating: {
-    score: number;
-    max: number;
-  };
-  review: string | null;
+  reviews: MediaReview[];
+  averageScore: number;
   posterUrl: string;
-  date: string;
-  postPermalink: string;
-  rawDataHash: string;
+  permalink: string;
+  themoviedbId: number;
 };
 
 export type Movies = Record<string, Movie>;
 
+export type TvShow = {
+  key: string;
+  title: string;
+  seasons: {
+    number: number;
+    rating: {
+      score: number;
+      max: number;
+    };
+    review: string | null;
+    postPermalink: string;
+    posterUrl: string;
+  }[];
+  date: string;
+  rawDataHash: string;
+};
+
+export type TvShows = Record<string, TvShow>;
+
 export type Data = LoaderData & {
   movies: Movies;
+  tvShows: TvShows;
   lastUpdated: string;
 };
 

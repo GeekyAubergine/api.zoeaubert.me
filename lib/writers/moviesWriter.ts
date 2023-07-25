@@ -12,8 +12,8 @@ export async function writeMovies(
   const { movies } = data;
 
   const moviesByWatchDate = Object.keys(movies).sort((a, b) => {
-    const aDate = new Date(movies[a]!.date);
-    const bDate = new Date(movies[b]!.date);
+    const aDate = new Date(movies[a]!.reviews[0]!.date);
+    const bDate = new Date(movies[b]!.reviews[0]!.date);
 
     return bDate.getTime() - aDate.getTime();
   });

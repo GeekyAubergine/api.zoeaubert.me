@@ -2,10 +2,18 @@ import { describe, expect, it } from "@jest/globals";
 
 import { MastodonPostEntity, MicroBlogEntity, MicroPostEntity } from "../types";
 import { Ok } from "../utils";
-import { MoviePostParts, parsePost } from "./processsMovies";
+import { ReviewForMovie, cleanMovieTitle, parseReviewPost } from "./processsMovies";
 
 describe("moviesWriter", () => {
-  describe("#parsePost", () => {
+  describe("#cleanMovieTitle", () => {
+    it("should format correctly", () => {
+      expect(cleanMovieTitle("The Blues Brothers")).toEqual(
+        "the-blues-brothers"
+      );
+    });
+  });
+
+  describe("#parseReviewPost", () => {
     it("should parse legacy micro blog format", () => {
       const post: MicroBlogEntity = {
         type: "microBlog",
@@ -23,19 +31,19 @@ describe("moviesWriter", () => {
         rawDataHash: "3c976b00af0fffc11735559cf79d5f4e",
       };
 
-      const result = parsePost(post);
+      const result = parseReviewPost(post);
 
-      const expected: MoviePostParts = {
-        key: "Chicken Little-2005",
-        title: "Chicken Little",
-        year: 2005,
-        rating: {
-          score: 3,
-          max: 5,
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "Chicken Little",
+          year: 2005,
         },
-        review: "Nice easy watch, some good moments and laughs",
-        date: "2022-10-05T21:00:00.000Z",
-        postPermalink: "/micros/2022/10/05/chicken-little-nice",
+        review: {
+          score: 3,
+          review: "Nice easy watch, some good moments and laughs",
+          date: "2022-10-05T21:00:00.000Z",
+          postPermalink: "/micros/2022/10/05/chicken-little-nice",
+        },
       };
 
       expect(result).toEqual(Ok(expected));
@@ -56,19 +64,19 @@ describe("moviesWriter", () => {
         rawDataHash: "69c4cfa25be0a088357d710c51629518",
       };
 
-      const result = parsePost(post);
+      const result = parseReviewPost(post);
 
-      const expected: MoviePostParts = {
-        key: "Desert Hearts-1985",
-        title: "Desert Hearts",
-        year: 1985,
-        rating: {
-          score: 3,
-          max: 5,
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "Desert Hearts",
+          year: 1985,
         },
-        review: null,
-        date: "2022-12-06T23:00:00.000Z",
-        postPermalink: "/micros/2022/12/06/desert-hearts",
+        review: {
+          score: 3,
+          review: null,
+          date: "2022-12-06T23:00:00.000Z",
+          postPermalink: "/micros/2022/12/06/desert-hearts",
+        },
       };
 
       expect(result).toEqual(Ok(expected));
@@ -91,19 +99,19 @@ describe("moviesWriter", () => {
         rawDataHash: "c532f359858c9cc31cbf1fab44deb583",
       };
 
-      const result = parsePost(post);
+      const result = parseReviewPost(post);
 
-      const expected: MoviePostParts = {
-        key: "The Blues Brothers-1980",
-        title: "The Blues Brothers",
-        year: 1980,
-        rating: {
-          score: 5,
-          max: 5,
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "The Blues Brothers",
+          year: 1980,
         },
-        review: "This film gets better every time I watch it.",
-        date: "2022-12-22T23:01:45.000Z",
-        postPermalink: "/micros/2022/12/22/the-blues-brothers",
+        review: {
+          score: 5,
+          review: "This film gets better every time I watch it.",
+          date: "2022-12-22T23:01:45.000Z",
+          postPermalink: "/micros/2022/12/22/the-blues-brothers",
+        },
       };
 
       expect(result).toEqual(Ok(expected));
@@ -124,20 +132,20 @@ describe("moviesWriter", () => {
         rawDataHash: "33cfe2bd65f0d69017ea092e7dc433d0",
       };
 
-      const result = parsePost(post);
+      const result = parseReviewPost(post);
 
-      const expected: MoviePostParts = {
-        key: "All Quiet on the Western Front-2022",
-        title: "All Quiet on the Western Front",
-        year: 2022,
-        rating: {
-          score: 3,
-          max: 5,
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "All Quiet on the Western Front",
+          year: 2022,
         },
-        review:
-          "I see why others enjoyed it, but a lot of it felt like gore for the sake of gore. The performances are great.",
-        date: "2023-02-04T20:04",
-        postPermalink: "/micros/2023/02/04/all-quiet",
+        review: {
+          score: 3,
+          review:
+            "I see why others enjoyed it, but a lot of it felt like gore for the sake of gore. The performances are great.",
+          date: "2023-02-04T20:04",
+          postPermalink: "/micros/2023/02/04/all-quiet",
+        },
       };
 
       expect(result).toEqual(Ok(expected));
@@ -158,19 +166,19 @@ describe("moviesWriter", () => {
         rawDataHash: "bf8a4b0c66adc070eebde51569100b33",
       };
 
-      const result = parsePost(post);
+      const result = parseReviewPost(post);
 
-      const expected: MoviePostParts = {
-        key: "The Menu-2022",
-        title: "The Menu",
-        year: 2022,
-        rating: {
-          score: 2,
-          max: 5,
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "The Menu",
+          year: 2022,
         },
-        review: "Interesting, but not for me",
-        date: "2023-06-10T19:40:19.551Z",
-        postPermalink: "/micros/2023/06/110521615616918604",
+        review: {
+          score: 2,
+          review: "Interesting, but not for me",
+          date: "2023-06-10T19:40:19.551Z",
+          postPermalink: "/micros/2023/06/110521615616918604",
+        },
       };
 
       expect(result).toEqual(Ok(expected));
@@ -190,19 +198,19 @@ describe("moviesWriter", () => {
         rawDataHash: "f1db4bb012ccee81e253c06b27d904ea",
       };
 
-      const result = parsePost(post);
+      const result = parseReviewPost(post);
 
-      const expected: MoviePostParts = {
-        key: "Yentl-1983",
-        title: "Yentl",
-        year: 1983,
-        rating: {
-          score: 3,
-          max: 5,
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "Yentl",
+          year: 1983,
         },
-        review: null,
-        date: "2023-02-27T22:23:15.822Z",
-        postPermalink: "/micros/2023/02/109939038343455006",
+        review: {
+          score: 3,
+          review: null,
+          date: "2023-02-27T22:23:15.822Z",
+          postPermalink: "/micros/2023/02/109939038343455006",
+        },
       };
 
       expect(result).toEqual(Ok(expected));

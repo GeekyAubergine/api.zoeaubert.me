@@ -1,6 +1,7 @@
 import type {
   Data,
   MastodonPostEntity,
+  MediaReview,
   MicroBlogEntity,
   MicroPostEntity,
   Movie,
@@ -14,10 +15,24 @@ import {
   fetchUrl,
   filterErr,
   filterOk,
-  hash,
   mergeOrderedEntities,
 } from "../utils";
 import config from "../../config";
+
+export type MoviePostParts = Omit<
+  Movie,
+  "posterUrl" | "rawDataHash" | "themoviedbId"
+>;
+
+export type MovieTitleAndYear = {
+  title: string;
+  year: number;
+};
+
+export type ReviewForMovie = {
+  movieTitleAndYear: MovieTitleAndYear;
+  review: MediaReview;
+};
 
 const TAG = "movies";
 const TAG_TO_IGNORE = "twitterarchive";
@@ -32,9 +47,21 @@ function movieTitleToSearch(title: string): string {
   return title.replace(/[&]/g, "").replace(/\s+/g, "+").toLowerCase();
 }
 
-export type MoviePostParts = Omit<Movie, "posterUrl" | "rawDataHash">;
+export function cleanMovieTitle(title: string): string {
+  return title.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "");
+}
 
-function parseMicroblogPost(post: MicroBlogEntity): Result<MoviePostParts> {
+function movieKey(movie: MovieTitleAndYear): string {
+  return `${cleanMovieTitle(movie.title)}-${movie.year}`;
+}
+
+function makePermalink(movie: MovieTitleAndYear) {
+  return `/hobbies/movies/${movieKey(movie)}`;
+}
+
+// TODO Movies have multiple reviews, so we need to handle that
+
+function parseMicroblogPost(post: MicroBlogEntity): Result<ReviewForMovie> {
   const { content, date } = post;
 
   const lines = content.split("\n").filter((line) => line.trim() !== "");
@@ -58,9 +85,7 @@ function parseMicroblogPost(post: MicroBlogEntity): Result<MoviePostParts> {
 
   const score = scoreAndMax?.[1];
 
-  const max = scoreAndMax?.[2];
-
-  if (!title || !year || !score || !max) {
+  if (!title || !year || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
       post,
@@ -68,20 +93,20 @@ function parseMicroblogPost(post: MicroBlogEntity): Result<MoviePostParts> {
   }
 
   return Ok({
-    key: `${title}-${year}`,
-    title,
-    year: parseInt(year, 10),
-    rating: {
-      score: parseInt(score, 10),
-      max: parseInt(max, 10),
+    movieTitleAndYear: {
+      title,
+      year: parseInt(year, 10),
     },
-    review: review || null,
-    date,
-    postPermalink: post.permalink,
+    review: {
+      score: parseInt(score, 10),
+      review: review || null,
+      date,
+      postPermalink: post.permalink,
+    },
   });
 }
 
-function parseMicroPostPost(post: MicroPostEntity): Result<MoviePostParts> {
+function parseMicroPostPost(post: MicroPostEntity): Result<ReviewForMovie> {
   const { content, date } = post;
 
   const lines = content.split("\n").filter((line) => line.trim() !== "");
@@ -105,9 +130,7 @@ function parseMicroPostPost(post: MicroPostEntity): Result<MoviePostParts> {
 
   const score = scoreAndMax?.[1];
 
-  const max = scoreAndMax?.[2];
-
-  if (!title || !year || !review || !score || !max) {
+  if (!title || !year || !review || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
       post,
@@ -115,20 +138,20 @@ function parseMicroPostPost(post: MicroPostEntity): Result<MoviePostParts> {
   }
 
   return Ok({
-    key: `${title}-${year}`,
-    title,
-    year: parseInt(year, 10),
-    rating: {
-      score: parseInt(score, 10),
-      max: parseInt(max, 10),
+    movieTitleAndYear: {
+      title,
+      year: parseInt(year, 10),
     },
-    review,
-    date,
-    postPermalink: post.permalink,
+    review: {
+      score: parseInt(score, 10),
+      review,
+      date,
+      postPermalink: post.permalink,
+    },
   });
 }
 
-function parseMastodonPost(post: MastodonPostEntity): Result<MoviePostParts> {
+function parseMastodonPost(post: MastodonPostEntity): Result<ReviewForMovie> {
   const { content, date } = post;
 
   const lines = content
@@ -155,9 +178,7 @@ function parseMastodonPost(post: MastodonPostEntity): Result<MoviePostParts> {
 
   const score = scoreAndMax?.[1];
 
-  const max = scoreAndMax?.[2];
-
-  if (!title || !year || !score || !max) {
+  if (!title || !year || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
       post,
@@ -165,22 +186,22 @@ function parseMastodonPost(post: MastodonPostEntity): Result<MoviePostParts> {
   }
 
   return Ok({
-    key: `${title}-${year}`,
-    title,
-    year: parseInt(year, 10),
-    rating: {
-      score: parseInt(score, 10),
-      max: parseInt(max, 10),
+    movieTitleAndYear: {
+      title,
+      year: parseInt(year, 10),
     },
-    review: review || null,
-    date,
-    postPermalink: post.permalink,
+    review: {
+      score: parseInt(score, 10),
+      review: review || null,
+      date,
+      postPermalink: post.permalink,
+    },
   });
 }
 
-export function parsePost(
+export function parseReviewPost(
   post: MicroPostEntity | MastodonPostEntity | MicroBlogEntity
-): Result<MoviePostParts> {
+): Result<ReviewForMovie> {
   const { type } = post;
 
   switch (type) {
@@ -195,11 +216,27 @@ export function parsePost(
   }
 }
 
-async function findMovieFromPost(
-  post: MoviePostParts,
-  rawDataHash: string
-): Promise<Result<Movie>> {
-  const serachQuery = movieTitleToSearch(post.title);
+async function findMoviePosterAndID(
+  data: Data,
+  movieWithTitleAndYear: MovieTitleAndYear
+): Promise<
+  Result<{
+    posterUrl: string;
+    themoviedbId: number;
+  }>
+> {
+  const key = movieKey(movieWithTitleAndYear);
+
+  const existing = data.movies[key];
+
+  if (existing) {
+    return Ok({
+      posterUrl: existing.posterUrl,
+      themoviedbId: existing.themoviedbId,
+    });
+  }
+
+  const serachQuery = movieTitleToSearch(movieWithTitleAndYear.title);
 
   const response = await fetchUrl<{
     results: {
@@ -217,42 +254,54 @@ async function findMovieFromPost(
   const { results } = response.value;
 
   const movie = results.find((movie) =>
-    movie.release_date.startsWith(post.year.toString())
+    movie.release_date.startsWith(movieWithTitleAndYear.year.toString())
   );
 
   if (!movie) {
     return Err({
       type: "COULD_NOT_FIND_MOVIE",
-      post,
+      movie: movieWithTitleAndYear,
     });
   }
 
   return Ok({
-    key: post.key,
-    title: post.title,
-    year: post.year,
-    rating: post.rating,
-    review: post.review,
     posterUrl: movie.poster_path,
-    date: post.date,
-    rawDataHash,
-    postPermalink: post.postPermalink,
+    themoviedbId: movie.id,
   });
 }
 
-async function processPost(
-  post: MoviePostParts,
-  data: Data
+async function processMovieWithTitleYearAndReviews(
+  data: Data,
+  key: string,
+  movieTitleAndYear: MovieTitleAndYear,
+  reviews: MediaReview[]
 ): Promise<Result<Movie>> {
-  const rawDataHash = hash(post);
+  const posterAndIdResult = await findMoviePosterAndID(data, movieTitleAndYear);
 
-  const existing = data.movies[post.key];
-
-  if (existing && existing.rawDataHash === rawDataHash) {
-    return Ok(existing);
+  if (!posterAndIdResult.ok) {
+    return posterAndIdResult;
   }
 
-  return findMovieFromPost(post, rawDataHash);
+  const { posterUrl, themoviedbId } = posterAndIdResult.value;
+
+  const sortedReviews = reviews.sort((a, b) => {
+    return new Date(a.date).getTime() - new Date(b.date).getTime();
+  });
+
+  const movie: Movie = {
+    key,
+    title: movieTitleAndYear.title,
+    year: movieTitleAndYear.year,
+    reviews: sortedReviews,
+    averageScore:
+      reviews.reduce((acc, review) => acc + review.score, 0) /
+      Math.max(reviews.length, 1),
+    posterUrl,
+    permalink: makePermalink(movieTitleAndYear),
+    themoviedbId,
+  };
+
+  return Ok(movie);
 }
 
 export async function processMovies(data: Data): Promise<Result<Movies>> {
@@ -260,37 +309,59 @@ export async function processMovies(data: Data): Promise<Result<Movies>> {
     MicroPostEntity | MastodonPostEntity | MicroBlogEntity
   >([data.microPosts, data.mastodonPosts, data.microBlogsPosts]);
 
-  const moviePosts = potentialMoviePosts.entityOrder.filter((id) => {
-    const entity = potentialMoviePosts.entities[id];
+  const reviewPosts = Object.values(potentialMoviePosts.entities).filter(
+    (entity) => {
+      return (
+        entity.tags.some((tag) => tag.toLowerCase() === TAG) &&
+        !entity.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
+      );
+    }
+  );
 
-    if (!entity) {
-      return false;
+  const reviewResults = reviewPosts.map((reviewPosts) =>
+    parseReviewPost(reviewPosts)
+  );
+
+  const okReviews = filterOk(reviewResults);
+
+  const moviesTitleYearWithReviews = okReviews.reduce<
+    Record<
+      string,
+      {
+        key: string;
+        movieTitleAndYear: MovieTitleAndYear;
+        reviews: MediaReview[];
+      }
+    >
+  >((acc, review) => {
+    const { movieTitleAndYear: movie } = review;
+
+    const key = movieKey(movie);
+
+    const existing = acc[key];
+
+    if (!existing) {
+      acc[key] = {
+        key,
+        movieTitleAndYear: movie,
+        reviews: [],
+      };
     }
 
-    return (
-      entity.tags.some((tag) => tag.toLowerCase() === TAG) &&
-      !entity.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
-    );
-  });
+    acc[key]!.reviews.push(review.review);
 
-  const movieParts = moviePosts.reduce<MoviePostParts[]>((acc, id) => {
-    const entity = potentialMoviePosts.entities[id];
-
-    if (!entity) {
-      return acc;
-    }
-
-    const post = parsePost(entity);
-
-    if (!post.ok) {
-      return acc;
-    }
-
-    return acc.concat([post.value]);
-  }, []);
+    return acc;
+  }, {});
 
   const movieResults = await Promise.all(
-    Object.values(movieParts).map((movie) => processPost(movie, data))
+    Object.values(moviesTitleYearWithReviews).map((movie) =>
+      processMovieWithTitleYearAndReviews(
+        data,
+        movie.key,
+        movie.movieTitleAndYear,
+        movie.reviews
+      )
+    )
   );
 
   const errors = filterErr(movieResults);
