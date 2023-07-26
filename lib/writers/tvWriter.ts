@@ -6,7 +6,7 @@ import path from "path";
 function seasonMostRecentReviewDate(season: TvShowSeason): string {
   const reviews = season.reviews;
 
-  const sortedReviews = reviews.sort((a, b) => {
+  const sortedReviews = reviews.slice().sort((a, b) => {
     const aDate = new Date(a.date);
     const bDate = new Date(b.date);
 
@@ -19,7 +19,7 @@ function seasonMostRecentReviewDate(season: TvShowSeason): string {
 function tvShowMostRecentReviewDate(tvShow: TvShow): string {
   const seasons = tvShow.seasons;
 
-  const sortedSeasons = seasons.sort((a, b) => {
+  const sortedSeasons = seasons.slice().sort((a, b) => {
     const aDate = new Date(seasonMostRecentReviewDate(a));
     const bDate = new Date(seasonMostRecentReviewDate(b));
 

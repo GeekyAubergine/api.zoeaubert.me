@@ -43,7 +43,10 @@ function movieTitleToSearch(title: string): string {
 }
 
 export function cleanMovieTitle(title: string): string {
-  return title.toLowerCase().replace(/ /g, "-").replace(/[^a-z0-9-]/g, "");
+  return title
+    .toLowerCase()
+    .replace(/ /g, "-")
+    .replace(/[^a-z0-9-]/g, "");
 }
 
 function movieKey(movie: MovieTitleAndYear): string {
@@ -286,9 +289,10 @@ async function processMovieWithTitleYearAndReviews(
     title: movieTitleAndYear.title,
     year: movieTitleAndYear.year,
     reviews: sortedReviews,
-    averageScore:
+    averageScore: Math.floor(
       reviews.reduce((acc, review) => acc + review.score, 0) /
-      Math.max(reviews.length, 1),
+        Math.max(reviews.length, 1)
+    ),
     posterUrl,
     permalink: makePermalink(movieTitleAndYear),
     themoviedbId,

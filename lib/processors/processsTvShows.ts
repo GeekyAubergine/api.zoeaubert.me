@@ -51,10 +51,6 @@ export function cleanTvShowTitle(title: string): string {
     .replace(/[^a-z0-9-]/g, "");
 }
 
-function tvShowSeasonKey(tvShowTitle: string, season: number): string {
-  return `${cleanTvShowTitle(tvShowTitle)}-${season}`;
-}
-
 function tvShowKey(tvShowTitle: string): string {
   return `${cleanTvShowTitle(tvShowTitle)}`;
 }
@@ -293,8 +289,9 @@ function processTvShowSeason(
 ): TvShowSeason {
   const { reviews } = tvShowSeason;
 
-  const averageScore =
-    reviews.reduce((acc, review) => acc + review.score, 0) / reviews.length;
+  const averageScore = Math.floor(
+    reviews.reduce((acc, review) => acc + review.score, 0) / reviews.length
+  );
 
   const sortedReviews = reviews.sort((a, b) => {
     return new Date(a.date).getTime() - new Date(b.date).getTime();
@@ -330,7 +327,7 @@ async function processTvShowWithSeasons(
   const unsortedSeasons = seasons.map(processTvShowSeason);
 
   const sortedSeasons = unsortedSeasons.sort((a, b) => {
-    return a.season - b.season;
+    return b.season - a.season;
   });
 
   const totalReviews = sortedSeasons.reduce(
@@ -338,12 +335,13 @@ async function processTvShowWithSeasons(
     0
   );
 
-  const averageScore =
+  const averageScore = Math.floor(
     sortedSeasons.reduce((acc, season) => {
       return (
         acc + season.reviews.reduce((acc, review) => acc + review.score, 0)
       );
-    }, 0) / totalReviews;
+    }, 0) / totalReviews
+  );
 
   const key = tvShowKey(tvShowTitle);
 
@@ -382,7 +380,7 @@ export async function processTvShows(data: Data): Promise<Result<TvShows>> {
   >((acc, review) => {
     const { tvShowTitle, seasonNumber } = review;
 
-    const key = tvShowSeasonKey(tvShowTitle, seasonNumber);
+    const key = tvShowKey(tvShowTitle);
 
     if (!acc[key]) {
       acc[key] = [];
