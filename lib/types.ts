@@ -148,9 +148,9 @@ export type Game = {
   };
 };
 
-export type Games = Record<string, Game>
+export type Games = Record<string, Game>;
 
-type Data = {
+export type LoaderData = {
   blogPosts: BlogPosts;
   microBlogsPosts: MicroBlogPosts;
   microPosts: MicroPosts;
@@ -163,9 +163,52 @@ type Data = {
   now: string;
   lego: Lego;
   games: Games;
+};
+
+export type MediaReview = {
+  score: number;
+  review: string | null;
+  postPermalink: string;
+  date: string;
+};
+
+export type Movie = {
+  key: string;
+  title: string;
+  year: number;
+  reviews: MediaReview[];
+  averageScore: number;
+  posterUrl: string;
+  permalink: string;
+  themoviedbId: number;
+};
+
+export type Movies = Record<string, Movie>;
+
+export type TvShowSeason = {
+  season: number;
+  reviews: MediaReview[];
+  postPermalink: string;
+  averageScore: number;
+}
+
+export type TvShow = {
+  key: string;
+  title: string;
+  seasons: TvShowSeason[];
+  permalink: string;
+  averageScore: number;
+  posterUrl: string;
+  themoviedbId: number;
+};
+
+export type TvShows = Record<string, TvShow>;
+
+export type Data = LoaderData & {
+  movies: Movies;
+  tvShows: TvShows;
   lastUpdated: string;
 };
-export default Data;
 
 export type LoaderParams<E extends Entity> = {
   orderedEntities: OrderedEntities<E>;

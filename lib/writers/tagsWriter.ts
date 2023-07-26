@@ -1,7 +1,8 @@
 import path from "path";
 import natsort from "natsort";
 import { Result, mergeOrderedEntities, writeJSONFile } from "../utils";
-import Data, {
+import {
+  Data,
   AlbumPhotoEntity,
   BlogPostEntity,
   MastodonPostEntity,

@@ -1,4 +1,4 @@
-import { Err, Ok, Result } from "../utils";
+import { Ok, Result, fetchUrl } from "../utils";
 
 import config from "../../config";
 import { Game, Games } from "../types";
@@ -6,23 +6,10 @@ import { Game, Games } from "../types";
 const GAMES_URL =
   "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?format=json&include_appinfo=true";
 
-async function fetchGames(): Promise<Result<any>> {
-  try {
-    const response = await fetch(
-      `${GAMES_URL}&key=${config.steam.apiKey}&steamid=${config.steam.steamId}`
-    );
-
-    return Ok(await response.json());
-  } catch (e) {
-    return Err({
-      type: "UNABLE_TO_FETCH_URL",
-      url: GAMES_URL,
-    });
-  }
-}
-
 export async function loadGames(): Promise<Result<Games>> {
-  const gamesResult = await fetchGames();
+  const gamesResult = await fetchUrl<any>(
+    `${GAMES_URL}&key=${config.steam.apiKey}&steamid=${config.steam.steamId}`
+  );
 
   if (!gamesResult.ok) {
     return gamesResult;

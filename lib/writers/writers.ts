@@ -1,4 +1,4 @@
-import Data from "../types";
+import { Data } from "../types";
 import { Err, Ok, Result, filterErr } from "../utils";
 import { writeArchive } from "./archiveWriter";
 import { writeAbout } from "./aboutWriter";
@@ -14,6 +14,8 @@ import { writeNow } from "./nowWriter";
 import { writeAllPosts } from "./allPostsWriter";
 import { writeLego } from "./legoWriter";
 import { writeGames } from "./gamesWriter";
+import { writeMovies } from "./moviesWriter";
+import { writeTv } from "./tvWriter";
 
 const WRITERS = [
   writeArchive,
@@ -30,6 +32,8 @@ const WRITERS = [
   writeAllPosts,
   writeLego,
   writeGames,
+  writeMovies,
+  writeTv,
 ];
 
 export async function writeData(

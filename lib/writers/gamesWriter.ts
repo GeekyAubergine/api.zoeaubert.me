@@ -1,6 +1,6 @@
 import path from "path";
 import { Result, writeJSONFile } from "../utils";
-import Data from "../types";
+import { Data } from "../types";
 
 const RECENT_GAMES_COUNT = 3;
 

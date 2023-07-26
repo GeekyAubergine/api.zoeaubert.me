@@ -1,3 +1,10 @@
+import {
+  MastodonPostEntity,
+  MicroBlogEntity,
+  MicroPostEntity,
+  TvShowSeason,
+} from "./types";
+
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
   localPath: string;
@@ -144,6 +151,38 @@ type AlbumMissingDate = {
   path: string;
 };
 
+type UnableToParseMoviePost = {
+  type: "UNABLE_TO_PARSE_MOVIE_POST";
+  post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
+};
+
+type CouldNotFindMovie = {
+  type: "COULD_NOT_FIND_MOVIE";
+  movie: {
+    title: string;
+    year: number;
+  };
+};
+
+type CouldNotParseSeason = {
+  type: "COULD_NOT_PARSE_SEASON";
+  season: string;
+};
+
+type UnableToParseTvShowPost = {
+  type: "UNABLE_TO_PARSE_TV_SHOW_POST";
+  post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
+};
+
+type CouldNotFindTvShowFromEmptySeasons = {
+  type: "COULD_NOT_FIND_TV_SHOW_FROM_EMPTY_SEASONS";
+};
+
+type CouldNotFindTvShowByTitle = {
+  type: "COULD_NOT_FIND_TV_SHOW_BY_TITLE";
+  title: string;
+};
+
 export type ProjectError =
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
@@ -174,4 +213,10 @@ export type ProjectError =
   | AlubmPhotoMissingMetadata
   | AlbumPhotoMissingWidthOrHeight
   | AlbumMissingTitle
-  | AlbumMissingDate;
+  | AlbumMissingDate
+  | UnableToParseMoviePost
+  | CouldNotFindMovie
+  | CouldNotParseSeason
+  | UnableToParseTvShowPost
+  | CouldNotFindTvShowFromEmptySeasons
+  | CouldNotFindTvShowByTitle;

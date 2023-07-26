@@ -1,8 +1,8 @@
 import {
-  Err,
   Ok,
   Result,
   entitiesToOrderedEntities,
+  fetchUrl,
   formatDateAsSlugPart,
   hash,
 } from "../utils";
@@ -31,19 +31,20 @@ function mapStatusLol(status: any): StatusLolEntity {
 }
 
 export async function loadStatusLolPosts(): Promise<Result<StatusLolPosts>> {
-  try {
-    const request = await fetch(URL);
-    const data: any = await request.json();
-    const { response } = data;
-    const { statuses } = response;
+  const request = await fetchUrl<{
+    response: {
+      statuses: any[];
+    };
+  }>(URL);
 
-    const mapped: StatusLolEntity[] = statuses.map(mapStatusLol);
-
-    return Ok(entitiesToOrderedEntities(mapped));
-  } catch (e) {
-    return Err({
-      type: "UNABLE_TO_FETCH_URL",
-      url: URL,
-    });
+  if (!request.ok) {
+    return request;
   }
+
+  const { response } = request.value;
+  const { statuses } = response;
+
+  const mapped: StatusLolEntity[] = statuses.map(mapStatusLol);
+
+  return Ok(entitiesToOrderedEntities(mapped));
 }

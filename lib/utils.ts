@@ -53,6 +53,21 @@ export function exhaust(value: never): never {
   throw new Error(`Unhandled value: ${value}`);
 }
 
+export async function fetchUrl<T>(url: string): Promise<Result<T>> {
+  try {
+    const request = await fetch(url);
+
+    const json = await request.json();
+
+    return Ok(json);
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_FETCH_URL",
+      url,
+    });
+  }
+}
+
 export async function getImageSize(
   url: string
 ): Promise<Result<{ width: number; height: number }>> {
@@ -211,6 +226,15 @@ export function formatDateAsSlugPart(date: Date): string {
   return `${year.toString().padStart(4, "0")}/${month
     .toString()
     .padStart(2, "0")}/${day.toString().padStart(2, "0")}`;
+}
+
+export function formatDate(date: Date): string {
+  const year = date.getFullYear();
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${year.toString().padStart(4, "0")}-${month
+    .toString()
+    .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 }
 
 export async function downloadAndCacheFile(url: string): Promise<
