@@ -1,7 +1,7 @@
 import path from "path";
 
 import { Data } from "../types";
-import { Err, Ok, Result, filterErr, writeFile } from "../utils";
+import { Err, Ok, Result, filterErr, writeFile, writeJSONFile } from "../utils";
 import { writeArchive } from "./archiveWriter";
 import { writeAbout } from "./aboutWriter";
 import { writeBlogPosts } from "./blogPostsWriter";
@@ -18,26 +18,26 @@ import { writeLego } from "./legoWriter";
 import { writeGames } from "./gamesWriter";
 import { writeMovies } from "./moviesWriter";
 import { writeTv } from "./tvWriter";
-import { logFailedPromisedResults } from "lib/loggger";
+import { logFailedPromisedResults } from "../loggger";
 
-const WRITERS = [
-  writeArchive,
-  writeAbout,
-  writeBlogPosts,
-  writeFaq,
-  writeMicros,
-  writeTags,
-  writeTimeline,
-  writeYears,
-  writePhotos,
-  writeAlbumsAndPhoto,
-  writeNow,
-  writeAllPosts,
-  writeLego,
-  writeGames,
-  writeMovies,
-  writeTv,
-];
+// const WRITERS = [
+//   writeArchive,
+//   writeAbout,
+//   writeBlogPosts,
+//   writeFaq,
+//   writeMicros,
+//   writeTags,
+//   writeTimeline,
+//   writeYears,
+//   writePhotos,
+//   writeAlbumsAndPhoto,
+//   writeNow,
+//   writeAllPosts,
+//   writeLego,
+//   writeGames,
+//   writeMovies,
+//   writeTv,
+// ];
 
 export async function writeSimples(
   data: Data,
@@ -63,7 +63,7 @@ export async function writeData(
   data: Data,
   outputDir: string
 ): Promise<Result<undefined>> {
-  const dataRequest = await writeArchive(
+  const dataRequest = await writeJSONFile(
     path.join(outputDir, "data.json"),
     data
   );

@@ -1,8 +1,8 @@
 import { Ok, Result } from "../utils";
 import { Data } from "../types";
-import { SourceData } from "lib/loaders/loaders";
-import { DEFAULT_SOURCE_DATA_ABOUT } from "lib/loaders/aboutLoader";
-import { DEFAULT_SOURCE_DATA_FAQ } from "lib/loaders/faqLoader";
+import { SourceData } from "../loaders/loaders";
+import { DEFAULT_SOURCE_DATA_ABOUT } from "../loaders/aboutLoader";
+import { DEFAULT_SOURCE_DATA_FAQ } from "../loaders/faqLoader";
 
 export const DEFAULT_DATA: Data = {
   about: DEFAULT_SOURCE_DATA_ABOUT,
@@ -18,8 +18,8 @@ export async function processData(sourceData: SourceData): Promise<Result<Data>>
     data.about = sourceData.about;
   }
 
-  if (sourceData.lastUpdated) {
-    data.lastUpdated = sourceData.lastUpdated;
+  if (sourceData.faq) {
+    data.faq = sourceData.faq;
   }
 
   // const processMoviesRequest = processMovies(data);

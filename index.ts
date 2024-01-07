@@ -2,12 +2,12 @@ import fs from "fs-extra";
 import path from "path";
 import config from "./config";
 
-import { Err, Ok, Result, exists, parseJson, readFile, writeFile } from "./lib/utils";
+import { Err, Ok, Result, exists, parseJson, readFile, writeFile, writeJSONFile } from "./lib/utils";
 import extract from "extract-zip";
 import { DEFAULT_SOURCE_DATA, SourceData, loadSourceData } from "./lib/loaders/loaders";
 import { logError } from "./lib/loggger";
-import { processData } from "lib/processors/processors";
-import { writeData } from "lib/writers/writers";
+import { processData } from "./lib/processors/processors";
+import { writeData } from "./lib/writers/writers";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
@@ -133,7 +133,7 @@ async function main() {
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const writeSourceDataResult = await writeFile(SOURCE_DATA_FILE, JSON.stringify(sourceData));
+  const writeSourceDataResult = await writeJSONFile(SOURCE_DATA_FILE, sourceData);
 
   if (!writeSourceDataResult.ok) {
     logError(writeSourceDataResult);

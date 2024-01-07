@@ -63,7 +63,7 @@ export type SourceData = {
   microPosts?: SourceDataMicroPosts;
   blogPosts?: SourceDataBlogPosts;
   microBlogArchivePosts?: SourceDataMicroBlogArchivePosts;
-  lastUpdated?: string;
+  lastUpdated: string;
 };
 
 export const DEFAULT_SOURCE_DATA: SourceData = {
