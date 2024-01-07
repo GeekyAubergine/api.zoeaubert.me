@@ -6,7 +6,11 @@ import { Game, Games } from "../types";
 const GAMES_URL =
   "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?format=json&include_appinfo=true";
 
-export async function loadGames(): Promise<Result<Games>> {
+export type SourceDataGames = Record<string, Game>;
+
+export const DEFAULT_SOURCE_DATA_GAMES: SourceDataGames = {};
+
+export async function loadGames(previousGames: SourceDataGames): Promise<Result<Games>> {
   const gamesResult = await fetchUrl<any>(
     `${GAMES_URL}&key=${config.steam.apiKey}&steamid=${config.steam.steamId}`
   );
@@ -15,7 +19,7 @@ export async function loadGames(): Promise<Result<Games>> {
     return gamesResult;
   }
 
-  const games: Games = {};
+  const games: Games = previousGames;
 
   for (const rawGame of gamesResult.value.response.games) {
     const game: Game = {

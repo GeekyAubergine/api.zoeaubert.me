@@ -1,24 +1,38 @@
-import fs from "fs-extra";
-
 import {
   CONTENT_TO_FILTER_OUT,
   Err,
   Ok,
   Result,
   cleanTags,
-  entitiesToOrderedEntities,
   getImageOrientation,
-  hash,
+  readFile,
 } from "../utils";
-import { EntityMedia, MicroBlogEntity, MicroBlogPosts } from "../types";
+import { SourceDataImage } from "../types";
+
+export type SourceDataMicroBlogArchivePost = {
+  key: string;
+  date: string;
+  content: string;
+  description: string;
+  tags: string[];
+  images: SourceDataImage[];
+};
+
+export type SourceDataMicroBlogArchivePosts = Record<
+  string,
+  SourceDataMicroBlogArchivePost
+>;
+
+export const DEFAULT_SOURCE_DATA_MICRO_BLOG_ARCHIVE_POSTS: SourceDataMicroBlogArchivePosts =
+  {};
 
 const REGEX_IMAGES =
   /<img src="(.*?)".*?width="(.*?)".*?height="(.*?)".*?alt="(.*?)"/gm;
 
-function mapMicroBlog(microBlog: any): MicroBlogEntity {
-  const permalink = microBlog.id
-    .replace("http://geekyaubergine.micro.blog/", "/micros/")
-    .replace(".html", "");
+function mapMicroBlog(microBlog: any): SourceDataMicroBlogArchivePost {
+  // const permalink = microBlog.id
+  //   .replace("http://geekyaubergine.micro.blog/", "/micros/")
+  //   .replace(".html", "");
 
   const date = new Date(microBlog.date_published).toISOString();
 
@@ -29,7 +43,7 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
 
   const imagesMatch = (content as string).matchAll(REGEX_IMAGES);
 
-  const media: EntityMedia[] = [];
+  const images: SourceDataImage[] = [];
 
   for (const match of imagesMatch) {
     const [, src, width, height, alt] = match;
@@ -37,56 +51,47 @@ function mapMicroBlog(microBlog: any): MicroBlogEntity {
     if (!src || !alt || !width || !height) {
       continue;
     }
-    media.push({
-      image: {
-        src,
-        alt,
-        width: parseInt(width, 10),
-        height: parseInt(height, 10),
-        title: alt,
-        orientation: getImageOrientation(
-          parseInt(width, 10),
-          parseInt(height, 10)
-        ),
-      },
-      date,
-      parentPermalink: permalink,
+    images.push({
+      src,
+      alt,
+      width: parseInt(width, 10),
+      height: parseInt(height, 10),
+      title: alt,
+      orientation: getImageOrientation(
+        parseInt(width, 10),
+        parseInt(height, 10)
+      ),
     });
   }
 
   const firstLine = content.split("\n")[0];
 
-  const data: Omit<MicroBlogEntity, "rawDataHash"> = {
-    type: "microBlog",
-    key: permalink,
-    permalink,
+  return {
+    key: `micro-blog-${microBlog.id}`,
     date,
     content,
     description: firstLine ?? "",
-    media,
     tags: cleanTags(microBlog.tags ?? []),
-  };
-
-  const rawDataHash = hash(data);
-
-  return {
-    ...data,
-    rawDataHash,
+    images,
   };
 }
 
 export async function loadMicroBlogArchive(
   microBlogoutputPath: string
-): Promise<Result<MicroBlogPosts>> {
+): Promise<Result<SourceDataMicroBlogArchivePosts>> {
   try {
-    const archiveContents = await fs.readFile(microBlogoutputPath, "utf-8");
+    const archiveContents = await readFile(microBlogoutputPath);
 
-    const archive = JSON.parse(archiveContents);
+    if (!archiveContents.ok) {
+      return archiveContents;
+    }
 
-    const mapped: MicroBlogEntity[] = archive.items
+    const archive = JSON.parse(archiveContents.value);
+
+    const posts: SourceDataMicroBlogArchivePost[] = archive.items
       .map(mapMicroBlog)
       .filter(
-        (micro: MicroBlogEntity) =>
+        (micro: SourceDataMicroBlogArchivePost) =>
           !CONTENT_TO_FILTER_OUT.test(micro.content) &&
           !micro.tags.includes("status") &&
           !micro.tags.includes("Status") &&
@@ -94,7 +99,12 @@ export async function loadMicroBlogArchive(
           !micro.tags.includes("Photography")
       );
 
-    return Ok(entitiesToOrderedEntities(mapped));
+    const data = posts.reduce<SourceDataMicroBlogArchivePosts>((acc, post) => {
+      acc[post.key] = post;
+      return acc;
+    }, {});
+
+    return Ok(data);
   } catch (e) {
     return Err({
       type: "UNABLE_TO_READ_FILE",

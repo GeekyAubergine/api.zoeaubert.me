@@ -2,7 +2,15 @@ import { Err, Ok, Result, fetchUrl } from "../utils";
 
 const URL = "https://api.omg.lol/address/geekyaubergine/pastebin/web-now.txt";
 
-export async function loadNow(): Promise<Result<string>> {
+export type SourceDataNow = {
+  content: string;
+};
+
+export const DEFAULT_SOURCE_DATA_NOW: SourceDataNow = {
+  content: "",
+};
+
+export async function loadNow(): Promise<Result<SourceDataNow>> {
   try {
     const request = await fetchUrl<{
       response: {
@@ -22,7 +30,7 @@ export async function loadNow(): Promise<Result<string>> {
 
     const { content } = paste;
 
-    return Ok(content);
+    return Ok({ content });
   } catch (e) {
     return Err({
       type: "UNABLE_TO_FETCH_URL",

@@ -4,6 +4,7 @@ import {
   MicroPostEntity,
   TvShowSeason,
 } from "./types";
+import { exhaust } from "./utils";
 
 type UnableToUploadFileToCDN = {
   type: "UNABLE_TO_UPLOAD_FILE_TO_CDN";
@@ -183,7 +184,25 @@ type CouldNotFindTvShowByTitle = {
   title: string;
 };
 
+type CouldNotParseJson = {
+  type: "COULD_NOT_PARSE_JSON";
+  description: string;
+};
+
+type CouldNotReadAddress = {
+  type: "COULD_NOT_READ_ADDRESS";
+  path: string;
+};
+
+type CouldNotReadFileStats = {
+  type: "COULD_NOT_READ_FILE_STATS";
+  path: string;
+};
+
 export type ProjectError =
+  | CouldNotParseJson
+  | CouldNotReadAddress
+  | CouldNotReadFileStats
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
   | UnableToGetFileExtension
@@ -220,3 +239,88 @@ export type ProjectError =
   | UnableToParseTvShowPost
   | CouldNotFindTvShowFromEmptySeasons
   | CouldNotFindTvShowByTitle;
+
+export function formatError(error: ProjectError): string {
+  switch (error.type) {
+    case "COULD_NOT_PARSE_JSON":
+      return `Could not parse JSON: ${error.description}`;
+    case "COULD_NOT_READ_ADDRESS":
+      return `Could not read address: ${error.path}`;
+    case "COULD_NOT_READ_FILE_STATS":
+      return `Could not read file stats: ${error.path}`;
+    case "UNABLE_TO_UPLOAD_FILE_TO_CDN":
+      return `Unable to upload file to CDN: ${error.localPath} -> ${error.uploadPath}`;
+    case "UNABLE_TO_DOWNLOAD_FILE":
+      return `Unable to download file: ${error.url}`;
+    case "UNABLE_TO_GET_FILE_EXTENSION":
+      return `Unable to get file extension: ${error.url}`;
+    case "BLOG_POST_MISSING_SLUG":
+      return `Blog post is missing slug: ${error.url}`;
+    case "BLOG_POST_MISSING_DATE":
+      return `Blog post is missing date: ${error.url}`;
+    case "BLOG_POST_MISSING_TITLE":
+      return `Blog post is missing title: ${error.url}`;
+    case "BLOG_POST_MISSING_DESCRIPTION":
+      return `Blog post is missing description: ${error.url}`;
+    case "BLOG_POST_HERO_MISSING_ALT":
+      return `Blog post hero is missing alt: ${error.url}`;
+    case "BLOG_POST_HERO_MISSING_WIDTH_OR_HEIGHT":
+      return `Blog post hero is missing width or height: ${error.url}`;
+    case "UNABLE_TO_GET_IMAGE_SIZE":
+      return `Unable to get image size: ${error.url}`;
+    case "IMAGE_MISSING_SRC":
+      return `Image is missing src: ${error.url}`;
+    case "IMAGE_MISSING_ALT":
+      return `Image is missing alt: ${error.url}`;
+    case "UNABLE_TO_READ_FILE_SYSTEM":
+      return `Unable to read file system: ${error.url}`;
+    case "UNABLE_TO_LOAD_ARCHIVE":
+      return `Unable to load archive`;
+    case "UNABLE_TO_DOWNLOAD_CONTENT":
+      return `Unable to download content`;
+    case "UNABLE_TO_WRITE_ARCHIVE":
+      return `Unable to write archive`;
+    case "UNABLE_TO_LOAD_ABOUT":
+      return `Unable to load about data`;
+    case "UNABLE_TO_READ_FILE":
+      return `Unable to read file: ${error.path}`;
+    case "MICRO_POST_MISSING_DATE":
+      return `Micro post is missing date: ${error.url}`;
+    case "MICRO_POST_MISSING_TAGS":
+      return `Micro post is missing tags: ${error.url}`;
+    case "UNABLE_TO_FETCH_URL":
+      return `Unable to fetch URL: ${error.url}`;
+    case "UNABLE_TO_WRITE_FILE":
+      return `Unable to write file: ${error.path}`;
+    case "INVALID_FILE_NAME":
+      return `Invalid file name: ${error.path}`;
+    case "UNABLE_TO_RESIZE_IMAGE":
+      return `Unable to resize image: ${error.path}`;
+    case "ALBUM_PHOTO_MISSING_URL":
+      return `Album photo is missing url`;
+    case "ALBUM_PHOTO_MISSING_ALT":
+      return `Album photo is missing alt: ${error.url}`;
+    case "ALBUM_PHOTO_MISSING_METADATA":
+      return `Album photo is missing metadata: ${error.url}`;
+    case "ALBUM_PHOTO_MISSING_WIDTH_OR_HEIGHT":
+      return `Album photo is missing width or height: ${error.url}`;
+    case "ALBUM_MISSING_TITLE":
+      return `Album is missing title: ${error.path}`;
+    case "ALBUM_MISSING_DATE":
+      return `Album is missing date: ${error.path}`;
+    case "UNABLE_TO_PARSE_MOVIE_POST":
+      return `Unable to parse movie post: ${error.post.permalink}`;
+    case "COULD_NOT_FIND_MOVIE":
+      return `Could not find movie: ${error.movie.title} (${error.movie.year})`;
+    case "COULD_NOT_PARSE_SEASON":
+      return `Could not parse season: ${error.season}`;
+    case "UNABLE_TO_PARSE_TV_SHOW_POST":
+      return `Unable to parse TV show post: ${error.post.permalink}`;
+    case "COULD_NOT_FIND_TV_SHOW_FROM_EMPTY_SEASONS":
+      return `Could not find TV show from empty seasons`;
+    case "COULD_NOT_FIND_TV_SHOW_BY_TITLE": 
+      return `Could not find TV show by title: ${error.title}`;
+    default:
+      return exhaust(error);
+  }
+}

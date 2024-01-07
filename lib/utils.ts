@@ -2,7 +2,12 @@ import fs from "fs-extra";
 import md5 from "md5";
 import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
-import { Entity, Image, ImageOrientation, OrderedEntities } from "./types";
+import {
+  Entity,
+  SourceDataImage,
+  ImageOrientation,
+  OrderedEntities,
+} from "./types";
 import { ProjectError } from "./error";
 import imageSize from "image-size";
 import frontMatterParser from "front-matter";
@@ -56,6 +61,33 @@ export function exhaust(value: never): never {
 export async function fetchUrl<T>(url: string): Promise<Result<T>> {
   try {
     const request = await fetch(url);
+
+    const json = await request.json();
+
+    return Ok(json);
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_FETCH_URL",
+      url,
+    });
+  }
+}
+
+export async function postUrl<T>(url: string, body: any): Promise<Result<T>> {
+  try {
+    let requestInfo: {
+      method: string;
+      body: string | null;
+    } = {
+      method: "POST",
+      body: null,
+    };
+
+    if (body != null) {
+      requestInfo.body = typeof body === "string" ? body : JSON.stringify(body);
+    }
+
+    const request = await fetch(url, requestInfo);
 
     const json = await request.json();
 
@@ -123,19 +155,48 @@ export function cleanTags(tags: string[] | null | undefined): string[] {
     .filter((tag) => !TAGS_TO_FILTER_OUT.includes(tag));
 }
 
-export async function getFilesRecursive(path: string, ext: string) {
-  const files = await fs.promises.readdir(path);
-  const result: string[] = [];
-  for (const file of files) {
-    const filePath = `${path}/${file}`;
-    const stats = await fs.promises.stat(filePath);
-    if (stats.isDirectory()) {
-      result.push(...(await getFilesRecursive(filePath, ext)));
-    } else if (stats.isFile() && filePath.endsWith(ext)) {
-      result.push(filePath);
+export async function getFilesRecursive(
+  path: string,
+  ext: string
+): Promise<Result<string[]>> {
+  try {
+    const files = await fs.promises.readdir(path);
+
+    const result: string[] = [];
+    for (const file of files) {
+      const filePath = `${path}/${file}`;
+
+      try {
+        const stats = await fs.promises.stat(filePath);
+        if (stats.isDirectory()) {
+          const getFilesRecursiveResult = await getFilesRecursive(
+            filePath,
+            ext
+          );
+
+          if (!getFilesRecursiveResult.ok) {
+            return getFilesRecursiveResult;
+          }
+
+          result.push(...getFilesRecursiveResult.value);
+        } else if (stats.isFile() && filePath.endsWith(ext)) {
+          result.push(filePath);
+        }
+      } catch (e) {
+        return Err({
+          type: "COULD_NOT_READ_FILE_STATS",
+          path: filePath,
+        });
+      }
     }
+
+    return Ok(result);
+  } catch (e) {
+    return Err({
+      type: "COULD_NOT_READ_ADDRESS",
+      path,
+    });
   }
-  return result;
 }
 
 export function entitiesToOrderedEntities<E extends Entity>(
@@ -178,8 +239,8 @@ const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
 export async function parseImagesFromMarkdown(
   filePath: string,
   body: string
-): Promise<Result<Image[]>> {
-  const images: Image[] = [];
+): Promise<Result<SourceDataImage[]>> {
+  const images: SourceDataImage[] = [];
 
   for (const match of body.matchAll(IMAGE_REGEX)) {
     const [, alt, src] = match;
@@ -372,6 +433,19 @@ export async function readMarkdownFile(path: string): Promise<Result<string>> {
   const frontMatter = frontMatterParser(fileContents.value);
 
   return Ok(frontMatter.body);
+}
+
+export function parseJson<T>(json: string, description: string): Result<T> {
+  try {
+    const parsed = JSON.parse(json);
+
+    return Ok(parsed);
+  } catch (e) {
+    return Err({
+      type: "COULD_NOT_PARSE_JSON",
+      description,
+    });
+  }
 }
 
 export async function writeFile(

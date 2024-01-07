@@ -1,10 +1,29 @@
 import { Ok, Result, fetchUrl } from "../utils";
 
 import config from "../../config";
-import { Lego, LegoSet } from "../types";
 
 const LOGIN_URL = "https://brickset.com/api/v3.asmx/login";
 const GET_SET_URL = "https://brickset.com/api/v3.asmx/getSets";
+
+export type LegoSet = {
+  key: string;
+  name: string;
+  number: string;
+  pieces: number;
+  image: {
+    src: string;
+  };
+  thumbnail: {
+    src: string;
+  };
+  bricksetUrl: string;
+  quantity: number;
+};
+
+
+export type SourceDataLego = Record<string, LegoSet>;
+
+export const DEFAULT_SOURCE_DATA_LEGO: SourceDataLego = {};
 
 async function fetchUserHash(): Promise<Result<string>> {
   const loginResponse = await fetchUrl<{
@@ -20,7 +39,9 @@ async function fetchUserHash(): Promise<Result<string>> {
   return Ok(loginResponse.value.hash);
 }
 
-export async function loadLegoSets(): Promise<Result<Lego>> {
+export async function loadLegoSets(
+  previousData: SourceDataLego
+): Promise<Result<SourceDataLego>> {
   const userHashResult = await fetchUserHash();
 
   if (!userHashResult.ok) {
@@ -37,7 +58,7 @@ export async function loadLegoSets(): Promise<Result<Lego>> {
 
   const rawSets = setsResult.value.sets;
 
-  const lego: Lego = {};
+  const lego = { ...previousData };
 
   for (const rawSet of rawSets) {
     const set: LegoSet = {

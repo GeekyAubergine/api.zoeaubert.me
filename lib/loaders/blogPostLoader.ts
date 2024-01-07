@@ -5,8 +5,7 @@ import {
   BlogPostEntity,
   BlogPosts,
   EntityMedia,
-  Image,
-  LoaderParams,
+  SourceDataImage,
 } from "../types";
 import {
   Err,
@@ -16,9 +15,23 @@ import {
   entitiesToOrderedEntities,
   getFilesRecursive,
   getImageOrientation,
-  hash,
   parseImagesFromMarkdown,
 } from "../utils";
+
+export type SourceDataBlogPost = {
+  key: string;
+  title: string;
+  date: string;
+  description: string;
+  content: string;
+  tags: string[];
+  hero: SourceDataImage | null;
+  images: SourceDataImage[];
+};
+
+export type SourceDataBlogPosts = Record<string, SourceDataBlogPost>;
+
+export const DEFAULT_SOURCE_DATA_BLOG_POSTS: SourceDataBlogPosts = {};
 
 function parseHeroImage(
   filePath: string,
@@ -26,7 +39,7 @@ function parseHeroImage(
   heroAlt: string | undefined,
   heroWidth: number | undefined,
   heroHeight: number | undefined
-): Result<Image | null> {
+): Result<SourceDataImage | null> {
   if (!hero) {
     return Ok(null);
   }
@@ -56,9 +69,8 @@ function parseHeroImage(
 }
 
 async function loadBlogPost(
-  loaderParams: LoaderParams<BlogPostEntity>,
   filePath: string
-): Promise<Result<BlogPostEntity>> {
+): Promise<Result<SourceDataBlogPost>> {
   const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
   const frontMatter = frontMatterParser(fileContents);
@@ -115,26 +127,7 @@ async function loadBlogPost(
     });
   }
 
-  const rawDataHash = hash({
-    slug,
-    title,
-    date,
-    description,
-    tags,
-    hero,
-    heroAlt,
-    showHero,
-    heroWidth,
-    heroHeight,
-  });
-
   const key = slug;
-
-  const existingPost = loaderParams.orderedEntities.entities[key];
-
-  if (existingPost && existingPost.rawDataHash === rawDataHash) {
-    return Ok(existingPost);
-  }
 
   const heroImageResult = parseHeroImage(
     filePath,
@@ -150,29 +143,17 @@ async function loadBlogPost(
 
   const heroImage = heroImageResult.value;
 
-  const permalink = `/blog/${slug}`;
   const dateString = new Date(date).toISOString();
 
-  const mediaResult = await parseImagesFromMarkdown(filePath, body);
+  const images = await parseImagesFromMarkdown(filePath, body);
 
-  if (!mediaResult.ok) {
-    return mediaResult;
+  if (!images.ok) {
+    return images;
   }
-
-  const media: EntityMedia[] = mediaResult.value.map(
-    (image): EntityMedia => ({
-      image,
-      parentPermalink: permalink,
-      date,
-    })
-  );
-
-  console.log(`Updating blog post: ${key} (${title})`);
 
   return Ok({
     type: "blogPost",
     key,
-    permalink,
     title,
     date: dateString,
     description,
@@ -180,29 +161,33 @@ async function loadBlogPost(
     tags: cleanTags(tags),
     hero: heroImage,
     showHero: showHero || false,
-    media,
-    rawDataHash,
-    firstLine: body.split("\n")[0] ?? "",
+    images: images.value,
   });
 }
 
 export async function loadBlogPosts(
-  loaderParams: LoaderParams<BlogPostEntity>,
+  previousData: SourceDataBlogPosts,
   postsDir: string
-): Promise<Result<BlogPosts>> {
+): Promise<Result<SourceDataBlogPosts>> {
   const paths = await getFilesRecursive(postsDir, ".md");
 
-  const blogPosts: BlogPostEntity[] = [];
+  if (!paths.ok) {
+    return Ok(previousData);
+  }
 
-  for (const filePath of paths) {
-    const result = await loadBlogPost(loaderParams, filePath);
+  const blogPosts: SourceDataBlogPosts = { ...previousData };
+
+  for (const filePath of paths.value) {
+    const result = await loadBlogPost(filePath);
 
     if (!result.ok) {
       return result;
     }
 
-    blogPosts.push(result.value);
+    const { value } = result;
+
+    blogPosts[value.key] = value;
   }
 
-  return Ok(entitiesToOrderedEntities(blogPosts));
+  return Ok(blogPosts);
 }

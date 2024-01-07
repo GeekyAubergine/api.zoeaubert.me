@@ -1,31 +1,39 @@
-import fs from "fs";
 import path from "path";
 import frontMatterParser from "front-matter";
-import {
-  EntityMedia,
-  LoaderParams,
-  MicroPostEntity,
-  MicroPosts,
-} from "../types";
 import {
   Err,
   Ok,
   Result,
-  entitiesToOrderedEntities,
-  formatDateAsSlugPart,
-  hash,
   parseImagesFromMarkdown,
   getFilesRecursive,
   cleanTags,
+  readFile,
 } from "../utils";
+import { SourceDataImage } from "lib/types";
+
+export type SourceDataMicroPost = {
+  key: string;
+  title: string;
+  date: string;
+  content: string;
+  tags: string[];
+  images: SourceDataImage[];
+};
+
+export type SourceDataMicroPosts = Record<string, SourceDataMicroPost>;
+
+export const DEFAULT_SOURCE_DATA_MICRO_POSTS: SourceDataMicroPosts = {};
 
 async function loadMicroPost(
-  loaderParams: LoaderParams<MicroPostEntity>,
   filePath: string
-): Promise<Result<MicroPostEntity>> {
-  const fileContents = await fs.promises.readFile(filePath, "utf-8");
+): Promise<Result<SourceDataMicroPost>> {
+  const fileContents = await readFile(filePath);
 
-  const frontMatter = frontMatterParser(fileContents);
+  if (!fileContents.ok) {
+    return fileContents;
+  }
+
+  const frontMatter = frontMatterParser(fileContents.value);
   const { attributes, body } = frontMatter;
   const { date, tags } = attributes as {
     date: string | undefined;
@@ -43,69 +51,45 @@ async function loadMicroPost(
 
   const key = `${title}-${date}`;
 
-  const rawDataHash = hash({
-    key,
-    date,
-    tags: (tags ?? []).join(","),
-    body,
-  });
+  const imagesResult = await parseImagesFromMarkdown(filePath, body);
 
-  const permalink = `/micros/${formatDateAsSlugPart(new Date(date))}/${title}`;
-
-  const existingPost = loaderParams.orderedEntities.entities[key];
-
-  if (existingPost && existingPost.rawDataHash === rawDataHash) {
-    return Ok(existingPost);
+  if (!imagesResult.ok) {
+    return imagesResult;
   }
-
-  const mediaResult = await parseImagesFromMarkdown(filePath, body);
-
-  if (!mediaResult.ok) {
-    return mediaResult;
-  }
-
-  const media: EntityMedia[] = mediaResult.value.map(
-    (image): EntityMedia => ({
-      image,
-      parentPermalink: permalink,
-      date,
-    })
-  );
-
-  const firstLine = body.split(/\/n/)[0]?.replace(/\[(.*?)]\(.*?\)/g, "$1");
-
-  console.log(`Updating micro post: ${key} (${date})`);
 
   return Ok({
-    type: "microPost",
     key,
-    permalink,
+    title,
     date,
     content: body,
     tags: cleanTags(tags ?? []),
-    media,
-    description: firstLine ?? "",
-    rawDataHash,
+    images: imagesResult.value,
   });
 }
 
 export async function loadMicroPosts(
-  loaderParams: LoaderParams<MicroPostEntity>,
+  previousData: SourceDataMicroPosts,
   microsDir: string
-): Promise<Result<MicroPosts>> {
+): Promise<Result<SourceDataMicroPosts>> {
   const paths = await getFilesRecursive(microsDir, ".md");
 
-  const microPosts: MicroPostEntity[] = [];
+  if (!paths.ok) {
+    return paths;
+  }
 
-  for (const filePath of paths) {
-    const result = await loadMicroPost(loaderParams, filePath);
+  const microPosts = { ...previousData };
+
+  for (const filePath of paths.value) {
+    const result = await loadMicroPost(filePath);
 
     if (!result.ok) {
       return result;
     }
 
-    microPosts.push(result.value);
+    const { value } = result;
+
+    microPosts[value.key] = value;
   }
 
-  return Ok(entitiesToOrderedEntities(microPosts));
+  return Ok(microPosts);
 }

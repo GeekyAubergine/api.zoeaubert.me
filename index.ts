@@ -2,81 +2,30 @@ import fs from "fs-extra";
 import path from "path";
 import config from "./config";
 
-import { Err, Ok, Result, exists } from "./lib/utils";
-import { Data } from "./lib/types";
+import { Err, Ok, Result, exists, parseJson, readFile, writeFile } from "./lib/utils";
 import extract from "extract-zip";
-import { loadData } from "./lib/loaders/loaders";
-import { writeData } from "./lib/writers/writers";
-import { generateData } from "./lib/processors/processors";
+import { DEFAULT_SOURCE_DATA, SourceData, loadSourceData } from "./lib/loaders/loaders";
+import { logError } from "./lib/loggger";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
 const CONTENT_DIR = path.join(__dirname, "./.content");
-
-const DEFAULT_DATA: Data = {
-  blogPosts: {
-    entityOrder: [],
-    entities: {},
-  },
-  microBlogsPosts: {
-    entityOrder: [],
-    entities: {},
-  },
-  microPosts: {
-    entityOrder: [],
-    entities: {},
-  },
-  mastodonPosts: {
-    entityOrder: [],
-    entities: {},
-  },
-  statusLolPosts: {
-    entityOrder: [],
-    entities: {},
-  },
-  albums: {
-    entityOrder: [],
-    entities: {},
-  },
-  albumPhotos: {
-    entityOrder: [],
-    entities: {},
-  },
-  lego: {},
-  games: {},
-  about: "",
-  faq: "",
-  now: "",
-  movies: {},
-  tvShows: {},
-  lastUpdated: "",
-};
+const SOURCE_DATA_FILE = path.join(PUBLIC_DIR, "source-data.json");
 
 const CONTENT_URL =
   "https://github.com/GeekyAubergine/zoeaubert.me-content/archive/refs/heads/main.zip";
 
 async function prepFolders() {
-  if (!(await exists(PUBLIC_DIR))) {
+  const pubDirExists = await exists(PUBLIC_DIR);
+
+  if (!pubDirExists.ok || !pubDirExists.value) {
     await fs.promises.mkdir(PUBLIC_DIR, { recursive: true });
   }
-  if (!(await exists(config.cacheDir))) {
+
+  const cacheDirExists = await exists(config.cacheDir);
+  
+  if (!cacheDirExists.ok || !cacheDirExists.value) {
     await fs.promises.mkdir(config.cacheDir, { recursive: true });
-  }
-}
-
-async function loadArchive(): Promise<Result<Data>> {
-  try {
-    const archiveFile = await fs.promises.readFile(
-      path.join(PUBLIC_DIR, "archive.json"),
-      "utf-8"
-    );
-
-    return Ok(JSON.parse(archiveFile));
-  } catch (e) {
-    // TODO Try loading from backup
-    return Err({
-      type: "UNABLE_TO_LOAD_ARCHIVE",
-    });
   }
 }
 
@@ -120,75 +69,106 @@ async function downloadContent(): Promise<Result<undefined>> {
   }
 }
 
+async function loadSourceDataFromFile(): Promise<Result<SourceData>> {
+  const sourceDataFile = await readFile(
+    path.join(SOURCE_DATA_FILE)
+  );
+
+  if (!sourceDataFile.ok) {
+    return sourceDataFile;
+  }
+
+  return parseJson(sourceDataFile.value, "Source data archive");
+}
+
 async function main() {
   console.log("Building api.zoeaubert.me data");
 
   await prepFolders();
 
-  const archiveResult = await loadArchive();
-
-  const archive = archiveResult.ok ? archiveResult.value : DEFAULT_DATA;
+  console.log("Downloading content");
+  const downloadStart = Date.now();
 
   const contentDownloadResult = await downloadContent();
 
+  const downloadEnd = Date.now();
+  console.log(`Downloaded in ${downloadEnd - downloadStart}ms`);
+
   if (!contentDownloadResult.ok) {
-    console.error(contentDownloadResult.error);
+    logError(contentDownloadResult);
+    return;
+  }
+  
+  console.log("Reading source data from file")
+
+  let archivedSourceDataResult = await loadSourceDataFromFile();
+
+  let sourceData = DEFAULT_SOURCE_DATA;
+
+  if (archivedSourceDataResult.ok) {
+    sourceData = archivedSourceDataResult.value;
+  } else if (archivedSourceDataResult.error.type === "UNABLE_TO_READ_FILE") {
+    // Do nothing, if file doesn't exist we should create it without risk of corrupting a previous archive
+  } else {
+    // Irrcoverable error. Prevent corrupting the archive
+    logError(archivedSourceDataResult);
     return;
   }
 
   console.log("Loading data");
-
   const loadStart = Date.now();
 
-  const loadDataResult = await loadData(archive, CACHE_DIR, CONTENT_DIR);
+  const sourceDataLoadingResponse = await loadSourceData(sourceData, CACHE_DIR, CONTENT_DIR);
 
-  if (!loadDataResult.ok) {
-    console.error(loadDataResult.error);
-    return;
+  if (sourceDataLoadingResponse.ok) { 
+    sourceData = sourceDataLoadingResponse.value;
+  } else {
+    // Log the error and continue with old data
+    logError(sourceDataLoadingResponse);
   }
-
-  const loaderData = loadDataResult.value;
-
-  const archiveWithNewData = {
-    ...archive,
-    ...loaderData,
-  };
 
   const loadEnd = Date.now();
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const transformStart = Date.now();
+  const writeSourceDataResult = await writeFile(SOURCE_DATA_FILE, JSON.stringify(sourceData));
 
-  console.log("Transforming data");
-
-  const processedData = await generateData(archiveWithNewData);
-
-  const transformEnd = Date.now();
-
-  console.log(`Transformed in ${transformEnd - transformStart}ms`);
-
-  if (!processedData.ok) {
-    console.error(processedData.error);
+  if (!writeSourceDataResult.ok) {
+    logError(writeSourceDataResult);
     return;
   }
 
-  console.log("Writing data");
+  // const transformStart = Date.now();
 
-  const writeStart = Date.now();
+  // console.log("Transforming data");
 
-  const writingResult = await writeData(processedData.value, PUBLIC_DIR);
+  // const processedData = await generateData(archiveWithNewData);
 
-  if (!writingResult.ok) {
-    console.error(writingResult.error);
-    return;
-  }
+  // const transformEnd = Date.now();
 
-  const writeEnd = Date.now();
+  // console.log(`Transformed in ${transformEnd - transformStart}ms`);
 
-  console.log(`Wrote in ${writeEnd - writeStart}ms`);
+  // if (!processedData.ok) {
+  //   console.error(processedData.error);
+  //   return;
+  // }
 
-  console.log("Done");
+  // console.log("Writing data");
+
+  // const writeStart = Date.now();
+
+  // const writingResult = await writeData(processedData.value, PUBLIC_DIR);
+
+  // if (!writingResult.ok) {
+  //   console.error(writingResult.error);
+  //   return;
+  // }
+
+  // const writeEnd = Date.now();
+
+  // console.log(`Wrote in ${writeEnd - writeStart}ms`);
+
+  // console.log("Done");
 }
 
 main();

@@ -10,7 +10,7 @@ type EntityType =
 
 export type ImageOrientation = "landscape" | "portrait" | "square";
 
-export type Image = {
+export type SourceDataImage = {
   src: string;
   alt: string;
   title: string;
@@ -20,7 +20,7 @@ export type Image = {
 };
 
 export type EntityMedia = {
-  image: Image;
+  image: SourceDataImage;
   parentPermalink: string;
   date: string;
 };
@@ -41,7 +41,7 @@ export type BlogPostEntity = EntityBase<
   "blogPost",
   {
     title: string;
-    hero: Image | null;
+    hero: SourceDataImage | null;
     showHero: boolean;
     firstLine: string;
   }
@@ -69,9 +69,9 @@ export type StatusLolEntity = EntityBase<
 export type AlbumPhotoEntity = EntityBase<
   "albumPhoto",
   {
-    fullSize: Image;
-    thumbnailSmall: Image;
-    thumbnailLarge: Image;
+    fullSize: SourceDataImage;
+    thumbnailSmall: SourceDataImage;
+    thumbnailLarge: SourceDataImage;
     albumPermalink: string;
     albumTotalPhotos: number;
     indexString: string;
@@ -208,9 +208,4 @@ export type Data = LoaderData & {
   movies: Movies;
   tvShows: TvShows;
   lastUpdated: string;
-};
-
-export type LoaderParams<E extends Entity> = {
-  orderedEntities: OrderedEntities<E>;
-  cacheDir: string;
 };
