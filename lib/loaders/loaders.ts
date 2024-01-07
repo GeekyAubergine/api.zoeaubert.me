@@ -47,6 +47,7 @@ import {
   SourceDataMastodonPosts,
   loadMastodonPosts,
 } from "./mastodonLoader";
+import { DEFAULT_SOURCE_DATA_ALBUMS, SourceDataAlbums, loadAlbums } from "./albumsLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
@@ -64,6 +65,7 @@ export type SourceData = {
   blogPosts?: SourceDataBlogPosts;
   microBlogArchivePosts?: SourceDataMicroBlogArchivePosts;
   mastodonPosts?: SourceDataMastodonPosts;
+  albums: SourceDataAlbums;
   lastUpdated: string;
 };
 
@@ -78,6 +80,7 @@ export const DEFAULT_SOURCE_DATA: SourceData = {
   blogPosts: DEFAULT_SOURCE_DATA_BLOG_POSTS,
   microBlogArchivePosts: DEFAULT_SOURCE_DATA_MICRO_BLOG_ARCHIVE_POSTS,
   mastodonPosts: DEFAULT_SOURCE_DATA_MASTODON_POSTS,
+  albums: DEFAULT_SOURCE_DATA_ALBUMS,
   lastUpdated: "2000-01-01T00:00:00.000Z",
 };
 
@@ -122,6 +125,11 @@ export async function loadSourceData(
     previousData.mastodonPosts ?? DEFAULT_SOURCE_DATA_MASTODON_POSTS,
     cacheDir
   );
+  const albumsRequest = loadAlbums(
+    previousData.albums ?? DEFAULT_SOURCE_DATA_ALBUMS,
+    path.join(contentDir, ALBUMS_DIR),
+    cacheDir
+  );
 
   const [
     aboutResult,
@@ -134,6 +142,7 @@ export async function loadSourceData(
     blogPostsResult,
     microBlogArchiveResult,
     mastodonResult,
+    albumsResult,
   ] = await Promise.allSettled([
     aboutRequest,
     faqRequest,
@@ -145,6 +154,7 @@ export async function loadSourceData(
     blogPostsRequest,
     microBlogArchiveRequest,
     mastodonRequest,
+    albumsRequest,
   ]);
 
   if (aboutResult.status === "fulfilled" && aboutResult.value.ok) {
@@ -189,6 +199,10 @@ export async function loadSourceData(
   if (mastodonResult.status === "fulfilled" && mastodonResult.value.ok) {
     data.mastodonPosts = mastodonResult.value.value;
   }
+  
+  if (albumsResult.status === "fulfilled" && albumsResult.value.ok) {
+    data.albums = albumsResult.value.value;
+  }
 
   data.lastUpdated = new Date().toISOString();
 
@@ -203,6 +217,7 @@ export async function loadSourceData(
     blogPostsResult,
     microBlogArchiveResult,
     mastodonResult,
+    albumsResult,
   ]);
 
   return Ok(data);

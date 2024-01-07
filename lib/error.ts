@@ -125,6 +125,7 @@ type UnableToResizeImage = {
 
 type AlbumPhotoMissingUrl = {
   type: "ALBUM_PHOTO_MISSING_URL";
+  path: string;
 };
 
 type AlbumPhotoMissingAlt = {
@@ -149,6 +150,11 @@ type AlbumMissingTitle = {
 
 type AlbumMissingDate = {
   type: "ALBUM_MISSING_DATE";
+  path: string;
+};
+
+type AlbumMissingPhotos = {
+  type: "ALBUM_MISSING_PHOTOS";
   path: string;
 };
 
@@ -239,6 +245,7 @@ export type ProjectError =
   | AlbumPhotoMissingWidthOrHeight
   | AlbumMissingTitle
   | AlbumMissingDate
+  | AlbumMissingPhotos
   | UnableToParseMoviePost
   | CouldNotFindMovie
   | CouldNotParseSeason
@@ -305,7 +312,7 @@ export function formatError(error: ProjectError): string {
     case "UNABLE_TO_RESIZE_IMAGE":
       return `Unable to resize image: ${error.path}`;
     case "ALBUM_PHOTO_MISSING_URL":
-      return `Album photo is missing url`;
+      return `Album photo is missing url ${error.path}`;
     case "ALBUM_PHOTO_MISSING_ALT":
       return `Album photo is missing alt: ${error.url}`;
     case "ALBUM_PHOTO_MISSING_METADATA":
@@ -316,6 +323,8 @@ export function formatError(error: ProjectError): string {
       return `Album is missing title: ${error.path}`;
     case "ALBUM_MISSING_DATE":
       return `Album is missing date: ${error.path}`;
+    case "ALBUM_MISSING_PHOTOS":
+      return `Album is missing photos: ${error.path}`;
     case "UNABLE_TO_PARSE_MOVIE_POST":
       return `Unable to parse movie post: ${error.post.permalink}`;
     case "COULD_NOT_FIND_MOVIE":
