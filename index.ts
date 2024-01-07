@@ -6,6 +6,8 @@ import { Err, Ok, Result, exists, parseJson, readFile, writeFile } from "./lib/u
 import extract from "extract-zip";
 import { DEFAULT_SOURCE_DATA, SourceData, loadSourceData } from "./lib/loaders/loaders";
 import { logError } from "./lib/loggger";
+import { processData } from "lib/processors/processors";
+import { writeData } from "lib/writers/writers";
 
 const PUBLIC_DIR = path.join(__dirname, "./_public");
 const CACHE_DIR = path.join(__dirname, "./.cache");
@@ -138,37 +140,37 @@ async function main() {
     return;
   }
 
-  // const transformStart = Date.now();
+  const processingStart = Date.now();
 
-  // console.log("Transforming data");
+  console.log("Processing data");
 
-  // const processedData = await generateData(archiveWithNewData);
+  const processedData = await processData(sourceData);
 
-  // const transformEnd = Date.now();
+  const processsingEnd = Date.now();
 
-  // console.log(`Transformed in ${transformEnd - transformStart}ms`);
+  console.log(`Processed in ${processsingEnd - processingStart}ms`);
 
-  // if (!processedData.ok) {
-  //   console.error(processedData.error);
-  //   return;
-  // }
+  if (!processedData.ok) {
+    logError(processedData);
+    return;
+  }
 
-  // console.log("Writing data");
+  console.log("Writing data");
 
-  // const writeStart = Date.now();
+  const writeStart = Date.now();
 
-  // const writingResult = await writeData(processedData.value, PUBLIC_DIR);
+  const writingResult = await writeData(processedData.value, PUBLIC_DIR);
 
-  // if (!writingResult.ok) {
-  //   console.error(writingResult.error);
-  //   return;
-  // }
+  if (!writingResult.ok) {
+    logError(writingResult);
+    return;
+  }
 
-  // const writeEnd = Date.now();
+  const writeEnd = Date.now();
 
-  // console.log(`Wrote in ${writeEnd - writeStart}ms`);
+  console.log(`Wrote in ${writeEnd - writeStart}ms`);
 
-  // console.log("Done");
+  console.log("Done");
 }
 
 main();

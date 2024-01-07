@@ -1,3 +1,6 @@
+import { SourceDataAbout } from "./loaders/aboutLoader";
+import { SourceDataFaq } from "./loaders/faqLoader";
+
 type EntityType =
   | "media"
   | "blogPost"
@@ -204,8 +207,11 @@ export type TvShow = {
 
 export type TvShows = Record<string, TvShow>;
 
-export type Data = LoaderData & {
-  movies: Movies;
-  tvShows: TvShows;
+export type AboutData = SourceDataAbout
+export type FaqData = SourceDataFaq;
+
+export type Data = {
+  about: SourceDataAbout;
+  faq: SourceDataFaq;
   lastUpdated: string;
 };

@@ -2,7 +2,7 @@ import path from "path";
 import { Ok, Result } from "../utils";
 import {
   DEFAULT_SOURCE_DATA_ABOUT,
-  SourceDatadAbout as SourceDataAbout,
+  SourceDataAbout as SourceDataAbout,
   loadAbout,
 } from "./aboutLoader";
 import {

@@ -1,5 +1,7 @@
+import path from "path";
+
 import { Data } from "../types";
-import { Err, Ok, Result, filterErr } from "../utils";
+import { Err, Ok, Result, filterErr, writeFile } from "../utils";
 import { writeArchive } from "./archiveWriter";
 import { writeAbout } from "./aboutWriter";
 import { writeBlogPosts } from "./blogPostsWriter";
@@ -16,6 +18,7 @@ import { writeLego } from "./legoWriter";
 import { writeGames } from "./gamesWriter";
 import { writeMovies } from "./moviesWriter";
 import { writeTv } from "./tvWriter";
+import { logFailedPromisedResults } from "lib/loggger";
 
 const WRITERS = [
   writeArchive,
@@ -36,19 +39,42 @@ const WRITERS = [
   writeTv,
 ];
 
+export async function writeSimples(
+  data: Data,
+  outputDir: string
+): Promise<Result<undefined>> {
+  const aboutRequest = writeFile(
+    path.join(outputDir, "about.md"),
+    data.about.content
+  );
+  const faqRequest = writeFile(
+    path.join(outputDir, "faq.md"),
+    data.faq.content
+  );
+
+  const results = await Promise.allSettled([aboutRequest, faqRequest]);
+
+  logFailedPromisedResults(results);
+
+  return Ok(undefined);
+}
+
 export async function writeData(
   data: Data,
   outputDir: string
 ): Promise<Result<undefined>> {
-  const results = await Promise.all(
-    WRITERS.map((writer) => writer(outputDir, data))
+  const dataRequest = await writeArchive(
+    path.join(outputDir, "data.json"),
+    data
   );
 
-  const errors = filterErr(results);
-
-  if (errors.length > 0) {
-    return Err(errors[0]!);
+  if (!dataRequest.ok) {
+    return dataRequest;
   }
+
+  const results = await Promise.allSettled([writeSimples(data, outputDir)]);
+
+  logFailedPromisedResults(results);
 
   return Ok(undefined);
 }
