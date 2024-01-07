@@ -1,43 +1,21 @@
-import Bottleneck from "bottleneck";
 import fs from "fs-extra";
 import yaml from "js-yaml";
-import path from "path";
 import {
-  exists,
   Err,
   Ok,
   Result,
-  uploadToCDN,
-  hash,
   downloadAndCacheFile,
-  cleanTags,
-  filterErr,
-  filterOk,
-  orderedEntitesFromArray,
   getImageSize,
   getImageOrientation,
 } from "../utils";
-import {
-  AlbumEntity,
-  AlbumPhotoEntity,
-  AlbumPhotos,
-  Albums,
-  ImageOrientation,
-  OrderedEntities,
-  SourceDataImage,
-} from "../types";
-import sharp from "sharp";
+import { SourceDataImage } from "../types";
 import config from "../../config";
 import { getFilesRecursive } from "../utils";
 
-const FILE_NAME_REGEX = /([\w,\s-]+)\.[A-Za-z]{3}$/;
-
-const photoLimiter = new Bottleneck({
-  maxConcurrent: 2,
-});
+// const FILE_NAME_REGEX = /([\w,\s-]+)\.[A-Za-z]{3}$/;
 
 export type SourceDataAlbum = {
-  key: string,
+  key: string;
   title: string;
   description: string | null;
   date: string;

@@ -5,21 +5,12 @@ import {
   cleanTags,
   contentContainsContentToFilterOut,
   downloadAndCacheFile,
-  orderedEntitesFromArray,
   fetchUrl,
   getImageOrientation,
-  hash,
   uploadToCDN,
 } from "../utils";
 import config from "../../config";
-import {
-  DataImage,
-  EntityMedia,
-  MastodonPostEntity,
-  MastodonPosts,
-  SourceDataImage,
-} from "../types";
-import { SourceData } from "./loaders";
+import { SourceDataImage } from "../types";
 
 const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true&limit=40`;
 
@@ -93,10 +84,14 @@ async function processAttachment(
   const cdnPath = cdnPathForFileNameAndDate(
     cachedResult.value.cachePath,
     dateString,
-    cacheDir,
+    cacheDir
   );
 
-  const uploadResult = await uploadToCDN(cachedResult.value.cachePath, cdnPath, cacheDir);
+  const uploadResult = await uploadToCDN(
+    cachedResult.value.cachePath,
+    cdnPath,
+    cacheDir
+  );
 
   if (!uploadResult.ok) {
     return uploadResult;

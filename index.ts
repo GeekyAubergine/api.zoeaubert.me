@@ -2,9 +2,21 @@ import fs from "fs-extra";
 import path from "path";
 import config from "./config";
 
-import { Err, Ok, Result, exists, parseJson, readFile, writeFile, writeJSONFile } from "./lib/utils";
+import {
+  Err,
+  Ok,
+  Result,
+  exists,
+  parseJson,
+  readFile,
+  writeJSONFile,
+} from "./lib/utils";
 import extract from "extract-zip";
-import { DEFAULT_SOURCE_DATA, SourceData, loadSourceData } from "./lib/loaders/loaders";
+import {
+  DEFAULT_SOURCE_DATA,
+  SourceData,
+  loadSourceData,
+} from "./lib/loaders/loaders";
 import { logError } from "./lib/loggger";
 import { processData } from "./lib/processors/processors";
 import { writeData } from "./lib/writers/writers";
@@ -25,7 +37,7 @@ async function prepFolders() {
   }
 
   const cacheDirExists = await exists(config.cacheDir);
-  
+
   if (!cacheDirExists.ok || !cacheDirExists.value) {
     await fs.promises.mkdir(config.cacheDir, { recursive: true });
   }
@@ -72,9 +84,7 @@ async function downloadContent(): Promise<Result<undefined>> {
 }
 
 async function loadSourceDataFromFile(): Promise<Result<SourceData>> {
-  const sourceDataFile = await readFile(
-    path.join(SOURCE_DATA_FILE)
-  );
+  const sourceDataFile = await readFile(path.join(SOURCE_DATA_FILE));
 
   if (!sourceDataFile.ok) {
     return sourceDataFile;
@@ -88,20 +98,20 @@ async function main() {
 
   await prepFolders();
 
-  // console.log("Downloading content");
-  // const downloadStart = Date.now();
+  console.log("Downloading content");
+  const downloadStart = Date.now();
 
-  // const contentDownloadResult = await downloadContent();
+  const contentDownloadResult = await downloadContent();
 
-  // const downloadEnd = Date.now();
-  // console.log(`Downloaded in ${downloadEnd - downloadStart}ms`);
+  const downloadEnd = Date.now();
+  console.log(`Downloaded in ${downloadEnd - downloadStart}ms`);
 
-  // if (!contentDownloadResult.ok) {
-  //   logError(contentDownloadResult);
-  //   return;
-  // }
-  
-  console.log("Reading source data from file")
+  if (!contentDownloadResult.ok) {
+    logError(contentDownloadResult);
+    return;
+  }
+
+  console.log("Reading source data from file");
 
   let archivedSourceDataResult = await loadSourceDataFromFile();
 
@@ -120,9 +130,13 @@ async function main() {
   console.log("Loading data");
   const loadStart = Date.now();
 
-  const sourceDataLoadingResponse = await loadSourceData(sourceData, CACHE_DIR, CONTENT_DIR);
+  const sourceDataLoadingResponse = await loadSourceData(
+    sourceData,
+    CACHE_DIR,
+    CONTENT_DIR
+  );
 
-  if (sourceDataLoadingResponse.ok) { 
+  if (sourceDataLoadingResponse.ok) {
     sourceData = sourceDataLoadingResponse.value;
   } else {
     // Log the error and continue with old data
@@ -133,7 +147,10 @@ async function main() {
 
   console.log(`Loaded in ${loadEnd - loadStart}ms`);
 
-  const writeSourceDataResult = await writeJSONFile(SOURCE_DATA_FILE, sourceData);
+  const writeSourceDataResult = await writeJSONFile(
+    SOURCE_DATA_FILE,
+    sourceData
+  );
 
   if (!writeSourceDataResult.ok) {
     logError(writeSourceDataResult);

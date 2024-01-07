@@ -20,10 +20,13 @@ export type LegoSet = {
   quantity: number;
 };
 
+export type SourceDataLego = {
+  sets: Record<string, LegoSet>;
+};
 
-export type SourceDataLego = Record<string, LegoSet>;
-
-export const DEFAULT_SOURCE_DATA_LEGO: SourceDataLego = {};
+export const DEFAULT_SOURCE_DATA_LEGO: SourceDataLego = {
+  sets: {}
+};
 
 async function fetchUserHash(): Promise<Result<string>> {
   const loginResponse = await fetchUrl<{
@@ -76,7 +79,7 @@ export async function loadLegoSets(
       quantity: rawSet.collection.qtyOwned,
     };
 
-    lego[set.key] = set;
+    lego.sets[set.key] = set;
   }
   return Ok(lego);
 }

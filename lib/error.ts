@@ -1,9 +1,3 @@
-import {
-  MastodonPostEntity,
-  MicroBlogEntity,
-  MicroPostEntity,
-  TvShowSeason,
-} from "./types";
 import { exhaust } from "./utils";
 
 type UnableToUploadFileToCDN = {
@@ -160,7 +154,7 @@ type AlbumMissingPhotos = {
 
 type UnableToParseMoviePost = {
   type: "UNABLE_TO_PARSE_MOVIE_POST";
-  post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
+  permalink: string;
 };
 
 type CouldNotFindMovie = {
@@ -178,7 +172,7 @@ type CouldNotParseSeason = {
 
 type UnableToParseTvShowPost = {
   type: "UNABLE_TO_PARSE_TV_SHOW_POST";
-  post: MicroBlogEntity | MicroPostEntity | MastodonPostEntity;
+  permalink: string;
 };
 
 type CouldNotFindTvShowFromEmptySeasons = {
@@ -326,13 +320,13 @@ export function formatError(error: ProjectError): string {
     case "ALBUM_MISSING_PHOTOS":
       return `Album is missing photos: ${error.path}`;
     case "UNABLE_TO_PARSE_MOVIE_POST":
-      return `Unable to parse movie post: ${error.post.permalink}`;
+      return `Unable to parse movie post: ${error.permalink}`;
     case "COULD_NOT_FIND_MOVIE":
       return `Could not find movie: ${error.movie.title} (${error.movie.year})`;
     case "COULD_NOT_PARSE_SEASON":
       return `Could not parse season: ${error.season}`;
     case "UNABLE_TO_PARSE_TV_SHOW_POST":
-      return `Unable to parse TV show post: ${error.post.permalink}`;
+      return `Unable to parse TV show post: ${error.permalink}`;
     case "COULD_NOT_FIND_TV_SHOW_FROM_EMPTY_SEASONS":
       return `Could not find TV show from empty seasons`;
     case "COULD_NOT_FIND_TV_SHOW_BY_TITLE": 

@@ -1,19 +1,19 @@
 import { Ok, Result } from "../utils";
-import { BlogPostsData, DataImage } from "../types";
+import { DataBlogPosts, DataImage } from "../types";
 import { SourceData } from "../loaders/loaders";
 import { processImage } from "./processors";
 import { logError } from "../loggger";
 
 export async function processBlogPosts(
   sourceData: SourceData
-): Promise<Result<BlogPostsData>> {
+): Promise<Result<DataBlogPosts>> {
   if (!sourceData.blogPosts) {
     return Ok({});
   }
 
   const keys = Object.keys(sourceData.blogPosts);
 
-  const blogPosts: BlogPostsData = {};
+  const blogPosts: DataBlogPosts = {};
 
   for (const key of keys) {
     const sourceBlogPost = sourceData.blogPosts[key];

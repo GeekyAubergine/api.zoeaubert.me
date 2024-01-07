@@ -3,12 +3,7 @@ import path from "path";
 import md5 from "md5";
 import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
-import {
-  Entity,
-  SourceDataImage,
-  ImageOrientation,
-  OrderedEntities,
-} from "./types";
+import { SourceDataImage, ImageOrientation } from "./types";
 import { ProjectError } from "./error";
 import imageSize from "image-size";
 import frontMatterParser from "front-matter";
@@ -565,23 +560,6 @@ export async function writeJSONFile(
   const json = JSON.stringify(contents, null, 2);
 
   return writeFile(path, json);
-}
-
-export function mergeOrderedEntities<T extends Entity>(
-  orderedEntities: OrderedEntities<T>[]
-): OrderedEntities<T> {
-  const entities: T[] = [];
-
-  for (const orderedEntity of orderedEntities) {
-    for (const key of orderedEntity.entityOrder) {
-      let entity = orderedEntity.entities[key];
-      if (entity) {
-        entities.push(entity);
-      }
-    }
-  }
-
-  return orderedEntitesFromArray(entities);
 }
 
 export function contentContainsContentToFilterOut(content: string): boolean {

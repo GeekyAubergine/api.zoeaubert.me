@@ -1,21 +1,19 @@
 import type {
   Data,
-  MastodonPostEntity,
-  MediaReview,
-  MicroBlogEntity,
-  MicroPostEntity,
-  Movie,
-  Movies,
+  DataMastodonPost,
+  DataMediaReview,
+  DataMovie,
+  DataMovies,
+  DataMicroPost,
+  DataMicroBlogArchivePost,
 } from "../types";
 import {
   Err,
   Ok,
   Result,
-  exhaust,
   fetchUrl,
   filterErr,
   filterOk,
-  mergeOrderedEntities,
 } from "../utils";
 import config from "../../config";
 
@@ -26,7 +24,7 @@ export type MovieTitleAndYear = {
 
 export type ReviewForMovie = {
   movieTitleAndYear: MovieTitleAndYear;
-  review: MediaReview;
+  review: DataMediaReview;
 };
 
 const TAG = "movies";
@@ -57,7 +55,7 @@ function makePermalink(movie: MovieTitleAndYear) {
   return `/hobbies/movies/${movieKey(movie)}`;
 }
 
-function parseMicroblogPost(post: MicroBlogEntity): Result<ReviewForMovie> {
+export function parseMicroblogPost(post: DataMicroBlogArchivePost): Result<ReviewForMovie> {
   const { content, date } = post;
 
   const lines = content.split("\n").filter((line) => line.trim() !== "");
@@ -67,7 +65,7 @@ function parseMicroblogPost(post: MicroBlogEntity): Result<ReviewForMovie> {
   if (!titleLine || !ratingAndReviewLine) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -84,7 +82,7 @@ function parseMicroblogPost(post: MicroBlogEntity): Result<ReviewForMovie> {
   if (!title || !year || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -102,7 +100,7 @@ function parseMicroblogPost(post: MicroBlogEntity): Result<ReviewForMovie> {
   });
 }
 
-function parseMicroPostPost(post: MicroPostEntity): Result<ReviewForMovie> {
+export function parseMicroPostPost(post: DataMicroPost): Result<ReviewForMovie> {
   const { content, date } = post;
 
   const lines = content.split("\n").filter((line) => line.trim() !== "");
@@ -112,7 +110,7 @@ function parseMicroPostPost(post: MicroPostEntity): Result<ReviewForMovie> {
   if (!titleLine || !ratingAndReviewLine) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -129,7 +127,7 @@ function parseMicroPostPost(post: MicroPostEntity): Result<ReviewForMovie> {
   if (!title || !year || !review || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -147,7 +145,7 @@ function parseMicroPostPost(post: MicroPostEntity): Result<ReviewForMovie> {
   });
 }
 
-function parseMastodonPost(post: MastodonPostEntity): Result<ReviewForMovie> {
+export function parseMastodonPost(post: DataMastodonPost): Result<ReviewForMovie> {
   const { content, date } = post;
 
   const lines = content
@@ -160,7 +158,7 @@ function parseMastodonPost(post: MastodonPostEntity): Result<ReviewForMovie> {
   if (!titleLine || !ratingAndReviewLine) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -177,7 +175,7 @@ function parseMastodonPost(post: MastodonPostEntity): Result<ReviewForMovie> {
   if (!title || !year || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_MOVIE_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -193,23 +191,6 @@ function parseMastodonPost(post: MastodonPostEntity): Result<ReviewForMovie> {
       postPermalink: post.permalink,
     },
   });
-}
-
-export function parseReviewPost(
-  post: MicroPostEntity | MastodonPostEntity | MicroBlogEntity
-): Result<ReviewForMovie> {
-  const { type } = post;
-
-  switch (type) {
-    case "microBlog":
-      return parseMicroblogPost(post);
-    case "microPost":
-      return parseMicroPostPost(post);
-    case "mastodon":
-      return parseMastodonPost(post);
-    default:
-      return exhaust(type);
-  }
 }
 
 async function findMoviePosterAndID(
@@ -270,8 +251,8 @@ async function processMovieWithTitleYearAndReviews(
   data: Data,
   key: string,
   movieTitleAndYear: MovieTitleAndYear,
-  reviews: MediaReview[]
-): Promise<Result<Movie>> {
+  reviews: DataMediaReview[]
+): Promise<Result<DataMovie>> {
   const posterAndIdResult = await findMoviePosterAndID(data, movieTitleAndYear);
 
   if (!posterAndIdResult.ok) {
@@ -284,7 +265,7 @@ async function processMovieWithTitleYearAndReviews(
     return new Date(a.date).getTime() - new Date(b.date).getTime();
   });
 
-  const movie: Movie = {
+  const movie: DataMovie = {
     key,
     title: movieTitleAndYear.title,
     year: movieTitleAndYear.year,
@@ -301,23 +282,35 @@ async function processMovieWithTitleYearAndReviews(
   return Ok(movie);
 }
 
-export async function processMovies(data: Data): Promise<Result<Movies>> {
-  const potentialMoviePosts = mergeOrderedEntities<
-    MicroPostEntity | MastodonPostEntity | MicroBlogEntity
-  >([data.microPosts, data.mastodonPosts, data.microBlogsPosts]);
-
-  const reviewPosts = Object.values(potentialMoviePosts.entities).filter(
-    (entity) => {
+export async function processMovies(data: Data): Promise<Result<DataMovies>> {
+  const mastodonReviewPosts = Object.values(data.mastodonPosts).filter(
+    (post) => {
       return (
-        entity.tags.some((tag) => tag.toLowerCase() === TAG) &&
-        !entity.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
+        post.tags.some((tag) => tag.toLowerCase() === TAG) &&
+        !post.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
       );
     }
-  );
+  ).map(parseMastodonPost);
 
-  const reviewResults = reviewPosts.map((reviewPosts) =>
-    parseReviewPost(reviewPosts)
-  );
+  const microPostReviewPosts = Object.values(data.microPosts).filter(
+    (post) => {
+      return (
+        post.tags.some((tag) => tag.toLowerCase() === TAG) &&
+        !post.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
+      );
+    }
+  ).map(parseMicroPostPost);
+
+  const microBlogReviewPosts = Object.values(data.microBlogArchivePosts).filter(
+    (post) => {
+      return (
+        post.tags.some((tag) => tag.toLowerCase() === TAG) &&
+        !post.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
+      );
+    }
+  ).map(parseMicroblogPost);
+
+  const reviewResults =  [...mastodonReviewPosts, ...microPostReviewPosts, ...microBlogReviewPosts]
 
   const okReviews = filterOk(reviewResults);
 
@@ -327,7 +320,7 @@ export async function processMovies(data: Data): Promise<Result<Movies>> {
       {
         key: string;
         movieTitleAndYear: MovieTitleAndYear;
-        reviews: MediaReview[];
+        reviews: DataMediaReview[];
       }
     >
   >((acc, review) => {
@@ -369,7 +362,7 @@ export async function processMovies(data: Data): Promise<Result<Movies>> {
 
   const moviesArray = filterOk(movieResults);
 
-  const movies = moviesArray.reduce<Movies>((acc, movie) => {
+  const movies = moviesArray.reduce<DataMovies>((acc, movie) => {
     acc[movie.key] = movie;
     return acc;
   }, {});

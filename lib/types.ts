@@ -1,16 +1,6 @@
 import { SourceDataAbout } from "./loaders/aboutLoader";
 import { SourceDataFaq } from "./loaders/faqLoader";
 
-type EntityType =
-  | "media"
-  | "blogPost"
-  | "microBlog"
-  | "microPost"
-  | "mastodon"
-  | "statusLol"
-  | "album"
-  | "albumPhoto";
-
 export type ImageOrientation = "landscape" | "portrait" | "square";
 
 export type SourceDataImage = {
@@ -21,101 +11,109 @@ export type SourceDataImage = {
   orientation: ImageOrientation;
 };
 
-export type EntityMedia = {
-  image: SourceDataImage;
-  parentPermalink: string;
+export type DataImage = {
+  src: string;
+  alt: string;
   date: string;
+  title: string | null;
+  parentPermalink: string;
 };
 
-type EntityBase<T extends EntityType, D> = {
-  rawDataHash: string;
-  type: T;
+export type DataAbout = SourceDataAbout;
+export type DataFaq = SourceDataFaq;
+
+export type DataBlogPost = {
+  key: string;
+  permalink: string;
+  title: string;
+  date: string;
+  description: string;
+  content: string;
+  tags: string[];
+  hero: DataImage | null;
+  images: DataImage[];
+};
+
+export type DataBlogPosts = Record<string, DataBlogPost>;
+
+export type DataMastodonPost = {
   key: string;
   permalink: string;
   date: string;
   content: string;
   tags: string[];
-  media: EntityMedia[];
-  description: string;
-} & D;
-
-export type BlogPostEntity = EntityBase<
-  "blogPost",
-  {
-    title: string;
-    hero: SourceDataImage | null;
-    showHero: boolean;
-    firstLine: string;
-  }
->;
-
-export type MicroBlogEntity = EntityBase<"microBlog", {}>;
-
-export type MicroPostEntity = EntityBase<"microPost", {}>;
-
-export type MastodonPostEntity = EntityBase<
-  "mastodon",
-  {
-    originalUrl: string;
-  }
->;
-
-export type StatusLolEntity = EntityBase<
-  "statusLol",
-  {
-    emoji: string;
-    originalUrl: string;
-  }
->;
-
-export type AlbumPhotoEntity = EntityBase<
-  "albumPhoto",
-  {
-    fullSize: SourceDataImage;
-    thumbnailSmall: SourceDataImage;
-    thumbnailLarge: SourceDataImage;
-    albumPermalink: string;
-    albumTotalPhotos: number;
-    indexString: string;
-    previous: string | null;
-    next: string | null;
-    albumTitle: string;
-    featured: boolean;
-  }
->;
-
-export type AlbumEntity = EntityBase<
-  "album",
-  {
-    title: string;
-    photoOrder: string[];
-    coverPhotos: string[];
-  }
->;
-
-export type Entity =
-  | BlogPostEntity
-  | MicroBlogEntity
-  | MicroPostEntity
-  | MastodonPostEntity
-  | StatusLolEntity
-  | AlbumEntity
-  | AlbumPhotoEntity;
-
-export type OrderedEntities<E extends { key: string, date: string }> = {
-  entityOrder: string[];
-  entities: Record<string, E>;
+  originalUrl: string;
+  images: DataImage[];
 };
 
-export type BlogPosts = OrderedEntities<BlogPostEntity>;
-export type MicroBlogPosts = OrderedEntities<MicroBlogEntity>;
-export type MicroPosts = OrderedEntities<MicroPostEntity>;
-export type MastodonPosts = OrderedEntities<MastodonPostEntity>;
-export type StatusLolPosts = OrderedEntities<StatusLolEntity>;
-export type Albums = OrderedEntities<AlbumEntity>;
-export type AlbumPhotos = OrderedEntities<AlbumPhotoEntity>;
+export type DataMastodonPosts = Record<string, DataMastodonPost>;
 
-export type LegoSet = {
+export type DataMicroPost = {
+  key: string;
+  date: string;
+  content: string;
+  tags: string[];
+  images: DataImage[];
+  permalink: string;
+}
+
+export type DataMicroPosts = Record<string, DataMicroPost>;
+
+export type DataMicroBlogArchivePost = {
+  key: string;
+  date: string;
+  content: string;
+  description: string;
+  tags: string[];
+  images: DataImage[];
+  permalink: string;
+};
+
+export type DataMicroBlogArchivePosts = Record<
+  string,
+  DataMicroBlogArchivePost
+>;
+
+export type DataMediaReview = {
+  score: number;
+  review: string | null;
+  postPermalink: string;
+  date: string;
+};
+
+export type DataMovie = {
+  key: string;
+  title: string;
+  year: number;
+  reviews: DataMediaReview[];
+  averageScore: number;
+  posterUrl: string;
+  permalink: string;
+  themoviedbId: number;
+};
+
+export type DataMovies = Record<string, DataMovie>;
+
+export type DataTvShowSeason = {
+  season: number;
+  reviews: DataMediaReview[];
+  postPermalink: string;
+  averageScore: number;
+};
+
+export type DataTvShow = {
+  key: string;
+  title: string;
+  seasons: DataTvShowSeason[];
+  permalink: string;
+  averageScore: number;
+  posterUrl: string;
+  themoviedbId: number;
+};
+
+export type DataTvShows = Record<string, DataTvShow>;
+
+export type DataLegoSet = {
   key: string;
   name: string;
   number: string;
@@ -130,9 +128,13 @@ export type LegoSet = {
   quantity: number;
 };
 
-export type Lego = Record<string, LegoSet>;
+export type DataLego = { sets: Record<string, DataLegoSet> };
 
-export type Game = {
+export const DEFAULT_DATA_LEGO: DataLego = {
+  sets: {},
+};
+
+export type DataGame = {
   appid: number;
   name: string;
   played: boolean;
@@ -150,92 +152,18 @@ export type Game = {
   };
 };
 
-export type Games = Record<string, Game>;
-
-export type LoaderData = {
-  blogPosts: BlogPosts;
-  microBlogsPosts: MicroBlogPosts;
-  microPosts: MicroPosts;
-  mastodonPosts: MastodonPosts;
-  statusLolPosts: StatusLolPosts;
-  albums: Albums;
-  albumPhotos: AlbumPhotos;
-  about: string;
-  faq: string;
-  now: string;
-  lego: Lego;
-  games: Games;
-};
-
-export type MediaReview = {
-  score: number;
-  review: string | null;
-  postPermalink: string;
-  date: string;
-};
-
-export type Movie = {
-  key: string;
-  title: string;
-  year: number;
-  reviews: MediaReview[];
-  averageScore: number;
-  posterUrl: string;
-  permalink: string;
-  themoviedbId: number;
-};
-
-export type Movies = Record<string, Movie>;
-
-export type TvShowSeason = {
-  season: number;
-  reviews: MediaReview[];
-  postPermalink: string;
-  averageScore: number;
-}
-
-export type TvShow = {
-  key: string;
-  title: string;
-  seasons: TvShowSeason[];
-  permalink: string;
-  averageScore: number;
-  posterUrl: string;
-  themoviedbId: number;
-};
-
-export type TvShows = Record<string, TvShow>;
-
-export type DataImage = {
-  src: string,
-  alt: string,
-  date: string,
-  title: string | null,
-  parentPermalink: string,
-}
-
-
-export type DataAbout = SourceDataAbout
-export type DataFaq = SourceDataFaq;
-
-export type DataBlogPost = {
-  key: string;
-  permalink: string;
-  title: string;
-  date: string;
-  description: string;
-  content: string;
-  tags: string[];
-  hero: DataImage | null;
-  images: DataImage[];
-};
-
-export type BlogPostsData = Record<string, DataBlogPost>;
+export type DataGames = Record<string, DataGame>;
 
 export type Data = {
   about: SourceDataAbout;
   faq: SourceDataFaq;
-  blogPosts: BlogPostsData;
-  allImages: DataImage[];
+  blogPosts: DataBlogPosts;
+  mastodonPosts: DataMastodonPosts;
+  microPosts: DataMicroPosts;
+  microBlogArchivePosts: DataMicroBlogArchivePosts;
+  lego: DataLego;
+  games: DataGames;
+  movies: DataMovies;
+  tvShows: DataTvShows;
   lastUpdated: string;
 };

@@ -1,9 +1,9 @@
 import natsort from "natsort";
-import type { Data, TvShow, TvShowSeason } from "../types";
+import type { Data, DataTvShow, DataTvShowSeason } from "../types";
 import { Result, writeJSONFile } from "../utils";
 import path from "path";
 
-function seasonMostRecentReviewDate(season: TvShowSeason): string {
+function seasonMostRecentReviewDate(season: DataTvShowSeason): string {
   const reviews = season.reviews;
 
   const sortedReviews = reviews.slice().sort((a, b) => {
@@ -16,7 +16,7 @@ function seasonMostRecentReviewDate(season: TvShowSeason): string {
   return sortedReviews[0]!.date;
 }
 
-function tvShowMostRecentReviewDate(tvShow: TvShow): string {
+function tvShowMostRecentReviewDate(tvShow: DataTvShow): string {
   const seasons = tvShow.seasons;
 
   const sortedSeasons = seasons.slice().sort((a, b) => {

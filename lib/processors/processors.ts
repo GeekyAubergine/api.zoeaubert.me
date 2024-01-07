@@ -1,15 +1,22 @@
 import { Ok, Result, getImageOrientation } from "../utils";
-import { Data, DataImage, SourceDataImage } from "../types";
+import { DEFAULT_DATA_LEGO, Data, DataImage, SourceDataImage } from "../types";
 import { SourceData } from "../loaders/loaders";
 import { DEFAULT_SOURCE_DATA_ABOUT } from "../loaders/aboutLoader";
 import { DEFAULT_SOURCE_DATA_FAQ } from "../loaders/faqLoader";
 import { processBlogPosts } from "./processBlogPosts";
+import { processMovies } from "./processMovies";
 
 export const DEFAULT_DATA: Data = {
   about: DEFAULT_SOURCE_DATA_ABOUT,
   faq: DEFAULT_SOURCE_DATA_FAQ,
   blogPosts: {},
-  allImages: [],
+  mastodonPosts: {},
+  microPosts: {},
+  microBlogArchivePosts: {},
+  lego: DEFAULT_DATA_LEGO,
+  games: {},
+  movies: {},
+  tvShows: {},
   lastUpdated: "2000-01-01T00:00:00.000Z",
 };
 
@@ -39,7 +46,7 @@ export async function processData(
 ): Promise<Result<Data>> {
   let data = { ...DEFAULT_DATA };
 
-  // Do simple copies first
+  // Pass-through
   if (sourceData.about) {
     data.about = sourceData.about;
   }
@@ -48,7 +55,7 @@ export async function processData(
     data.faq = sourceData.faq;
   }
 
-  // Complex
+  // Core data
 
   const blogPosts = await processBlogPosts(sourceData);
 
@@ -57,6 +64,16 @@ export async function processData(
   }
 
   data.blogPosts = blogPosts.value;
+
+  // Generated data
+
+  const movies = await processMovies(data);
+
+  if (!movies.ok) {
+    return movies;
+  }
+
+  data.movies = movies.value;
 
   // const processMoviesRequest = processMovies(data);
 

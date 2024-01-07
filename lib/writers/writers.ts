@@ -1,20 +1,7 @@
 import path from "path";
 
 import { Data } from "../types";
-import { Err, Ok, Result, filterErr, orderedEntitesFromArray, orderedEntitesFromObject, writeFile, writeJSONFile } from "../utils";
-import { writeArchive } from "./archiveWriter";
-import { writeMicros } from "./microsWriter";
-import { writeTags } from "./tagsWriter";
-import { writeTimeline } from "./timelineWriter";
-import { writeYears } from "./yearsWriter";
-import { writePhotos } from "./photosWriter";
-import { writeAlbumsAndPhoto } from "./albumsAndPhotosWriter";
-import { writeNow } from "./nowWriter";
-import { writeAllPosts } from "./allPostsWriter";
-import { writeLego } from "./legoWriter";
-import { writeGames } from "./gamesWriter";
-import { writeMovies } from "./moviesWriter";
-import { writeTv } from "./tvWriter";
+import { Ok, Result, orderedEntitesFromObject, writeJSONFile } from "../utils";
 import { logFailedPromisedResults } from "../loggger";
 
 // const WRITERS = [

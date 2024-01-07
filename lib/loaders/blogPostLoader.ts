@@ -1,18 +1,12 @@
 import fs from "fs-extra";
 import frontMatterParser from "front-matter";
 
-import {
-  BlogPostEntity,
-  BlogPosts,
-  EntityMedia,
-  SourceDataImage,
-} from "../types";
+import { SourceDataImage } from "../types";
 import {
   Err,
   Ok,
   Result,
   cleanTags,
-  orderedEntitesFromArray,
   getFilesRecursive,
   getImageOrientation,
   parseImagesFromMarkdown,

@@ -1,115 +1,211 @@
 import { describe, expect, it } from "@jest/globals";
 
-import {
-  ReviewForTvShowSeason,
-  cleanTvShowTitle,
-  parseReviewPost,
-  parseSeasonNumbers,
-} from "./processsTvShows";
 import { Ok } from "../utils";
-import { MastodonPostEntity, MicroBlogEntity } from "../types";
+import {
+  ReviewForMovie,
+  cleanMovieTitle,
+  parseMastodonPost,
+  parseMicroPostPost,
+  parseMicroblogPost,
+} from "./processMovies";
+import {
+  DataMastodonPost,
+  DataMicroBlogArchivePost,
+  DataMicroPost,
+} from "lib/types";
 
 describe("moviesWriter", () => {
-  describe("#cleanTvShowTitle", () => {
+  describe("#cleanMovieTitle", () => {
     it("should format correctly", () => {
-      expect(cleanTvShowTitle("F Is for Family")).toEqual("f-is-for-family");
-    });
-  });
-
-  describe("#parseSeasonNumbers", () => {
-    it("should parse season numbers", () => {
-      expect(parseSeasonNumbers("(S7)")).toEqual(Ok([7]));
-
-      expect(parseSeasonNumbers("(Seasons 3, 4 & 5)")).toEqual(Ok([3, 4, 5]));
+      expect(cleanMovieTitle("The Blues Brothers")).toEqual(
+        "the-blues-brothers"
+      );
     });
   });
 
   describe("#parseReviewPost", () => {
     it("should parse legacy micro blog format", () => {
-      const post: MicroBlogEntity = {
-        type: "microBlog",
-        key: "/micros/2022/11/09/f-is-for",
-        permalink: "/micros/2022/11/09/f-is-for",
-        date: "2022-11-09T21:38:20.000Z",
+      const post: DataMicroBlogArchivePost = {
+        key: "/micros/2022/10/05/chicken-little-nice",
+        permalink: "/micros/2022/10/05/chicken-little-nice",
+        date: "2022-10-05T21:00:00.000Z",
         content:
-          "[F Is for Family](https://www.imdb.com/title/tt4326894/) (Seasons 3, 4 & 5) 📺\n\n4/5 - The show continues to improve. The last two seasons touch on much more serious subjects and the show really shines for it.\n",
+          "[Chicken Little](https://www.imdb.com/title/tt0371606/) (2005) 🍿\n" +
+          "\n" +
+          "3/5 - Nice easy watch, some good moments and laughs\n",
         description:
-          "[F Is for Family](https://www.imdb.com/title/tt4326894/) (Seasons 3, 4 & 5) 📺",
-        media: [],
-        tags: ["TV"],
-        rawDataHash: "d37e8cceca2d9fc609dbcb56261c13ed",
+          "[Chicken Little](https://www.imdb.com/title/tt0371606/) (2005) 🍿",
+        images: [],
+        tags: ["Movies"],
       };
 
-      const result = parseReviewPost(post);
+      const result = parseMicroblogPost(post);
 
-      const expected: ReviewForTvShowSeason[] = [
-        {
-          tvShowTitle: "F Is for Family",
-          seasonNumber: 3,
-          review: {
-            score: 4,
-            review:
-              "The show continues to improve. The last two seasons touch on much more serious subjects and the show really shines for it.",
-            date: "2022-11-09T21:38:20.000Z",
-            postPermalink: "/micros/2022/11/09/f-is-for",
-          },
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "Chicken Little",
+          year: 2005,
         },
-        {
-          tvShowTitle: "F Is for Family",
-          seasonNumber: 4,
-          review: {
-            score: 4,
-            review:
-              "The show continues to improve. The last two seasons touch on much more serious subjects and the show really shines for it.",
-            date: "2022-11-09T21:38:20.000Z",
-            postPermalink: "/micros/2022/11/09/f-is-for",
-          },
+        review: {
+          score: 3,
+          review: "Nice easy watch, some good moments and laughs",
+          date: "2022-10-05T21:00:00.000Z",
+          postPermalink: "/micros/2022/10/05/chicken-little-nice",
         },
-        {
-          tvShowTitle: "F Is for Family",
-          seasonNumber: 5,
-          review: {
-            score: 4,
-            review:
-              "The show continues to improve. The last two seasons touch on much more serious subjects and the show really shines for it.",
-            date: "2022-11-09T21:38:20.000Z",
-            postPermalink: "/micros/2022/11/09/f-is-for",
-          },
-        },
-      ];
+      };
 
       expect(result).toEqual(Ok(expected));
     });
 
-    it("should parse mastodon format", () => {
-      const post: MastodonPostEntity = {
-        type: "mastodon",
-        key: "mastodon-110686438229258081",
-        permalink: "/micros/2023/07/110686438229258081",
-        originalUrl: "https://social.lol/@geekyaubergine/110686438229258081",
-        date: "2023-07-09T22:16:53.023Z",
+    it("should parse legacy micro blog format with no review", () => {
+      const post: DataMicroBlogArchivePost = {
+        key: "/micros/2022/12/06/desert-hearts",
+        permalink: "/micros/2022/12/06/desert-hearts",
+        date: "2022-12-06T23:00:00.000Z",
         content:
-          "<p>Game of Thrones (S7)</p><p>2/5 - The worst so far. Let&#39;s see how bad S8 is.</p>",
-        description: "<p>Game of Thrones (S7)</p>",
-        tags: ["TV"],
-        media: [],
-        rawDataHash: "a23b79dad33da9f530f575b68ea27042",
+          "[Desert Hearts](https://www.imdb.com/title/tt0089015/) (1985) 🍿\n\n3/5\n",
+        description:
+          "[Desert Hearts](https://www.imdb.com/title/tt0089015/) (1985) 🍿",
+        images: [],
+        tags: ["Movies"],
       };
 
-      const result = parseReviewPost(post);
+      const result = parseMicroblogPost(post);
 
-      const expected: ReviewForTvShowSeason[] = [
-        {
-          tvShowTitle: "Game of Thrones",
-          seasonNumber: 7,
-          review: {
-            score: 2,
-            review: "The worst so far. Let&#39;s see how bad S8 is.",
-            date: "2023-07-09T22:16:53.023Z",
-            postPermalink: "/micros/2023/07/110686438229258081",
-          },
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "Desert Hearts",
+          year: 1985,
         },
-      ];
+        review: {
+          score: 3,
+          review: null,
+          date: "2022-12-06T23:00:00.000Z",
+          postPermalink: "/micros/2022/12/06/desert-hearts",
+        },
+      };
+
+      expect(result).toEqual(Ok(expected));
+    });
+
+    it("should parse legacy micro blog format with custom metadata in year", () => {
+      const post: DataMicroBlogArchivePost = {
+        key: "/micros/2022/12/22/the-blues-brothers",
+        permalink: "/micros/2022/12/22/the-blues-brothers",
+        date: "2022-12-22T23:01:45.000Z",
+        content:
+          "[The Blues Brothers](https://www.imdb.com/title/tt0080455/) (1980 - Extended Version) 🍿\n" +
+          "\n" +
+          "5/5 - This film gets better every time I watch it.\n",
+        description:
+          "[The Blues Brothers](https://www.imdb.com/title/tt0080455/) (1980 - Extended Version) 🍿",
+        images: [],
+        tags: ["Movies"],
+      };
+
+      const result = parseMicroblogPost(post);
+
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "The Blues Brothers",
+          year: 1980,
+        },
+        review: {
+          score: 5,
+          review: "This film gets better every time I watch it.",
+          date: "2022-12-22T23:01:45.000Z",
+          postPermalink: "/micros/2022/12/22/the-blues-brothers",
+        },
+      };
+
+      expect(result).toEqual(Ok(expected));
+    });
+
+    it("should parse micro post format", () => {
+      const post: DataMicroPost = {
+        key: "all-quiet-2023-02-04T20:04",
+        permalink: "/micros/2023/02/04/all-quiet",
+        date: "2023-02-04T20:04",
+        content:
+          "[All Quiet on the Western Front](https://www.imdb.com/title/tt1016150/) (2022)\n\n3/5 - I see why others enjoyed it, but a lot of it felt like gore for the sake of gore. The performances are great.",
+        tags: ["Movies"],
+        images: [],
+      };
+
+      const result = parseMicroPostPost(post);
+
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "All Quiet on the Western Front",
+          year: 2022,
+        },
+        review: {
+          score: 3,
+          review:
+            "I see why others enjoyed it, but a lot of it felt like gore for the sake of gore. The performances are great.",
+          date: "2023-02-04T20:04",
+          postPermalink: "/micros/2023/02/04/all-quiet",
+        },
+      };
+
+      expect(result).toEqual(Ok(expected));
+    });
+
+    it("should parse mastodon post format", () => {
+      const post: DataMastodonPost = {
+        key: "mastodon-110521615616918604",
+        permalink: "/micros/2023/06/110521615616918604",
+        originalUrl: "https://social.lol/@geekyaubergine/110521615616918604",
+        date: "2023-06-10T19:40:19.551Z",
+        content:
+          "<p>The Menu (2022)</p><p>2/5 - Interesting, but not for me</p>",
+        tags: ["Movies"],
+        images: [],
+      };
+
+      const result = parseMastodonPost(post);
+
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "The Menu",
+          year: 2022,
+        },
+        review: {
+          score: 2,
+          review: "Interesting, but not for me",
+          date: "2023-06-10T19:40:19.551Z",
+          postPermalink: "/micros/2023/06/110521615616918604",
+        },
+      };
+
+      expect(result).toEqual(Ok(expected));
+    });
+
+    it("should parse mastodon post format with no review", () => {
+      const post: DataMastodonPost = {
+        key: "mastodon-109939038343455006",
+        permalink: "/micros/2023/02/109939038343455006",
+        originalUrl: "https://social.lol/@geekyaubergine/109939038343455006",
+        date: "2023-02-27T22:23:15.822Z",
+        content: "<p>Yentl (1983)</p><p>3/5</p>",
+        tags: ["Movies"],
+        images: [],
+      };
+
+      const result = parseMastodonPost(post);
+
+      const expected: ReviewForMovie = {
+        movieTitleAndYear: {
+          title: "Yentl",
+          year: 1983,
+        },
+        review: {
+          score: 3,
+          review: null,
+          date: "2023-02-27T22:23:15.822Z",
+          postPermalink: "/micros/2023/02/109939038343455006",
+        },
+      };
 
       expect(result).toEqual(Ok(expected));
     });

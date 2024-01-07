@@ -1,35 +1,31 @@
 import type {
   Data,
-  MastodonPostEntity,
-  MediaReview,
-  MicroBlogEntity,
-  TvShow,
-  TvShowSeason,
-  TvShows,
+  DataMediaReview,
+  DataTvShow,
+  DataTvShowSeason,
+  DataTvShows,
+  DataMastodonPost,
+  DataMicroBlogArchivePost,
 } from "../types";
-import {
-  Err,
-  Ok,
-  Result,
-  exhaust,
-  fetchUrl,
-  filterErr,
-  filterOk,
-  mergeOrderedEntities,
-} from "../utils";
+import { Err, Ok, Result, fetchUrl, filterErr, filterOk } from "../utils";
 import config from "../../config";
 
 export type ReviewForTvShowSeason = {
   tvShowTitle: string;
   seasonNumber: number;
-  review: MediaReview;
+  review: DataMediaReview;
 };
 
-type TvShowSeasonWithoutAverageScore = Omit<TvShowSeason, "averageScore"> & {
+type TvShowSeasonWithoutAverageScore = Omit<
+  DataTvShowSeason,
+  "averageScore"
+> & {
   tvShowTitle: string;
 };
 
 const TAG = "tv";
+const TAG_TO_IGNORE = "twitterarchive";
+
 const URL = "https://api.themoviedb.org/3/search/tv";
 
 export const LINK_TITLE_REGEX = /\[(.*)\]/;
@@ -102,8 +98,8 @@ export function parseSeasonNumbers(seasons: string): Result<number[]> {
   return Ok(seasonNumbers);
 }
 
-function parseMicroblogPost(
-  post: MicroBlogEntity
+export function parseMicroblogPost(
+  post: DataMicroBlogArchivePost
 ): Result<ReviewForTvShowSeason[]> {
   const { content, date } = post;
 
@@ -131,7 +127,7 @@ function parseMicroblogPost(
   if (!title || !season || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_TV_SHOW_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -157,8 +153,8 @@ function parseMicroblogPost(
   return Ok(reviews);
 }
 
-function parseMastodonPost(
-  post: MastodonPostEntity
+export function parseMastodonPost(
+  post: DataMastodonPost
 ): Result<ReviewForTvShowSeason[]> {
   const { content, date } = post;
 
@@ -172,7 +168,7 @@ function parseMastodonPost(
   if (!titleLine || !ratingAndReviewLine) {
     return Err({
       type: "UNABLE_TO_PARSE_TV_SHOW_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -189,7 +185,7 @@ function parseMastodonPost(
   if (!title || !season || !score) {
     return Err({
       type: "UNABLE_TO_PARSE_TV_SHOW_POST",
-      post,
+      permalink: post.permalink,
     });
   }
 
@@ -213,21 +209,6 @@ function parseMastodonPost(
   });
 
   return Ok(reviews);
-}
-
-export function parseReviewPost(
-  post: MicroBlogEntity | MastodonPostEntity
-): Result<ReviewForTvShowSeason[]> {
-  const { type } = post;
-
-  switch (type) {
-    case "microBlog":
-      return parseMicroblogPost(post);
-    case "mastodon":
-      return parseMastodonPost(post);
-    default:
-      return exhaust(type);
-  }
 }
 
 async function findMoviePosterAndID(
@@ -286,7 +267,7 @@ async function findMoviePosterAndID(
 
 function processTvShowSeason(
   tvShowSeason: TvShowSeasonWithoutAverageScore
-): TvShowSeason {
+): DataTvShowSeason {
   const { reviews } = tvShowSeason;
 
   const averageScore = Math.floor(
@@ -307,7 +288,7 @@ function processTvShowSeason(
 async function processTvShowWithSeasons(
   data: Data,
   seasons: TvShowSeasonWithoutAverageScore[]
-): Promise<Result<TvShow>> {
+): Promise<Result<DataTvShow>> {
   const firstSeason = seasons[0];
 
   if (!firstSeason) {
@@ -345,7 +326,7 @@ async function processTvShowWithSeasons(
 
   const key = tvShowKey(tvShowTitle);
 
-  const tvShow: TvShow = {
+  const tvShow: DataTvShow = {
     key,
     title: tvShowTitle,
     seasons: sortedSeasons,
@@ -358,20 +339,26 @@ async function processTvShowWithSeasons(
   return Ok(tvShow);
 }
 
-export async function processTvShows(data: Data): Promise<Result<TvShows>> {
-  const potentialTvPosts = mergeOrderedEntities<
-    MastodonPostEntity | MicroBlogEntity
-  >([data.mastodonPosts, data.microBlogsPosts]);
+export async function processTvShows(data: Data): Promise<Result<DataTvShows>> {
+  const mastodonReviewPosts = Object.values(data.mastodonPosts)
+    .filter((post) => {
+      return (
+        post.tags.some((tag) => tag.toLowerCase() === TAG) &&
+        !post.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
+      );
+    })
+    .map(parseMastodonPost);
 
-  const reviewPosts = Object.values(potentialTvPosts.entities).filter(
-    (entity) => {
-      return entity.tags.some((tag) => tag.toLowerCase() === TAG);
-    }
-  );
+  const microBlogReviewPosts = Object.values(data.microBlogArchivePosts)
+    .filter((post) => {
+      return (
+        post.tags.some((tag) => tag.toLowerCase() === TAG) &&
+        !post.tags.some((tag) => tag.toLowerCase() === TAG_TO_IGNORE)
+      );
+    })
+    .map(parseMicroblogPost);
 
-  const reviewResults = reviewPosts.map((reviewPosts) =>
-    parseReviewPost(reviewPosts)
-  );
+  const reviewResults = [...mastodonReviewPosts, ...microBlogReviewPosts];
 
   const okReviews = filterOk(reviewResults).flat();
 
@@ -420,7 +407,7 @@ export async function processTvShows(data: Data): Promise<Result<TvShows>> {
 
   const tvShowsArray = filterOk(tvShowResults);
 
-  const tvShows = tvShowsArray.reduce<TvShows>((acc, tvShow) => {
+  const tvShows = tvShowsArray.reduce<DataTvShows>((acc, tvShow) => {
     acc[tvShow.key] = tvShow;
     return acc;
   }, {});
