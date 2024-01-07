@@ -1,4 +1,5 @@
 import fs from "fs-extra";
+import path from "path";
 import md5 from "md5";
 import S3 from "aws-sdk/clients/s3.js";
 import config from "../config";
@@ -15,7 +16,7 @@ import frontMatterParser from "front-matter";
 const TAGS_TO_FILTER_OUT = ["WarhammerCommunity"];
 
 export const CONTENT_TO_FILTER_OUT =
-  /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog)/;
+  /http(s)?:\/\/zoeaubert\.me\/(photos|albums|blog|battle-report)/;
 
 const s3 = new S3({
   endpoint: `${config.cdn.endpoint}`,
@@ -257,12 +258,34 @@ export async function exists(path: string): Promise<Result<boolean>> {
   }
 }
 
+export async function makeFolder(path: string): Promise<Result<undefined>> {
+  try {
+    const pubDirExists = await exists(path);
+
+    if (!pubDirExists.ok || !pubDirExists.value) {
+      await fs.promises.mkdir(path, { recursive: true });
+    }
+
+    return Ok(undefined);
+  } catch (error) {
+    return Err({
+      type: "UNABLE_TO_MAKE_FOLDER",
+      path,
+    });
+  }
+}
+
 const IMAGE_REGEX = /!\[([^\]]+)\]\(([^\)]+)\)/g;
 
-export async function parseImagesFromMarkdown(
-  filePath: string,
-  body: string
-): Promise<Result<SourceDataImage[]>> {
+export async function parseImagesFromMarkdown({
+  filePath,
+  body,
+  cacheDir,
+}: {
+  filePath: string;
+  body: string;
+  cacheDir: string;
+}): Promise<Result<SourceDataImage[]>> {
   const images: SourceDataImage[] = [];
 
   for (const match of body.matchAll(IMAGE_REGEX)) {
@@ -282,9 +305,29 @@ export async function parseImagesFromMarkdown(
       });
     }
 
+    const cacheResult = await downloadAndCacheFile(src, cacheDir);
+
+    if (!cacheResult.ok) {
+      return cacheResult;
+    }
+
+    const imageSize = await getImageSize(cacheResult.value.cachePath);
+
+    if (!imageSize.ok) {
+      return imageSize;
+    }
+
+    const orientation = getImageOrientation(
+      imageSize.value.width,
+      imageSize.value.height
+    );
+
     images.push({
       src,
       alt,
+      width: imageSize.value.width,
+      height: imageSize.value.height,
+      orientation,
     });
   }
 
@@ -338,11 +381,15 @@ export async function downloadAndCacheFile(
     return Ok({ cachePath });
   }
 
-  const folder = cachePath.slice(0, cachePath.lastIndexOf("/"));
+  const dirname = path.dirname(cachePath);
 
-  if (!(await exists(folder))) {
-    await fs.promises.mkdir(folder, { recursive: true });
+  const makeFolderResult = await makeFolder(dirname);
+
+  if (!makeFolderResult.ok) {
+    return makeFolderResult;
   }
+
+  console.log(`Downloading ${url}`);
 
   const file = await fetch(url);
 
@@ -392,12 +439,20 @@ export async function uploadToCDN(
   filePath: string,
   url: string,
   contentType: string | null = null
-): Promise<Result<S3.ManagedUpload.SendData>> {
+): Promise<Result<undefined>> {
   const ContentType =
     contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
 
   try {
-    const x = await s3
+    await s3.headObject({ Bucket: config.cdn.bucket, Key: url }).promise();
+    // File already exists
+    return Ok(undefined);
+  } catch (e) {
+    // Do nothing as this just means the file doesn't exist
+  }
+
+  try {
+    await s3
       .upload({
         Bucket: config.cdn.bucket,
         Key: trimLeadingSlash(stripDoubleSlashes(url)),
@@ -407,7 +462,7 @@ export async function uploadToCDN(
       })
       .promise();
 
-    return Ok(x);
+    return Ok(undefined);
   } catch (e) {
     if (e.code === "ENOENT") {
       return Err({

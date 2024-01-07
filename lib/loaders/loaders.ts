@@ -42,16 +42,16 @@ import {
   loadGames,
 } from "./gamesLoader";
 import { logFailedPromisedResults } from "../loggger";
+import {
+  DEFAULT_SOURCE_DATA_MASTODON_POSTS,
+  SourceDataMastodonPosts,
+  loadMastodonPosts,
+} from "./mastodonLoader";
 
 const POSTS_DIR = "blogPosts";
 const MICRO_BLOG_ARCHIVE_FILE = "microBlog/feed.json";
 const MICRO_POSTS_DIR = "micros";
 const ALBUMS_DIR = "albums";
-
-const DEFAULT_ORDERED_ENTITIES = {
-  entityOrder: [],
-  entities: {},
-};
 
 export type SourceData = {
   about?: SourceDataAbout;
@@ -63,6 +63,7 @@ export type SourceData = {
   microPosts?: SourceDataMicroPosts;
   blogPosts?: SourceDataBlogPosts;
   microBlogArchivePosts?: SourceDataMicroBlogArchivePosts;
+  mastodonPosts?: SourceDataMastodonPosts;
   lastUpdated: string;
 };
 
@@ -76,6 +77,7 @@ export const DEFAULT_SOURCE_DATA: SourceData = {
   microPosts: DEFAULT_SOURCE_DATA_MICRO_POSTS,
   blogPosts: DEFAULT_SOURCE_DATA_BLOG_POSTS,
   microBlogArchivePosts: DEFAULT_SOURCE_DATA_MICRO_BLOG_ARCHIVE_POSTS,
+  mastodonPosts: DEFAULT_SOURCE_DATA_MASTODON_POSTS,
   lastUpdated: "2000-01-01T00:00:00.000Z",
 };
 
@@ -105,14 +107,20 @@ export async function loadSourceData(
   const nowRequest = loadNow();
   const microPostsRequest = loadMicroPosts(
     previousData.microPosts ?? DEFAULT_SOURCE_DATA_MICRO_POSTS,
-    MICRO_POSTS_DIR
+    path.join(contentDir, MICRO_POSTS_DIR),
+    cacheDir
   );
-  const blogPostsRequest = loadBlogPosts(
-    previousData.blogPosts ?? DEFAULT_SOURCE_DATA_BLOG_POSTS,
-    path.join(contentDir, POSTS_DIR)
-  );
+  const blogPostsRequest = loadBlogPosts({
+    previousData: previousData.blogPosts ?? DEFAULT_SOURCE_DATA_BLOG_POSTS,
+    postsDir: path.join(contentDir, POSTS_DIR),
+    cacheDir,
+  });
   const microBlogArchiveRequest = loadMicroBlogArchive(
     path.join(contentDir, MICRO_BLOG_ARCHIVE_FILE)
+  );
+  const mastodonRequest = loadMastodonPosts(
+    previousData.mastodonPosts ?? DEFAULT_SOURCE_DATA_MASTODON_POSTS,
+    cacheDir
   );
 
   const [
@@ -125,6 +133,7 @@ export async function loadSourceData(
     microPostsResult,
     blogPostsResult,
     microBlogArchiveResult,
+    mastodonResult,
   ] = await Promise.allSettled([
     aboutRequest,
     faqRequest,
@@ -135,6 +144,7 @@ export async function loadSourceData(
     microPostsRequest,
     blogPostsRequest,
     microBlogArchiveRequest,
+    mastodonRequest,
   ]);
 
   if (aboutResult.status === "fulfilled" && aboutResult.value.ok) {
@@ -176,6 +186,10 @@ export async function loadSourceData(
     data.microBlogArchivePosts = microBlogArchiveResult.value.value;
   }
 
+  if (mastodonResult.status === "fulfilled" && mastodonResult.value.ok) {
+    data.mastodonPosts = mastodonResult.value.value;
+  }
+
   data.lastUpdated = new Date().toISOString();
 
   logFailedPromisedResults([
@@ -188,14 +202,12 @@ export async function loadSourceData(
     microPostsResult,
     blogPostsResult,
     microBlogArchiveResult,
+    mastodonResult,
   ]);
 
   return Ok(data);
 
   // return Ok({
-  //   mastodonPosts: mastodonResult.ok
-  //     ? mastodonResult.value
-  //     : data.mastodonPosts,
   //   albums: albumResult.ok ? albumResult.value.albums : data.albums,
   //   albumPhotos: albumResult.ok
   //     ? albumResult.value.albumPhotos

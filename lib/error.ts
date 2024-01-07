@@ -199,10 +199,16 @@ type CouldNotReadFileStats = {
   path: string;
 };
 
+type UnableToMakeFolder = {
+  type: "UNABLE_TO_MAKE_FOLDER";
+  path: string;
+};
+
 export type ProjectError =
   | CouldNotParseJson
   | CouldNotReadAddress
   | CouldNotReadFileStats
+  | UnableToMakeFolder
   | UnableToUploadFileToCDN
   | UnableToDownloadFile
   | UnableToGetFileExtension
@@ -248,6 +254,8 @@ export function formatError(error: ProjectError): string {
       return `Could not read address: ${error.path}`;
     case "COULD_NOT_READ_FILE_STATS":
       return `Could not read file stats: ${error.path}`;
+    case "UNABLE_TO_MAKE_FOLDER":
+      return `Unable to make folder: ${error.path}`;
     case "UNABLE_TO_UPLOAD_FILE_TO_CDN":
       return `Unable to upload file to CDN: ${error.localPath} -> ${error.uploadPath}`;
     case "UNABLE_TO_DOWNLOAD_FILE":

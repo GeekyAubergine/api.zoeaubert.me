@@ -11,215 +11,203 @@ import {
   hash,
   uploadToCDN,
 } from "../utils";
-// import config from "../../config";
-// import {
-//   EntityMedia,
-//   LoaderParams,
-//   MastodonPostEntity,
-//   MastodonPosts,
-// } from "../types";
+import config from "../../config";
+import {
+  DataImage,
+  EntityMedia,
+  MastodonPostEntity,
+  MastodonPosts,
+  SourceDataImage,
+} from "../types";
+import { SourceData } from "./loaders";
 
-// const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true&limit=40`;
+const URL = `https://social.lol/api/v1/accounts/${config.mastodon.accountId}/statuses?exclude_reblogs=true&exclude_replies=true&limit=40`;
 
-// const REGEX_LINKS = /<a.*?>.*?<\/a>/g;
-// const REGEX_TAG_LINK = /rel="tag">#<span>(.*?)<\/span>/;
-// const CONTENT_EMPTY_TAG_REGEX = /<p>\s*<\/p>/g;
+const REGEX_LINKS = /<a.*?>.*?<\/a>/g;
+const REGEX_TAG_LINK = /rel="tag">#<span>(.*?)<\/span>/;
+const CONTENT_EMPTY_TAG_REGEX = /<p>\s*<\/p>/g;
 
-// function splitContentAndTags(content: string): {
-//   content: string;
-//   tags: string[];
-// } {
-//   const linksMatch = content.matchAll(REGEX_LINKS);
+export type SourceDataMastodonPost = {
+  key: string;
+  originalUrl: string;
+  date: string;
+  content: string;
+  description: string;
+  tags: string[];
+  images: SourceDataImage[];
+};
 
-//   let outContent = content;
+export type SourceDataMastodonPosts = Record<string, SourceDataMastodonPost>;
 
-//   const tags: string[] = [];
+export const DEFAULT_SOURCE_DATA_MASTODON_POSTS: SourceDataMastodonPosts = {};
 
-//   for (const match of linksMatch) {
-//     const [fullMatch] = match;
+function splitContentAndTags(content: string): {
+  content: string;
+  tags: string[];
+} {
+  const linksMatch = content.matchAll(REGEX_LINKS);
 
-//     const tagsMatch = fullMatch.match(REGEX_TAG_LINK);
+  let outContent = content;
 
-//     if (!tagsMatch) {
-//       continue;
-//     }
+  const tags: string[] = [];
 
-//     const [, tag] = tagsMatch;
-//     if (!tag) {
-//       continue;
-//     }
+  for (const match of linksMatch) {
+    const [fullMatch] = match;
 
-//     outContent = outContent.replace(fullMatch, "");
+    const tagsMatch = fullMatch.match(REGEX_TAG_LINK);
 
-//     tags.push(tag);
-//   }
+    if (!tagsMatch) {
+      continue;
+    }
 
-//   return {
-//     content: outContent.replace(CONTENT_EMPTY_TAG_REGEX, "").trim(),
-//     tags: cleanTags(tags),
-//   };
-// }
-// async function processAttachment(
-//   attachment: {
-//     url: string;
-//     description: string;
-//     meta: { original: { width: number; height: number } };
-//   },
-//   postPermalink: string,
-//   dateString: string
-// ): Promise<Result<EntityMedia>> {
-//   const cachedResult = await downloadAndCacheFile(attachment.url);
+    const [, tag] = tagsMatch;
+    if (!tag) {
+      continue;
+    }
 
-//   if (!cachedResult.ok) {
-//     return cachedResult;
-//   }
+    outContent = outContent.replace(fullMatch, "");
 
-//   const cdnPath = cdnPathForFileNameAndDate(
-//     cachedResult.value.cachePath,
-//     dateString
-//   );
+    tags.push(tag);
+  }
 
-//   const uploadResult = await uploadToCDN(cachedResult.value.cachePath, cdnPath);
+  return {
+    content: outContent.replace(CONTENT_EMPTY_TAG_REGEX, "").trim(),
+    tags: cleanTags(tags),
+  };
+}
+async function processAttachment(
+  attachment: {
+    url: string;
+    description: string;
+    meta: { original: { width: number; height: number } };
+  },
+  dateString: string,
+  cacheDir: string
+): Promise<Result<SourceDataImage>> {
+  const cachedResult = await downloadAndCacheFile(attachment.url, cacheDir);
 
-//   if (!uploadResult.ok) {
-//     return uploadResult;
-//   }
+  if (!cachedResult.ok) {
+    return cachedResult;
+  }
 
-//   return Ok({
-//     image: {
-//       src: `${config.cdn.url}${cdnPath}`,
-//       alt: attachment.description,
-//       width: attachment.meta.original.width,
-//       height: attachment.meta.original.height,
-//       title: attachment.description,
-//       orientation: getImageOrientation(
-//         attachment.meta.original.width,
-//         attachment.meta.original.height
-//       ),
-//     },
-//     parentPermalink: postPermalink,
-//     date: dateString,
-//   });
-// }
+  const cdnPath = cdnPathForFileNameAndDate(
+    cachedResult.value.cachePath,
+    dateString
+  );
 
-// async function processToot(
-//   loaderParams: LoaderParams<MastodonPostEntity>,
-//   toot: any
-// ): Promise<Result<MastodonPostEntity>> {
-//   const key = `mastodon-${toot.id}`;
+  const uploadResult = await uploadToCDN(cachedResult.value.cachePath, cdnPath);
 
-//   const hashable = {
-//     date: toot.created_at,
-//     content: toot.content,
-//     tags: toot.tags,
-//     media: toot.media_attachments,
-//     originalUrl: toot.url,
-//   };
+  if (!uploadResult.ok) {
+    return uploadResult;
+  }
 
-//   const rawDataHash = hash(hashable);
+  return Ok({
+    src: `${config.cdn.url}${cdnPath}`,
+    alt: attachment.description,
+    width: attachment.meta.original.width,
+    height: attachment.meta.original.height,
+    orientation: getImageOrientation(
+      attachment.meta.original.width,
+      attachment.meta.original.height
+    ),
+  });
+}
 
-//   const existing = loaderParams.orderedEntities.entities[key];
+async function processToot(
+  toot: any,
+  cacheDir: string,
+): Promise<Result<SourceDataMastodonPost>> {
+  const key = `mastodon-${toot.id}`;
 
-//   if (existing && existing.rawDataHash === rawDataHash) {
-//     return Ok(existing);
-//   }
+  // const slug = `/micros/${date.getFullYear()}/${(date.getMonth() + 1)
+  //   .toString()
+  //   .padStart(2, "0")}/${toot.id}`;
 
-//   const date = new Date(toot.created_at);
+  const { content, tags } = splitContentAndTags(toot.content);
 
-//   const slug = `/micros/${date.getFullYear()}/${(date.getMonth() + 1)
-//     .toString()
-//     .padStart(2, "0")}/${toot.id}`;
+  const firstLine = content.split("</p>")[0];
 
-//   const { content, tags } = splitContentAndTags(toot.content);
+  const dateString = new Date(toot.created_at).toISOString();
 
-//   const firstLine = content.split("</p>")[0];
+  const images: SourceDataImage[] = [];
 
-//   const dateString = new Date(toot.created_at).toISOString();
+  for (const attachment of toot.media_attachments) {
+    const result = await processAttachment(attachment, dateString, cacheDir);
 
-//   const media: EntityMedia[] = [];
+    if (!result.ok) {
+      return result;
+    }
 
-//   for (const attachment of toot.media_attachments) {
-//     const result = await processAttachment(attachment, slug, dateString);
+    images.push(result.value);
+  }
 
-//     if (!result.ok) {
-//       return result;
-//     }
+  return Ok({
+    key,
+    originalUrl: toot.url,
+    date: dateString,
+    content,
+    description: firstLine ? `${firstLine}</p>` : "",
+    tags: cleanTags(tags),
+    images,  });
+}
 
-//     media.push(result.value);
-//   }
+async function fetchAllToots(): Promise<Result<any[]>> {
+  let toots: any[] = [];
 
-//   console.log(`Updating toot ${key}`);
+  let maxId: string | undefined;
 
-//   return Ok({
-//     type: "mastodon",
-//     key,
-//     permalink: slug,
-//     originalUrl: toot.url,
-//     date: dateString,
-//     content,
-//     description: firstLine ? `${firstLine}</p>` : "",
-//     tags: cleanTags(tags),
-//     media,
-//     rawDataHash,
-//   });
-// }
+  while (true) {
+    const url = `${URL}${maxId ? `&max_id=${maxId}` : ""}`;
 
-// async function fetchAllToots(): Promise<Result<any[]>> {
-//   let toots: any[] = [];
+    const result = await fetchUrl<any[]>(url);
 
-//   let maxId: string | undefined;
+    if (!result.ok) {
+      return result;
+    }
 
-//   while (true) {
-//     const url = `${URL}${maxId ? `&max_id=${maxId}` : ""}`;
+    const data = result.value;
 
-//     const result = await fetchUrl<any[]>(url);
+    if (!data.length) {
+      break;
+    }
 
-//     if (!result.ok) {
-//       return result;
-//     }
+    toots = toots.concat(data);
 
-//     const data = result.value;
+    maxId = data[data.length - 1].id;
+  }
 
-//     if (!data.length) {
-//       break;
-//     }
+  return Ok(toots);
+}
 
-//     toots = toots.concat(data);
+export async function loadMastodonPosts(
+  previousData: SourceDataMastodonPosts,
+  cacheDir: string,
+): Promise<Result<SourceDataMastodonPosts>> {
+  const tootsResponse = await fetchAllToots();
 
-//     maxId = data[data.length - 1].id;
-//   }
+  if (!tootsResponse.ok) {
+    return tootsResponse;
+  }
 
-//   return Ok(toots);
-// }
+  const toots = { ...previousData };
 
-// export async function loadMastodonPosts(
-//   loaderParams: LoaderParams<MastodonPostEntity>
-// ): Promise<Result<MastodonPosts>> {
-//   const tootsResponse = await fetchAllToots();
+  for (const toot of tootsResponse.value) {
+    if (
+      toot.application?.name === "Micro.blog" ||
+      toot.application?.name === "status.lol" ||
+      contentContainsContentToFilterOut(toot.content)
+    ) {
+      continue;
+    }
 
-//   if (!tootsResponse.ok) {
-//     return tootsResponse;
-//   }
+    const tootResult = await processToot(toot, cacheDir);
 
-//   const entities: MastodonPostEntity[] = [];
+    if (!tootResult.ok) {
+      return tootResult;
+    }
 
-//   for (const toot of tootsResponse.value) {
-//     if (
-//       toot.application?.name === "Micro.blog" ||
-//       toot.application?.name === "status.lol" ||
-//       contentContainsContentToFilterOut(toot.content)
-//     ) {
-//       continue;
-//     }
+    toots[tootResult.value.key] = tootResult.value;    
+  }
 
-//     const entityResult = await processToot(loaderParams, toot);
-
-//     if (!entityResult.ok) {
-//       return entityResult;
-//     }
-
-//     entities.push(entityResult.value);
-//   }
-
-//   return Ok(entitiesToOrderedEntities(entities));
-// }
+  return Ok(toots);
+}

@@ -56,7 +56,6 @@ function mapMicroBlog(microBlog: any): SourceDataMicroBlogArchivePost {
       alt,
       width: parseInt(width, 10),
       height: parseInt(height, 10),
-      title: alt,
       orientation: getImageOrientation(
         parseInt(width, 10),
         parseInt(height, 10)

@@ -16,6 +16,9 @@ export type ImageOrientation = "landscape" | "portrait" | "square";
 export type SourceDataImage = {
   src: string;
   alt: string;
+  width: number;
+  height: number;
+  orientation: ImageOrientation;
 };
 
 export type EntityMedia = {
@@ -207,11 +210,8 @@ export type DataImage = {
   src: string,
   alt: string,
   date: string,
-  title: string,
+  title: string | null,
   parentPermalink: string,
-  width: number;
-  height: number;
-  orientation: ImageOrientation;
 }
 
 

@@ -1,10 +1,4 @@
-import {
-  Ok,
-  Result,
-  downloadAndCacheFile,
-  getImageOrientation,
-  getImageSize,
-} from "../utils";
+import { Ok, Result, getImageOrientation } from "../utils";
 import { Data, DataImage, SourceDataImage } from "../types";
 import { SourceData } from "../loaders/loaders";
 import { DEFAULT_SOURCE_DATA_ABOUT } from "../loaders/aboutLoader";
@@ -21,46 +15,27 @@ export const DEFAULT_DATA: Data = {
 
 export async function processImage({
   sourceImage,
-  cacheDir,
   parentPermalink,
   date,
 }: {
   sourceImage: SourceDataImage;
-  cacheDir: string;
   parentPermalink: string;
   date: string;
 }): Promise<Result<DataImage>> {
-  const downloadResult = await downloadAndCacheFile(sourceImage.src, cacheDir);
-
-  if (!downloadResult.ok) {
-    return downloadResult;
-  }
-
-  const cachedFilePath = downloadResult.value.cachePath;
-
-  const size = await getImageSize(cachedFilePath);
-
-  if (!size.ok) {
-    return size;
-  }
-
-  const orientation = getImageOrientation(size.value.width, size.value.height);
-
   return Ok({
     src: sourceImage.src,
     alt: sourceImage.alt,
     date,
-    title: sourceImage.title,
     parentPermalink,
-    width: size.value.width,
-    height: size.value.height,
-    orientation,
+    width: sourceImage.width,
+    height: sourceImage.height,
+    orientation: getImageOrientation(sourceImage.width, sourceImage.height),
+    title: null,
   });
 }
 
 export async function processData(
-  sourceData: SourceData,
-  cacheDir: string
+  sourceData: SourceData
 ): Promise<Result<Data>> {
   let data = { ...DEFAULT_DATA };
 
@@ -75,7 +50,7 @@ export async function processData(
 
   // Complex
 
-  const blogPosts = await processBlogPosts(sourceData, cacheDir);
+  const blogPosts = await processBlogPosts(sourceData);
 
   if (!blogPosts.ok) {
     return blogPosts;

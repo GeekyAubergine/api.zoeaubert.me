@@ -88,18 +88,18 @@ async function main() {
 
   await prepFolders();
 
-  console.log("Downloading content");
-  const downloadStart = Date.now();
+  // console.log("Downloading content");
+  // const downloadStart = Date.now();
 
-  const contentDownloadResult = await downloadContent();
+  // const contentDownloadResult = await downloadContent();
 
-  const downloadEnd = Date.now();
-  console.log(`Downloaded in ${downloadEnd - downloadStart}ms`);
+  // const downloadEnd = Date.now();
+  // console.log(`Downloaded in ${downloadEnd - downloadStart}ms`);
 
-  if (!contentDownloadResult.ok) {
-    logError(contentDownloadResult);
-    return;
-  }
+  // if (!contentDownloadResult.ok) {
+  //   logError(contentDownloadResult);
+  //   return;
+  // }
   
   console.log("Reading source data from file")
 
@@ -144,7 +144,7 @@ async function main() {
 
   console.log("Processing data");
 
-  const processedData = await processData(sourceData, CACHE_DIR);
+  const processedData = await processData(sourceData);
 
   const processsingEnd = Date.now();
 

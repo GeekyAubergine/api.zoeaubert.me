@@ -25,7 +25,8 @@ export type SourceDataMicroPosts = Record<string, SourceDataMicroPost>;
 export const DEFAULT_SOURCE_DATA_MICRO_POSTS: SourceDataMicroPosts = {};
 
 async function loadMicroPost(
-  filePath: string
+  filePath: string,
+  cacheDir: string
 ): Promise<Result<SourceDataMicroPost>> {
   const fileContents = await readFile(filePath);
 
@@ -51,7 +52,7 @@ async function loadMicroPost(
 
   const key = `${title}-${date}`;
 
-  const imagesResult = await parseImagesFromMarkdown(filePath, body);
+  const imagesResult = await parseImagesFromMarkdown({filePath, body, cacheDir});
 
   if (!imagesResult.ok) {
     return imagesResult;
@@ -69,7 +70,8 @@ async function loadMicroPost(
 
 export async function loadMicroPosts(
   previousData: SourceDataMicroPosts,
-  microsDir: string
+  microsDir: string,
+  cacheDir: string
 ): Promise<Result<SourceDataMicroPosts>> {
   const paths = await getFilesRecursive(microsDir, ".md");
 
@@ -80,7 +82,7 @@ export async function loadMicroPosts(
   const microPosts = { ...previousData };
 
   for (const filePath of paths.value) {
-    const result = await loadMicroPost(filePath);
+    const result = await loadMicroPost(filePath, cacheDir);
 
     if (!result.ok) {
       return result;

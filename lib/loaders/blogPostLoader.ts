@@ -68,9 +68,13 @@ function parseHeroImage(
   });
 }
 
-async function loadBlogPost(
-  filePath: string
-): Promise<Result<SourceDataBlogPost>> {
+async function loadBlogPost({
+  filePath,
+  cacheDir,
+}: {
+  filePath: string;
+  cacheDir: string;
+}): Promise<Result<SourceDataBlogPost>> {
   const fileContents = await fs.promises.readFile(filePath, "utf-8");
 
   const frontMatter = frontMatterParser(fileContents);
@@ -145,7 +149,7 @@ async function loadBlogPost(
 
   const dateString = new Date(date).toISOString();
 
-  const images = await parseImagesFromMarkdown(filePath, body);
+  const images = await parseImagesFromMarkdown({ filePath, body, cacheDir });
 
   if (!images.ok) {
     return images;
@@ -165,10 +169,15 @@ async function loadBlogPost(
   });
 }
 
-export async function loadBlogPosts(
-  previousData: SourceDataBlogPosts,
-  postsDir: string
-): Promise<Result<SourceDataBlogPosts>> {
+export async function loadBlogPosts({
+  previousData,
+  postsDir,
+  cacheDir,
+}: {
+  previousData: SourceDataBlogPosts;
+  postsDir: string;
+  cacheDir: string;
+}): Promise<Result<SourceDataBlogPosts>> {
   const paths = await getFilesRecursive(postsDir, ".md");
 
   if (!paths.ok) {
@@ -178,7 +187,7 @@ export async function loadBlogPosts(
   const blogPosts: SourceDataBlogPosts = { ...previousData };
 
   for (const filePath of paths.value) {
-    const result = await loadBlogPost(filePath);
+    const result = await loadBlogPost({ filePath, cacheDir });
 
     if (!result.ok) {
       return result;

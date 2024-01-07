@@ -1,12 +1,11 @@
 import { Ok, Result } from "../utils";
-import { BlogPostsData, Data, DataImage } from "../types";
+import { BlogPostsData, DataImage } from "../types";
 import { SourceData } from "../loaders/loaders";
 import { processImage } from "./processors";
 import { logError } from "../loggger";
 
 export async function processBlogPosts(
-  sourceData: SourceData,
-  cacheDir: string
+  sourceData: SourceData
 ): Promise<Result<BlogPostsData>> {
   if (!sourceData.blogPosts) {
     return Ok({});
@@ -29,7 +28,6 @@ export async function processBlogPosts(
     if (sourceBlogPost.hero) {
       const heroImageResult = await processImage({
         sourceImage: sourceBlogPost.hero,
-        cacheDir,
         parentPermalink: permalink,
         date: sourceBlogPost.date,
       });
@@ -46,7 +44,6 @@ export async function processBlogPosts(
     for (const image of sourceBlogPost.images) {
       const imageResult = await processImage({
         sourceImage: image,
-        cacheDir,
         parentPermalink: permalink,
         date: sourceBlogPost.date,
       });
