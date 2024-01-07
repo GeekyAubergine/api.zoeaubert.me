@@ -92,10 +92,11 @@ async function processAttachment(
 
   const cdnPath = cdnPathForFileNameAndDate(
     cachedResult.value.cachePath,
-    dateString
+    dateString,
+    cacheDir,
   );
 
-  const uploadResult = await uploadToCDN(cachedResult.value.cachePath, cdnPath);
+  const uploadResult = await uploadToCDN(cachedResult.value.cachePath, cdnPath, cacheDir);
 
   if (!uploadResult.ok) {
     return uploadResult;
@@ -115,7 +116,7 @@ async function processAttachment(
 
 async function processToot(
   toot: any,
-  cacheDir: string,
+  cacheDir: string
 ): Promise<Result<SourceDataMastodonPost>> {
   const key = `mastodon-${toot.id}`;
 
@@ -148,7 +149,8 @@ async function processToot(
     content,
     description: firstLine ? `${firstLine}</p>` : "",
     tags: cleanTags(tags),
-    images,  });
+    images,
+  });
 }
 
 async function fetchAllToots(): Promise<Result<any[]>> {
@@ -181,7 +183,7 @@ async function fetchAllToots(): Promise<Result<any[]>> {
 
 export async function loadMastodonPosts(
   previousData: SourceDataMastodonPosts,
-  cacheDir: string,
+  cacheDir: string
 ): Promise<Result<SourceDataMastodonPosts>> {
   const tootsResponse = await fetchAllToots();
 
@@ -206,7 +208,7 @@ export async function loadMastodonPosts(
       return tootResult;
     }
 
-    toots[tootResult.value.key] = tootResult.value;    
+    toots[tootResult.value.key] = tootResult.value;
   }
 
   return Ok(toots);

@@ -420,11 +420,12 @@ export async function downloadAndCacheFile(
 
 export function cdnPathForFileNameAndDate(
   fileName: string,
-  date: string
+  date: string,
+  cacheDir: string
 ): string {
-  const cleanedFilePath = fileName.replace(`${config.cacheDir}/`, "");
+  const cleanedFilePath = fileName.replace(`${cacheDir}/`, "");
   const slugPart = formatDateAsSlugPart(new Date(date));
-  return `/${slugPart}/${cleanedFilePath}`;
+  return stripDoubleSlashes(`/${slugPart}/${cleanedFilePath}`);
 }
 
 function stripDoubleSlashes(url: string): string {
@@ -435,23 +436,47 @@ function trimLeadingSlash(url: string): string {
   return url.replace(/^\//, "");
 }
 
-export async function uploadToCDN(
-  filePath: string,
+export async function fileExistsOnCDN(
   url: string,
-  contentType: string | null = null
-): Promise<Result<undefined>> {
-  const ContentType =
-    contentType ?? url.endsWith(".jpg") ? "image/jpeg" : "image/png";
+  cacheDir: string
+): Promise<Result<boolean>> {
+  const cleanedUrl = trimLeadingSlash(
+    stripDoubleSlashes(url.replace(`${cacheDir}/`, ""))
+  );
 
   try {
-    await s3.headObject({ Bucket: config.cdn.bucket, Key: url }).promise();
+    await s3
+      .headObject({ Bucket: config.cdn.bucket, Key: cleanedUrl })
+      .promise();
     // File already exists
-    return Ok(undefined);
+    return Ok(true);
   } catch (e) {
     // Do nothing as this just means the file doesn't exist
   }
 
+  return Ok(false);
+}
+
+export async function uploadToCDN(
+  filePath: string,
+  url: string,
+  cacheDir: string
+): Promise<Result<undefined>> {
+  const ContentType = url.endsWith(".jpg") ? "image/jpeg" : "image/png";
+
+  const fileExistsOnCDNResult = await fileExistsOnCDN(url, cacheDir);
+
+  if (!fileExistsOnCDNResult.ok) {
+    return fileExistsOnCDNResult;
+  }
+
+  if (fileExistsOnCDNResult.value) {
+    return Ok(undefined);
+  }
+
   try {
+    console.log(`Uploading ${url}`);
+
     await s3
       .upload({
         Bucket: config.cdn.bucket,
