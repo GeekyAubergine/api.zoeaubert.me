@@ -103,27 +103,34 @@ export async function postUrl<T>(url: string, body: any): Promise<Result<T>> {
 export async function getImageSize(
   url: string
 ): Promise<Result<{ width: number; height: number }>> {
-  const contentZip = await fetch(url);
+  try {
+    // const contentZip = await fetch(url);
 
-  const contentBlob = await contentZip.blob();
+    // const contentBlob = await contentZip.blob();
 
-  const arrayBuffer = await contentBlob.arrayBuffer();
+    // const arrayBuffer = await contentBlob.arrayBuffer();
 
-  const buffer = Buffer.from(arrayBuffer);
+    // const buffer = Buffer.from(arrayBuffer);
 
-  const size = imageSize(buffer);
+    const size = imageSize(url);
 
-  if (size.width && size.height) {
-    return Ok({
-      width: size.width,
-      height: size.height,
+    if (size.width && size.height) {
+      return Ok({
+        width: size.width,
+        height: size.height,
+      });
+    }
+
+    return Err({
+      type: "UNABLE_TO_GET_IMAGE_SIZE",
+      url,
+    });
+  } catch (e) {
+    return Err({
+      type: "UNABLE_TO_GET_IMAGE_SIZE",
+      url,
     });
   }
-
-  return Err({
-    type: "UNABLE_TO_GET_IMAGE_SIZE",
-    url,
-  });
 }
 
 export function getImageOrientation(
@@ -199,9 +206,14 @@ export async function getFilesRecursive(
   }
 }
 
-export function entitiesToOrderedEntities<E extends Entity>(
+export function orderedEntitesFromArray<
+  E extends { key: string; date: string }
+>(
   entities: E[]
-): OrderedEntities<E> {
+): {
+  entities: Record<string, E>;
+  entityOrder: string[];
+} {
   const entityOrder = entities
     .sort((a, b) => {
       const aDate = new Date(a.date);
@@ -219,6 +231,17 @@ export function entitiesToOrderedEntities<E extends Entity>(
     entities: record,
     entityOrder,
   };
+}
+
+export function orderedEntitesFromObject<
+  E extends { key: string; date: string }
+>(
+  entities: Record<string, E>
+): {
+  entities: Record<string, E>;
+  entityOrder: string[];
+} {
+  return orderedEntitesFromArray(Object.values(entities));
 }
 
 export async function exists(path: string): Promise<Result<boolean>> {
@@ -259,21 +282,9 @@ export async function parseImagesFromMarkdown(
       });
     }
 
-    const imageSize = await getImageSize(src);
-
-    if (!imageSize.ok) {
-      return imageSize;
-    }
-
-    const { width, height } = imageSize.value;
-
     images.push({
       src,
       alt,
-      width,
-      height,
-      title: alt,
-      orientation: getImageOrientation(width, height),
     });
   }
 
@@ -298,7 +309,10 @@ export function formatDate(date: Date): string {
     .padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 }
 
-export async function downloadAndCacheFile(url: string): Promise<
+export async function downloadAndCacheFile(
+  url: string,
+  cacheDir: string
+): Promise<
   Result<{
     cachePath: string;
   }>
@@ -312,7 +326,7 @@ export async function downloadAndCacheFile(url: string): Promise<
     });
   }
 
-  const cachePath = `${config.cacheDir}/${hash(url)}.${fileExtension}`;
+  const cachePath = `${cacheDir}/${hash(url)}.${fileExtension}`;
 
   const cacheExists = await exists(cachePath);
 
@@ -487,7 +501,7 @@ export function mergeOrderedEntities<T extends Entity>(
     }
   }
 
-  return entitiesToOrderedEntities(entities);
+  return orderedEntitesFromArray(entities);
 }
 
 export function contentContainsContentToFilterOut(content: string): boolean {

@@ -5,7 +5,7 @@ import {
   cleanTags,
   contentContainsContentToFilterOut,
   downloadAndCacheFile,
-  entitiesToOrderedEntities,
+  orderedEntitesFromArray,
   fetchUrl,
   getImageOrientation,
   hash,

@@ -12,7 +12,7 @@ import {
   Ok,
   Result,
   cleanTags,
-  entitiesToOrderedEntities,
+  orderedEntitesFromArray,
   getFilesRecursive,
   getImageOrientation,
   parseImagesFromMarkdown,

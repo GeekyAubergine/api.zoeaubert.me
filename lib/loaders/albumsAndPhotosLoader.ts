@@ -13,7 +13,7 @@ import {
   cleanTags,
   filterErr,
   filterOk,
-  entitiesToOrderedEntities,
+  orderedEntitesFromArray,
 } from "../utils";
 import {
   AlbumEntity,
@@ -529,7 +529,7 @@ export async function loadAlbumsAndPhotos(
   }
 
   return Ok({
-    albums: entitiesToOrderedEntities(albumEntites),
-    albumPhotos: entitiesToOrderedEntities(photoEntites),
+    albums: orderedEntitesFromArray(albumEntites),
+    albumPhotos: orderedEntitesFromArray(photoEntites),
   });
 }

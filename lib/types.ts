@@ -16,10 +16,6 @@ export type ImageOrientation = "landscape" | "portrait" | "square";
 export type SourceDataImage = {
   src: string;
   alt: string;
-  title: string;
-  width: number;
-  height: number;
-  orientation: ImageOrientation;
 };
 
 export type EntityMedia = {
@@ -103,7 +99,7 @@ export type Entity =
   | AlbumEntity
   | AlbumPhotoEntity;
 
-export type OrderedEntities<E extends Entity> = {
+export type OrderedEntities<E extends { key: string, date: string }> = {
   entityOrder: string[];
   entities: Record<string, E>;
 };
@@ -207,11 +203,39 @@ export type TvShow = {
 
 export type TvShows = Record<string, TvShow>;
 
-export type AboutData = SourceDataAbout
-export type FaqData = SourceDataFaq;
+export type DataImage = {
+  src: string,
+  alt: string,
+  date: string,
+  title: string,
+  parentPermalink: string,
+  width: number;
+  height: number;
+  orientation: ImageOrientation;
+}
+
+
+export type DataAbout = SourceDataAbout
+export type DataFaq = SourceDataFaq;
+
+export type DataBlogPost = {
+  key: string;
+  permalink: string;
+  title: string;
+  date: string;
+  description: string;
+  content: string;
+  tags: string[];
+  hero: DataImage | null;
+  images: DataImage[];
+};
+
+export type BlogPostsData = Record<string, DataBlogPost>;
 
 export type Data = {
   about: SourceDataAbout;
   faq: SourceDataFaq;
+  blogPosts: BlogPostsData;
+  allImages: DataImage[];
   lastUpdated: string;
 };

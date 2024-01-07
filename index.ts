@@ -144,7 +144,7 @@ async function main() {
 
   console.log("Processing data");
 
-  const processedData = await processData(sourceData);
+  const processedData = await processData(sourceData, CACHE_DIR);
 
   const processsingEnd = Date.now();
 

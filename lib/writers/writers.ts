@@ -1,11 +1,8 @@
 import path from "path";
 
 import { Data } from "../types";
-import { Err, Ok, Result, filterErr, writeFile, writeJSONFile } from "../utils";
+import { Err, Ok, Result, filterErr, orderedEntitesFromArray, orderedEntitesFromObject, writeFile, writeJSONFile } from "../utils";
 import { writeArchive } from "./archiveWriter";
-import { writeAbout } from "./aboutWriter";
-import { writeBlogPosts } from "./blogPostsWriter";
-import { writeFaq } from "./faqWriter";
 import { writeMicros } from "./microsWriter";
 import { writeTags } from "./tagsWriter";
 import { writeTimeline } from "./timelineWriter";
@@ -21,10 +18,7 @@ import { writeTv } from "./tvWriter";
 import { logFailedPromisedResults } from "../loggger";
 
 // const WRITERS = [
-//   writeArchive,
-//   writeAbout,
 //   writeBlogPosts,
-//   writeFaq,
 //   writeMicros,
 //   writeTags,
 //   writeTimeline,
@@ -39,24 +33,25 @@ import { logFailedPromisedResults } from "../loggger";
 //   writeTv,
 // ];
 
-export async function writeSimples(
+async function writeAbout(
   data: Data,
   outputDir: string
 ): Promise<Result<undefined>> {
-  const aboutRequest = writeFile(
-    path.join(outputDir, "about.md"),
-    data.about.content
-  );
-  const faqRequest = writeFile(
-    path.join(outputDir, "faq.md"),
-    data.faq.content
-  );
+  return writeJSONFile(path.join(outputDir, "about.json"), data.about);
+}
 
-  const results = await Promise.allSettled([aboutRequest, faqRequest]);
+async function writeFaq(
+  data: Data,
+  outputDir: string
+): Promise<Result<undefined>> {
+  return writeJSONFile(path.join(outputDir, "faq.json"), data.faq);
+}
 
-  logFailedPromisedResults(results);
-
-  return Ok(undefined);
+async function writeBlogPosts(
+  data: Data,
+  outputDir: string
+): Promise<Result<undefined>> {
+  return writeJSONFile(path.join(outputDir, "blog-posts.json"), orderedEntitesFromObject(data.blogPosts));
 }
 
 export async function writeData(
@@ -72,7 +67,11 @@ export async function writeData(
     return dataRequest;
   }
 
-  const results = await Promise.allSettled([writeSimples(data, outputDir)]);
+  const results = await Promise.allSettled([
+    writeAbout(data, outputDir),
+    writeFaq(data, outputDir),
+    writeBlogPosts(data, outputDir),
+  ]);
 
   logFailedPromisedResults(results);
 
