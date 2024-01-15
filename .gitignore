@@ -109,3 +109,7 @@ _public
 .content
 
 /build
+
+# Added by cargo
+
+/target
