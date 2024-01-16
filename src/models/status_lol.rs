@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
+use chrono::DateTime;
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct StatusLolPost {
     key: String,
     permalink: String,
-    date: chrono::DateTime<chrono::Utc>,
+    date: DateTime<chrono::Utc>,
     content: String,
     emoji: String,
     original_url: String,

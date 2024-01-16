@@ -44,12 +44,35 @@ impl ConfigStatusLol {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ConfigBrickset {
+    #[serde(rename = "apiKey")]
+    api_key: String,
+    username: String,
+    password: String,
+}
+
+impl ConfigBrickset {
+    pub fn api_key(&self) -> &str {
+        &self.api_key
+    }
+
+    pub fn username(&self) -> &str {
+        &self.username
+    }
+
+    pub fn password(&self) -> &str {
+        &self.password
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(rename = "cacheDir")]
     cache_dir: String,
     mastodon: ConfigMastodon,
     #[serde(rename = "statusLol")]
     status_lol: ConfigStatusLol,
+    brickset: ConfigBrickset,
 }
 
 impl Config {
@@ -67,5 +90,9 @@ impl Config {
 
     pub fn status_lol(&self) -> &ConfigStatusLol {
         &self.status_lol
+    }
+
+    pub fn brickset(&self) -> &ConfigBrickset {
+        &self.brickset
     }
 }

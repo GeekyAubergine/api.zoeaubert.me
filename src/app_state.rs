@@ -1,4 +1,6 @@
-use std::sync::{RwLock, Arc};
+use std::sync::{Arc};
+
+use tokio::sync::RwLock;
 
 use crate::{prelude::*, config::Config, models::data::Data};
 
@@ -9,10 +11,10 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub fn new(config: Config, data: Data) -> Self {
+    pub fn new(config: Config, data: Arc<RwLock<Data>>) -> Self {
         Self {
             config,
-            data: Arc::new(RwLock::new(data)),
+            data,
         }
     }
 
