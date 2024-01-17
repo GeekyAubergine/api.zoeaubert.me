@@ -66,6 +66,42 @@ impl ConfigBrickset {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ConfigR2 {
+    url: String,
+    id: String,
+    endpoint: String,
+    key: String,
+    secret:String,
+    bucket: String,
+}
+
+impl ConfigR2 {
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
+    pub fn id(&self) -> &str {
+        &self.id
+    }
+
+    pub fn endpoint(&self) -> &str {
+        &self.endpoint
+    }
+
+    pub fn key(&self) -> &str {
+        &self.key
+    }
+
+    pub fn secret(&self) -> &str {
+        &self.secret
+    }
+
+    pub fn bucket(&self) -> &str {
+        &self.bucket
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(rename = "cacheDir")]
     cache_dir: String,
@@ -73,6 +109,7 @@ pub struct Config {
     #[serde(rename = "statusLol")]
     status_lol: ConfigStatusLol,
     brickset: ConfigBrickset,
+    r2: ConfigR2,
 }
 
 impl Config {
@@ -94,5 +131,9 @@ impl Config {
 
     pub fn brickset(&self) -> &ConfigBrickset {
         &self.brickset
+    }
+
+    pub fn r2(&self) -> &ConfigR2 {
+        &self.r2
     }
 }

@@ -10,6 +10,7 @@ use axum::{
     routing::{get, post},
     Json, Router,
 };
+use cdn::{Cdn, CndPath};
 use chrono::{DateTime, Utc};
 use config::Config;
 use error::Error;
@@ -21,6 +22,7 @@ use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::{sync::RwLock, task};
 
 mod app_state;
+mod cdn;
 mod config;
 mod error;
 mod loaders;
@@ -56,6 +58,22 @@ async fn main() -> Result<()> {
     let mut state = AppState::new(config.clone(), data.clone());
 
     let app = router().with_state(state);
+
+    let cdn = Cdn::new(config.clone()).await;
+
+    match cdn
+        .file_exists(CndPath::new(
+            "2024/01/14/d7e4347cfe88a444a5ee957cff044ba0.jpeg".to_owned(),
+        ))
+        .await
+    {
+        Ok(exists) => {
+            println!("File exists: {}", exists);
+        }
+        Err(e) => {
+            println!("Failed to check file: {}", e);
+        }
+    }
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
