@@ -26,8 +26,9 @@ impl Cdn {
     pub async fn new(config: Config) -> Self {
         let credentials = Credentials::from_keys(config.r2().key(), config.r2().secret(), None);
 
-        let r2_config = aws_config::defaults(BehaviorVersion::latest())
-            .region(Region::new(config.r2().endpoint().to_owned()))
+        let r2_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
+            .region(Region::new("auto"))
+            .endpoint_url(config.r2().endpoint().to_owned())
             .credentials_provider(credentials)
             .load()
             .await;
