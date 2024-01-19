@@ -1,4 +1,4 @@
-import path from "path";
+-import path from "path";
 import { Result, writeJSONFile } from "../utils";
 import { Data } from "../types";
 

@@ -102,6 +102,24 @@ impl ConfigR2 {
 }
 
 #[derive(Debug, Clone, Deserialize)]
+pub struct ConfigSteam {
+    #[serde(rename = "apiKey")]
+    api_key: String,
+    #[serde(rename = "steamId")]
+    steam_id: String,
+}
+
+impl ConfigSteam {
+    pub fn api_key(&self) -> &str {
+        &self.api_key
+    }
+
+    pub fn steam_id(&self) -> &str {
+        &self.steam_id
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
 pub struct Config {
     #[serde(rename = "cacheDir")]
     cache_dir: String,
@@ -110,6 +128,7 @@ pub struct Config {
     status_lol: ConfigStatusLol,
     brickset: ConfigBrickset,
     r2: ConfigR2,
+    steam: ConfigSteam,
 }
 
 impl Config {
@@ -135,5 +154,9 @@ impl Config {
 
     pub fn r2(&self) -> &ConfigR2 {
         &self.r2
+    }
+
+    pub fn steam(&self) -> &ConfigSteam {
+        &self.steam
     }
 }

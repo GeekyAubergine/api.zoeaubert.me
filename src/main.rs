@@ -4,29 +4,27 @@ use std::{sync::Arc, thread::sleep, time::Duration};
 
 use crate::prelude::*;
 
-use app_state::AppState;
 use axum::{
-    http::StatusCode,
+    http::{
+        header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
+        HeaderValue, Method, StatusCode,
+    },
     routing::{get, post},
     Json, Router,
 };
-use cdn::{Cdn, CndPath};
 use chrono::{DateTime, Utc};
-use config::Config;
 use error::Error;
-use loaders::load_source_data;
-use models::{data::Data, source_data::SourceData};
+use infrastructure::{app_state::AppState, cdn::Cdn, config::Config};
 use prelude::Result;
 use routes::router;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use tokio::{sync::RwLock, task};
+use tower_http::cors::CorsLayer;
 
-mod app_state;
-mod cdn;
-mod config;
+mod application;
+mod domain;
 mod error;
-mod loaders;
-mod models;
+mod infrastructure;
 mod prelude;
 mod routes;
 
@@ -53,50 +51,36 @@ async fn main() -> Result<()> {
 
     prepare_folders(&config).await?;
 
-    let data = Arc::new(RwLock::new(Data::default()));
+    let mut state = AppState::new(config.clone());
 
-    let mut state = AppState::new(config.clone(), data.clone());
-
-    let app = router().with_state(state);
+    state.init().await;
 
     let cdn = Cdn::new(config.clone()).await;
 
-    match cdn
-        .file_exists(CndPath::new(
-            "2024/01/14/d7e4347cfe88a444a5ee957cff044ba0.jpeg".to_owned(),
-        ))
-        .await
-    {
-        Ok(exists) => {
-            println!("File exists: {}", exists);
-        }
-        Err(e) => {
-            println!("Failed to check file: {}", e);
-        }
-    }
+    let cors = CorsLayer::new()
+        .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
+        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
+        .allow_credentials(true)
+        .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
+
+    let app = router().with_state(state).layer(cors);
+
+    // match cdn
+    //     .file_exists(CndPath::new(
+    //         "2024/01/14/d7e4347cfe88a444a5ee957cff044ba0.jpeg".to_owned(),
+    //     ))
+    //     .await
+    // {
+    //     Ok(exists) => {
+    //         println!("File exists: {}", exists);
+    //     }
+    //     Err(e) => {
+    //         println!("Failed to check file: {}", e);
+    //     }
+    // }
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-
-    task::spawn(async move {
-        match load_source_data(&config, SourceData::default()).await {
-            Ok(source_data) => {
-                let mut data = data.write().await;
-
-                match Data::from_source_data(&source_data) {
-                    Ok(next_data) => {
-                        *data = next_data;
-                    }
-                    Err(e) => {
-                        println!("Failed to load source data: {}", e);
-                    }
-                }
-            }
-            Err(e) => {
-                println!("Failed to load source data: {}", e);
-            }
-        }
-    });
 
     axum::serve(listener, app).await.unwrap();
 

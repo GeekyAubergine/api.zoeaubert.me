@@ -1,7 +1,7 @@
-use axum::{Router, Json, http::StatusCode, routing::post};
+use axum::{Router, Json, http::StatusCode, routing::post, response::IntoResponse};
 use serde::{Serialize, Deserialize};
 
-use crate::app_state::AppState;
+use crate::infrastructure::app_state::AppState;
 
 pub mod api;
 
@@ -9,6 +9,14 @@ pub fn router() -> Router<AppState> {
     Router::new()
         .nest("/", api::api_routes())
         .route("/users", post(create_user))
+        .fallback(handler_404)
+}
+
+async fn handler_404() -> impl IntoResponse {
+    (
+        StatusCode::NOT_FOUND,
+        "The requested resource was not found",
+    )
 }
 
 async fn create_user(

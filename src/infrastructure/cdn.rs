@@ -2,7 +2,9 @@ use aws_config::{BehaviorVersion, Region};
 use aws_credential_types::Credentials;
 use aws_sdk_s3::{primitives::ByteStream, types::ObjectCannedAcl, Client};
 
-use crate::{config::Config, error::Error, prelude::*};
+use crate::{error::Error, prelude::*};
+
+use super::config::Config;
 
 #[derive(Debug)]
 pub struct CndPath {
@@ -57,14 +59,9 @@ impl Cdn {
             .bucket(self.config.r2().bucket())
             .key(path.path.to_owned());
 
-        println!("does file exist? {:?}", path);
-
         match request.send().await {
             Ok(_) => Ok(true),
-            Err(e) => {
-                println!("Error: {}", e);
-                Ok(false)
-            }
+            Err(e) => Ok(false),
         }
     }
 
