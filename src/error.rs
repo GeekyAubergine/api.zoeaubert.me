@@ -19,4 +19,8 @@ pub enum Error {
     ),
     #[error("CND Upload {0}")]
     CdnUpload(aws_sdk_s3::error::SdkError<aws_sdk_s3::operation::put_object::PutObjectError>),
+    #[error("File system unreadable {0}")]
+    FileSystemUnreadable(std::io::Error),
+    #[error("Dispatch job {0}")]
+    DispatchJob(tokio::sync::mpsc::error::SendError<crate::application::jobs::Job>),
 }

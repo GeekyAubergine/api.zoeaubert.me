@@ -6,7 +6,7 @@ use crate::{error::Error, prelude::*};
 
 use super::config::Config;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CndPath {
     path: String,
 }
@@ -17,15 +17,14 @@ impl CndPath {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cdn {
-    config: Config,
     reqwest_client: reqwest::Client,
     r2_client: Client,
 }
 
 impl Cdn {
-    pub async fn new(config: Config) -> Self {
+    pub async fn new(config: &Config) -> Self {
         let credentials = Credentials::from_keys(config.r2().key(), config.r2().secret(), None);
 
         let r2_config = aws_config::defaults(BehaviorVersion::v2023_11_09())
@@ -38,25 +37,20 @@ impl Cdn {
         let r2_client = aws_sdk_s3::Client::new(&r2_config);
 
         Self {
-            config,
             reqwest_client: reqwest::Client::new(),
             r2_client,
         }
-    }
-
-    pub fn config(&self) -> &Config {
-        &self.config
     }
 
     pub fn reqwest_client(&self) -> &reqwest::Client {
         &self.reqwest_client
     }
 
-    pub async fn file_exists(&self, path: CndPath) -> Result<bool> {
+    pub async fn file_exists(&self, path: CndPath, config: &Config) -> Result<bool> {
         let request = self
             .r2_client
             .head_object()
-            .bucket(self.config.r2().bucket())
+            .bucket(config.r2().bucket())
             .key(path.path.to_owned());
 
         match request.send().await {
@@ -65,13 +59,13 @@ impl Cdn {
         }
     }
 
-    pub async fn upload_file(&self, path: CndPath, data: Vec<u8>) -> Result<()> {
+    pub async fn upload_file(&self, path: CndPath, data: Vec<u8>, config: &Config) -> Result<()> {
         let data = ByteStream::from(data);
 
         let request = self
             .r2_client
             .put_object()
-            .bucket(self.config.r2().bucket())
+            .bucket(config.r2().bucket())
             .key(path.path)
             .acl(ObjectCannedAcl::PublicRead)
             .body(data);

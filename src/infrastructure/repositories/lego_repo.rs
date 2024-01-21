@@ -149,6 +149,12 @@ impl LegoRepo {
         }
     }
 
+    pub fn from_archive(archive: LegoRepoArchive) -> Self {
+        Self {
+            brickset: Arc::new(RwLock::new(archive.brickset)),
+        }
+    }
+
     pub async fn reload(&mut self, config: &Config) -> Result<()> {
         let login_response = get_json::<BricksetLoginResponse>(&make_login_url(config)).await?;
 
@@ -175,6 +181,14 @@ impl LegoRepo {
         *brickset_ref = brickset_data;
 
         Ok(())
+    }
+
+    pub async fn get_archived(&self) -> Result<LegoRepoArchive> {
+        let brickset = self.brickset.read().await;
+
+        Ok(LegoRepoArchive {
+            brickset: brickset.clone(),
+        })
     }
 
     pub async fn get_all_sets(&self) -> HashMap<u32, LegoSet> {
@@ -226,4 +240,9 @@ impl LegoRepo {
 
         brickset.sets.iter().map(|set| set.pieces.unwrap_or(1)).sum()
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LegoRepoArchive {
+    brickset: BricksetData,
 }

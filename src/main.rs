@@ -4,6 +4,7 @@ use std::{sync::Arc, thread::sleep, time::Duration};
 
 use crate::prelude::*;
 
+use application::jobs::Job;
 use axum::{
     http::{
         header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
@@ -14,11 +15,11 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use error::Error;
-use infrastructure::{app_state::AppState, cdn::Cdn, config::Config};
+use infrastructure::{app_state::{AppState, AppStateData}, cdn::Cdn, config::Config, bus::Queue};
 use prelude::Result;
 use routes::router;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use tokio::{sync::RwLock, task};
+use tokio::{sync::{RwLock, mpsc::channel}, task};
 use tower_http::cors::CorsLayer;
 
 mod application;
@@ -37,8 +38,11 @@ async fn load_config() -> Result<Config> {
 }
 
 async fn prepare_folders(config: &Config) -> Result<()> {
-    // create folders
     tokio::fs::create_dir_all(config.cache_dir())
+        .await
+        .map_err(Error::MakeFolder)?;
+
+        tokio::fs::create_dir_all("/archive")
         .await
         .map_err(Error::MakeFolder)?;
 
@@ -51,11 +55,14 @@ async fn main() -> Result<()> {
 
     prepare_folders(&config).await?;
 
-    let mut state = AppState::new(config.clone());
+    let (job_sender, queue_receiver) = channel::<Job>(1000);
 
-    state.init().await;
 
-    let cdn = Cdn::new(config.clone()).await;
+    let mut state = AppStateData::new(&config, job_sender.clone()).await;
+
+    let state = Arc::new(state);
+
+    let queue = Queue::<Job>::new(state.clone(), queue_receiver);
 
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())

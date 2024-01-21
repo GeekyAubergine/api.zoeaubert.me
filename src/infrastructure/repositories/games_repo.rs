@@ -73,6 +73,12 @@ impl GamesRepo {
         }
     }
 
+    pub fn from_archive(archive: GameRepoArchive) -> Self {
+        Self {
+            steam_games: Arc::new(RwLock::new(archive.steam_games)),
+        }
+    }
+
     pub async fn reload(&mut self, config: &Config) -> Result<()> {
         let games = get_json::<GetGamesResponse>(&make_get_url(config)).await?;
 
@@ -80,7 +86,7 @@ impl GamesRepo {
             .response
             .games
             .into_iter()
-            .map(|g| (g.appid, g.into()))
+            .map(|g| (g.appid, g))
             .collect::<HashMap<u32, SteamGame>>();
 
         let mut steam_games_ref = self.steam_games.write().await;
@@ -89,6 +95,14 @@ impl GamesRepo {
 
         Ok(())
     }
+
+    pub async fn get_archived(&self) -> Result<GameRepoArchive> {
+        let games = self.steam_games.read().await;
+
+        Ok(GameRepoArchive {
+            steam_games: games.clone(),
+        })
+    }    
 
     pub async fn get_all_games(&self) -> HashMap<u32, Game> {
         let games = self.steam_games.read().await;
@@ -130,4 +144,9 @@ impl GamesRepo {
 
         games.values().map(|game| game.playtime_forever).sum()
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GameRepoArchive {
+    steam_games: HashMap<u32, SteamGame>,
 }
