@@ -21,7 +21,7 @@ impl FaqRepo {
         Self { faq_text: Arc::new(RwLock::new(archive.faq_text)) }
     }
 
-    pub async fn reload(&mut self, config: &Config, cache: &Cache) -> Result<()> {
+    pub async fn reload(&self, config: &Config, cache: &Cache) -> Result<()> {
         if let Some(faq_text) = cache.read_cached_file(FILE_NAME, config).await? {
             let mut faw_text_ref = self.faq_text.write().await;
 

@@ -71,7 +71,7 @@ pub struct ConfigR2 {
     id: String,
     endpoint: String,
     key: String,
-    secret:String,
+    secret: String,
     bucket: String,
 }
 
@@ -123,6 +123,8 @@ impl ConfigSteam {
 pub struct Config {
     #[serde(rename = "cacheDir")]
     cache_dir: String,
+    #[serde(rename = "archiveDir")]
+    archive_dir: String,
     mastodon: ConfigMastodon,
     #[serde(rename = "statusLol")]
     status_lol: ConfigStatusLol,
@@ -138,6 +140,10 @@ impl Config {
 
     pub fn cache_dir(&self) -> &str {
         &self.cache_dir
+    }
+
+    pub fn archive_dir(&self) -> &str {
+        &self.archive_dir
     }
 
     pub fn mastodon(&self) -> &ConfigMastodon {

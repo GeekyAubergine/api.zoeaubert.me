@@ -42,6 +42,12 @@ impl<J: BusJob + Send + Sync, E: BusEvent + Send + Sync> Queue<J, E> {
 
     pub async fn start(&mut self) {
         loop {
+            while let Ok(job) = self.job_receiver.try_recv() {
+                self.jobs.push_back(job);
+            }
+
+            println!("Jobs: {}", self.jobs.len());
+
             while let Some(job) = self.jobs.pop_front() {
                 match job.run(&self.app_state).await {
                     Ok(_) => {}
@@ -51,11 +57,15 @@ impl<J: BusJob + Send + Sync, E: BusEvent + Send + Sync> Queue<J, E> {
                 }
             }
 
+            while let Ok(event) = self.event_receiver.try_recv() {
+                self.events.push_back(event);
+            }
+
             while let Some(event) = self.events.pop_front() {
                 println!("Event: {}", event.name());
             }
 
-            sleep(Duration::from_millis(50)).await;
+            sleep(Duration::from_millis(500)).await;
         }
     }
 }

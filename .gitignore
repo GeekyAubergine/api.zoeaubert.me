@@ -107,6 +107,7 @@ config.json
 config.ts
 _public
 .content
+.archive
 
 /build
 

@@ -4,7 +4,7 @@ use std::{sync::Arc, thread::sleep, time::Duration};
 
 use crate::prelude::*;
 
-use application::jobs::Job;
+use application::{events::Event, jobs::Job};
 use axum::{
     http::{
         header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
@@ -15,11 +15,19 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use error::Error;
-use infrastructure::{app_state::{AppState, AppStateData}, cdn::Cdn, config::Config, bus::Queue};
+use infrastructure::{
+    app_state::{AppState, AppStateData},
+    bus::Queue,
+    cdn::Cdn,
+    config::Config,
+};
 use prelude::Result;
 use routes::router;
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
-use tokio::{sync::{RwLock, mpsc::channel}, task};
+use tokio::{
+    sync::{mpsc::channel, RwLock},
+    task,
+};
 use tower_http::cors::CorsLayer;
 
 mod application;
@@ -42,7 +50,7 @@ async fn prepare_folders(config: &Config) -> Result<()> {
         .await
         .map_err(Error::MakeFolder)?;
 
-        tokio::fs::create_dir_all("/archive")
+    tokio::fs::create_dir_all(config.archive_dir())
         .await
         .map_err(Error::MakeFolder)?;
 
@@ -56,13 +64,18 @@ async fn main() -> Result<()> {
     prepare_folders(&config).await?;
 
     let (job_sender, queue_receiver) = channel::<Job>(1000);
+    let (event_sender, event_receiver) = channel::<Event>(1000);
 
-
-    let mut state = AppStateData::new(&config, job_sender.clone()).await;
-
+    
+    let state = AppStateData::new(&config, job_sender.clone(), event_sender.clone()).await;
+    
     let state = Arc::new(state);
+    
+    let mut queue = Queue::<Job, Event>::new(state.clone(), queue_receiver, event_receiver);
+    
+    println!("Starting jobs...");
+    state.dispatch_job(Job::reload_all_data()).await?;
 
-    let queue = Queue::<Job>::new(state.clone(), queue_receiver);
 
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
@@ -85,6 +98,12 @@ async fn main() -> Result<()> {
     //         println!("Failed to check file: {}", e);
     //     }
     // }
+
+    task::spawn(async move {
+        sleep(Duration::from_secs(1));
+
+        queue.start().await;
+    });
 
     // run our app with hyper, listening globally on port 3000
     let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();

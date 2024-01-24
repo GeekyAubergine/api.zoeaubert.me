@@ -155,7 +155,7 @@ impl LegoRepo {
         }
     }
 
-    pub async fn reload(&mut self, config: &Config) -> Result<()> {
+    pub async fn reload(&self, config: &Config) -> Result<()> {
         let login_response = get_json::<BricksetLoginResponse>(&make_login_url(config)).await?;
 
         let get_set_url = make_get_set_url(config, &login_response.hash);

@@ -79,7 +79,7 @@ impl GamesRepo {
         }
     }
 
-    pub async fn reload(&mut self, config: &Config) -> Result<()> {
+    pub async fn reload(&self, config: &Config) -> Result<()> {
         let games = get_json::<GetGamesResponse>(&make_get_url(config)).await?;
 
         let steam_games = games

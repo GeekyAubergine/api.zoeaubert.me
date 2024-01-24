@@ -21,7 +21,7 @@ impl AboutRepo {
         Self { about_text: Arc::new(RwLock::new(archive.about_text)) }
     }
 
-    pub async fn reload(&mut self, config: &Config, cache: &Cache) -> Result<()> {
+    pub async fn reload(&self, config: &Config, cache: &Cache) -> Result<()> {
         if let Some(about_text) = cache.read_cached_file(FILE_NAME, config).await? {
             let mut about_text_ref = self.about_text.write().await;
 

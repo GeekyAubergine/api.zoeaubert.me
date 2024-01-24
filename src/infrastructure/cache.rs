@@ -4,7 +4,7 @@ use crate::{error::Error, prelude::*};
 
 use super::config::Config;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Cache {}
 
 impl Cache {

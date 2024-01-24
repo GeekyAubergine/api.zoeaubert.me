@@ -23,4 +23,6 @@ pub enum Error {
     FileSystemUnreadable(std::io::Error),
     #[error("Dispatch job {0}")]
     DispatchJob(tokio::sync::mpsc::error::SendError<crate::application::jobs::Job>),
+    #[error("Dispatch event {0}")]
+    DispatchEvent(tokio::sync::mpsc::error::SendError<crate::application::events::Event>),
 }
