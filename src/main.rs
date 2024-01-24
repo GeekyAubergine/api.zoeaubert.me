@@ -37,6 +37,12 @@ mod infrastructure;
 mod prelude;
 mod routes;
 
+pub mod api_definitions {
+    include!(concat!(env!("OUT_DIR"), "/me.zoeaubert.api.rs"));
+}
+
+use harry::test::Person;
+
 async fn load_config() -> Result<Config> {
     let contents = tokio::fs::read_to_string("./config.json")
         .await
@@ -66,16 +72,14 @@ async fn main() -> Result<()> {
     let (job_sender, queue_receiver) = channel::<Job>(1000);
     let (event_sender, event_receiver) = channel::<Event>(1000);
 
-    
     let state = AppStateData::new(&config, job_sender.clone(), event_sender.clone()).await;
-    
+
     let state = Arc::new(state);
-    
+
     let mut queue = Queue::<Job, Event>::new(state.clone(), queue_receiver, event_receiver);
-    
+
     println!("Starting jobs...");
     state.dispatch_job(Job::reload_all_data()).await?;
-
 
     let cors = CorsLayer::new()
         .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())

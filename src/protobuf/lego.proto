@@ -1,0 +1,31 @@
+syntax = "proto3";
+package me.zoeaubert.api;
+
+message LegoSet {
+    uint32 id = 1;
+    string name = 2;
+    string number = 3;
+    string category = 4;
+    uint32 pieces = 5;
+    string image_url = 6;
+    string thumbnail_url = 7;
+    string link_url = 8;
+    uint32 quantity = 9;
+}
+
+message LegoMinifig {
+    string id = 1;
+    string name = 2;
+    string category = 3;
+    uint32 owned_in_sets = 4;
+    uint32 owned_loose = 5;
+    string image_url = 6;
+}
+
+message LegoCollection {
+    map <uint32, LegoSet> sets = 1;
+    repeated uint32 set_ids = 2;
+    map <string, LegoMinifig> minifigs = 3;
+    repeated string minifig_ids = 4;
+    uint32 total_pieces = 5;
+}

@@ -1,67 +1,56 @@
 use std::collections::HashMap;
 
-use axum::{extract::State, Json};
+use axum::{
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    Json,
+};
+use axum_extra::protobuf::Protobuf;
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 
-use crate::{domain::models::games::Game, infrastructure::app_state::AppState, prelude::*};
+use crate::{
+    domain::models::games::Game, infrastructure::app_state::AppState, prelude::*, api_definitions,
+};
 
 const RECENT_GAMES_COUNT: usize = 3;
 
-#[derive(Debug, Clone, Serialize)]
-pub struct ResponseGame {
-    key: u32,
-    name: String,
-    image: String,
-    playtime: u32,
-    last_played: DateTime<Utc>,
-    link: String,
-}
-
-impl From<Game> for ResponseGame {
+impl From<Game> for api_definitions::Game {
     fn from(game: Game) -> Self {
         Self {
-            key: game.key(),
+            id: game.key(),
             name: game.name().to_string(),
-            image: game.image().to_string(),
+            image_url: game.image().to_string(),
             playtime: game.playtime(),
-            last_played: *game.last_played(),
-            link: game.link().to_string(),
+            last_played: game.last_played().to_string(),
+            link_url: game.link().to_string(),
         }
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct ResponseGames {
-    games: HashMap<u32, ResponseGame>,
-    game_keys: Vec<u32>,
-    games_by_last_played: Vec<u32>,
-    games_by_play_time: Vec<u32>,
-    total_play_time: u32,
-}
-
-pub async fn get_all_games_data_query(State(state): State<AppState>) -> Json<ResponseGames> {
+pub async fn get_all_games_data_query(State(state): State<AppState>) -> Protobuf<api_definitions::Games> {
     let games = state
         .games_repo()
         .get_all_games()
         .await
         .iter()
         .map(|(key, game)| (*key, game.clone().into()))
-        .collect::<HashMap<u32, ResponseGame>>();
+        .collect::<HashMap<u32, api_definitions::Game>>();
 
     let games_keys = games.keys().cloned().collect::<Vec<u32>>();
 
     let games_by_last_played = state.games_repo().get_most_recently_played_keys().await;
 
-    let games_by_play_time = state.games_repo().get_most_played_keys().await;
+    let games_by_playtime = state.games_repo().get_most_played_keys().await;
 
-    let total_play_time = state.games_repo().get_total_play_time().await;
+    let total_playtime = state.games_repo().get_total_play_time().await;
 
-    Json(ResponseGames {
+    Protobuf(api_definitions::Games {
         games,
-        game_keys: games_keys,
+        game_ids: games_keys,
         games_by_last_played,
-        games_by_play_time,
-        total_play_time,
+        games_by_playtime,
+        total_playtime,
     })
 }
