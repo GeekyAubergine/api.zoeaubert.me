@@ -13,13 +13,8 @@ use crate::{
 
 pub fn routes() -> Router<AppState> {
     Router::new()
-        .route("/", get(root))
         .route("/lego", get(get_all_lego_data_query))
         .route("/games", get(get_all_games_data_query))
         .route("/about", get(query_get_about_data))
         .route("/faq", get(get_faq_data_query))
-}
-
-async fn root() -> &'static str {
-    "Hello, Worsdfld!"
 }

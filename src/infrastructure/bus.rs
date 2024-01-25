@@ -46,9 +46,7 @@ impl<J: BusJob + Send + Sync, E: BusEvent + Send + Sync> Queue<J, E> {
                 self.jobs.push_back(job);
             }
 
-            println!("Jobs: {}", self.jobs.len());
-
-            while let Some(job) = self.jobs.pop_front() {
+            if let Some(job) = self.jobs.pop_front() {
                 match job.run(&self.app_state).await {
                     Ok(_) => {}
                     Err(err) => {
@@ -64,8 +62,6 @@ impl<J: BusJob + Send + Sync, E: BusEvent + Send + Sync> Queue<J, E> {
             while let Some(event) = self.events.pop_front() {
                 println!("Event: {}", event.name());
             }
-
-            sleep(Duration::from_millis(500)).await;
         }
     }
 }

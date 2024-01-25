@@ -38,10 +38,8 @@ mod prelude;
 mod routes;
 
 pub mod api_definitions {
-    include!(concat!(env!("OUT_DIR"), "/me.zoeaubert.api.rs"));
+    include!(concat!(env!("OUT_DIR"), "/me.zoeaubert.api.v1.rs"));
 }
-
-use harry::test::Person;
 
 async fn load_config() -> Result<Config> {
     let contents = tokio::fs::read_to_string("./config.json")

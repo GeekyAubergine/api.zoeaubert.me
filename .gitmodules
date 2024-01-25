@@ -1,0 +1,3 @@
+[submodule "api.zoeaubert.me-definitions"]
+	path = api.zoeaubert.me-definitions
+	url = git@github.com:GeekyAubergine/api.zoeaubert.me-definitions.git
