@@ -28,7 +28,7 @@ use tokio::{
     sync::{mpsc::channel, RwLock},
     task,
 };
-use tower_http::cors::CorsLayer;
+use tower_http::{cors::CorsLayer, services::ServeDir};
 
 mod application;
 mod domain;
@@ -36,10 +36,6 @@ mod error;
 mod infrastructure;
 mod prelude;
 mod routes;
-
-pub mod api_definitions {
-    include!(concat!(env!("OUT_DIR"), "/me.zoeaubert.api.v1.rs"));
-}
 
 async fn load_config() -> Result<Config> {
     let contents = tokio::fs::read_to_string("./config.json")
@@ -85,7 +81,12 @@ async fn main() -> Result<()> {
         .allow_credentials(true)
         .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
-    let app = router().with_state(state).layer(cors);
+    let static_files = ServeDir::new("./assets");
+
+    let app = router()
+        .with_state(state)
+        .nest_service("/", static_files)
+        .layer(cors);
 
     // match cdn
     //     .file_exists(CndPath::new(

@@ -7,18 +7,23 @@ use axum::{
 use axum_extra::protobuf::Protobuf;
 use serde::Serialize;
 
-use crate::{domain::models::about::About, infrastructure::app_state::AppState, prelude::*, api_definitions};
+use crate::{domain::models::about::About, infrastructure::app_state::AppState, prelude::*};
 
-impl From<About> for api_definitions::About {
+#[derive(Debug, Clone, Serialize)]
+pub struct ResponseAboutData {
+    about_text: String,
+}
+
+impl From<About> for ResponseAboutData {
     fn from(about: About) -> Self {
         Self {
-            text: about.text().to_string(),
+            about_text: about.text().to_string(),
         }
     }
 }
 
-pub async fn query_get_about_data(State(state): State<AppState>) -> Protobuf<api_definitions::About> {
+pub async fn query_get_about_data(State(state): State<AppState>) -> Json<ResponseAboutData> {
     let about = state.about_repo().get_about().await;
 
-    Protobuf(about.into())
+    Json(about.into())
 }

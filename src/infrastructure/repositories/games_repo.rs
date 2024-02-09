@@ -1,240 +1,263 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, sync::Arc, vec};
 
+use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use tokio::{sync::RwLock, task::JoinSet};
 
-use crate::{domain::models::games::Game, get_json, infrastructure::config::Config, prelude::*};
+use crate::{
+    domain::models::{game::Game, game::GameAchievement},
+    get_json,
+    infrastructure::config::Config,
+    prelude::*,
+};
 
-const GAMES_URL: &str =
+const STEAM_OWNED_GAMES_URL: &str =
   "https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?format=json&include_appinfo=true";
 
-const ACHEIVEMENTS_URL: &str =
+const STEAM_PLAYER_ACHEIVEMENTS_URL: &str =
     "http://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?format=json";
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SteamAcheivement {
-    name: String,
-    #[serde(rename = "displayName")]
-    display_name: String,
-    description: String,
-    #[serde(rename = "icon")]
-    image_unlocked_url: String,
-    #[serde(rename = "icongray")]
-    image_locked_url: String,
-}
+const STEAM_GAME_DATA_URL: &str =
+    "http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?format=json";
 
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SteamGameAchievement {
-    apiname: String,
-    achieved: u8,
-    unlocktime: u32,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SteamGame {
-    appid: u32,
-    name: String,
-    playtime_forever: u32,
-    img_icon_url: String,
-    rtime_last_played: u32,
-    achievements: Option<Vec<SteamGameAchievement>>,
-}
-
-impl From<SteamGame> for Game {
-    fn from(game: SteamGame) -> Self {
-        let link = format!(
-            "https://store.steampowered.com/app/{}/{}",
-            game.appid,
-            game.name.replace(' ', "_")
-        );
-
-        let image = format!(
-            "https://steamcdn-a.akamaihd.net/steam/apps/{}/header.jpg",
-            game.appid
-        );
-
-        Game::new(
-            game.appid,
-            game.name,
-            image,
-            game.playtime_forever,
-            game.rtime_last_played,
-            link,
-        )
-    }
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct GetGamesResponseInner {
-    game_count: u32,
-    games: Vec<SteamGame>,
-}
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct GetGamesResponse {
-    response: GetGamesResponseInner,
-}
+// ---- Steam Game
 
 fn make_get_games_url(config: &Config) -> String {
     format!(
         "{}&key={}&steamid={}",
-        GAMES_URL,
+        STEAM_OWNED_GAMES_URL,
         config.steam().api_key(),
         config.steam().steam_id()
     )
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct GetGameAchievementsResponseInner {
-    achievements: Vec<SteamGameAchievement>,
+pub struct SteamOwnedGame {
+    appid: u32,
+    name: String,
+    playtime_forever: u32,
+    img_icon_url: String,
+    rtime_last_played: u32,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-struct GetGameAchievementsResponse {
-    playerstats: GetGameAchievementsResponseInner,
+struct SteamGetOwnedGamesResponseInner {
+    game_count: u32,
+    games: Vec<SteamOwnedGame>,
 }
 
-fn make_get_game_achievements_url(appid: u32, config: &Config) -> String {
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct SteamGetOwnedGamesResponse {
+    response: SteamGetOwnedGamesResponseInner,
+}
+
+async fn get_steam_owned_games(config: &Config) -> Result<HashMap<u32, SteamOwnedGame>> {
+    let response = get_json::<SteamGetOwnedGamesResponse>(&make_get_games_url(config)).await?;
+
+    Ok(response
+        .response
+        .games
+        .into_iter()
+        .map(|game| (game.appid, game))
+        .collect())
+}
+
+// ---- Steam Game Data
+
+fn make_steam_game_data_url(appid: u32, config: &Config) -> String {
     format!(
-        "{}&key={}&steamid={}&appid={}",
-        ACHEIVEMENTS_URL,
+        "{}&key={}&appid={}",
+        STEAM_GAME_DATA_URL,
         config.steam().api_key(),
-        config.steam().steam_id(),
         appid
     )
 }
 
-async fn load_acheivments_for_game_response(
-    mut game: SteamGame,
-    config: Config,
-) -> Result<SteamGame> {
-    match get_json::<GetGameAchievementsResponse>(&make_get_game_achievements_url(
-        game.appid, &config,
-    ))
-    .await
-    {
-        Ok(response) => {
-            game.achievements = Some(response.playerstats.achievements);
-        }
-        Err(_) => {
-            // Game has no achievements
-        }
-    }
-
-    Ok(game)
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SteamGameDataAcheivement {
+    name: String,
+    #[serde(rename = "displayName")]
+    display_name: String,
+    description: String,
+    icon: String,
+    #[serde(rename = "icongray")]
+    icon_gray: String,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SteamAvaialableGameStats {
-    achievements: Vec<SteamAcheivement>,
+pub struct SteamGameDataAvaialableGameStats {
+    achievements: Vec<SteamGameDataAcheivement>,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct SteamAvailableGameStatsResponse {
     #[serde(rename = "gameName")]
     game_name: String,
-    game: SteamAvaialableGameStats,
+    game: SteamGameDataAvaialableGameStats,
 }
 
-async fn load_available_acheivments_for_game_response(
-    appid: u32,
-    config: Config,
-) -> Result<SteamAvaialableGameStats> {
-    let url = format!(
-        "http://api.steampowered.com/ISteamUserStats/GetSchemaForGame/v2/?key={}&appid={}",
+async fn get_steam_game_data(appid: u32, config: &Config) -> Result<Vec<SteamGameDataAcheivement>> {
+    let response =
+        get_json::<SteamAvailableGameStatsResponse>(&make_steam_game_data_url(appid, config))
+            .await?;
+
+    Ok(response.game.achievements)
+}
+
+// ---- Steam Game Player Achievements
+
+fn make_get_player_achievements_url(appid: u32, config: &Config) -> String {
+    format!(
+        "{}&key={}&appid={}&steamid={}",
+        STEAM_PLAYER_ACHEIVEMENTS_URL,
         config.steam().api_key(),
-        appid
+        appid,
+        config.steam().steam_id()
+    )
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+pub struct SteamGamePlayerAchievement {
+    apiname: String,
+    achieved: u8,
+    unlocktime: u32,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct SteamGetPlayerAchievementsResponseInner {
+    achievements: Vec<SteamGamePlayerAchievement>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+struct SteamGetPlayerStatsResponse {
+    playerstats: SteamGetPlayerAchievementsResponseInner,
+}
+
+async fn get_steam_player_achievements(
+    appid: u32,
+    config: &Config,
+) -> Result<Vec<SteamGamePlayerAchievement>> {
+    let response =
+        get_json::<SteamGetPlayerStatsResponse>(&make_get_player_achievements_url(appid, config))
+            .await?;
+
+    Ok(response.playerstats.achievements)
+}
+
+async fn load_data_for_steam_game(steam_game: SteamOwnedGame, config: Config) -> Result<Game> {
+    let game_data = get_steam_game_data(steam_game.appid, &config).await?;
+    let player_achievements = get_steam_player_achievements(steam_game.appid, &config).await?;
+
+    let game_link = format!(
+        "https://store.steampowered.com/app/{}/{}",
+        steam_game.appid,
+        steam_game.name.replace(' ', "_")
     );
 
-    let response = get_json::<SteamAvailableGameStatsResponse>(&url).await?;
+    let game_header_image = format!(
+        "https://steamcdn-a.akamaihd.net/steam/apps/{}/header.jpg",
+        steam_game.appid
+    );
 
-    Ok(response.game)
+    let mut achievements = HashMap::new();
+
+    for achievement in game_data {
+        let player_achievement = player_achievements
+            .iter()
+            .find(|player_achievement| player_achievement.apiname == achievement.name);
+
+        let unlocked_date = match player_achievement {
+            Some(player_achievement) => {
+                if player_achievement.achieved == 1 {
+                    DateTime::from_timestamp(player_achievement.unlocktime as i64, 0)
+                } else {
+                    None
+                }
+            }
+            None => None,
+        };
+
+        achievements.insert(
+            achievement.name.clone(),
+            GameAchievement::new(
+                achievement.name.clone(),
+                achievement.display_name,
+                achievement.description,
+                achievement.icon,
+                achievement.icon_gray,
+                unlocked_date,
+            ),
+        );
+    }
+
+    Ok(Game::new(
+        steam_game.appid,
+        steam_game.name,
+        game_header_image,
+        steam_game.playtime_forever,
+        steam_game.rtime_last_played,
+        game_link,
+        achievements,
+    ))
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct GamesRepo {
-    steam_games: Arc<RwLock<HashMap<u32, SteamGame>>>,
-    steam_game_achievements: Arc<RwLock<HashMap<String, SteamAcheivement>>>,
+    games: Arc<RwLock<HashMap<u32, Game>>>,
 }
 
 impl GamesRepo {
     pub fn new() -> Self {
         Self {
-            steam_games: Arc::new(RwLock::new(HashMap::new())),
-            steam_game_achievements: Arc::new(RwLock::new(HashMap::new())),
+            games: Arc::new(RwLock::new(HashMap::new())),
         }
     }
 
     pub fn from_archive(archive: GameRepoArchive) -> Self {
         Self {
-            steam_games: Arc::new(RwLock::new(archive.steam_games)),
-            steam_game_achievements: Arc::new(RwLock::new(HashMap::new())),
+            games: Arc::new(RwLock::new(archive.games)),
         }
     }
 
     pub async fn reload(&self, config: &Config) -> Result<()> {
-        let games = get_json::<GetGamesResponse>(&make_get_games_url(config)).await?;
+        let steam_owned_games_response =
+            get_json::<SteamGetOwnedGamesResponse>(&make_get_games_url(config)).await?;
 
-        let mut games_with_achievements_taks = JoinSet::new();
+        let mut steam_game_data_tasks = JoinSet::new();
 
-        for game in games.response.games {
-            let game_with_achievements = load_acheivments_for_game_response(game, config.clone());
+        for game in steam_owned_games_response.response.games {
+            let game_with_achievements = load_data_for_steam_game(game, config.clone());
 
-            games_with_achievements_taks.spawn(game_with_achievements);
+            steam_game_data_tasks.spawn(game_with_achievements);
         }
 
         let mut steam_games = HashMap::new();
 
-        while let Some(game) = games_with_achievements_taks.join_next().await {
+        while let Some(game) = steam_game_data_tasks.join_next().await {
             if let Ok(Ok(game)) = game {
-                steam_games.insert(game.appid, game);
+                steam_games.insert(game.id(), game);
             } else {
                 // TODO log
             }
         }
 
-        let mut steam_games_ref = self.steam_games.write().await;
+        let mut steam_games_ref = self.games.write().await;
 
         *steam_games_ref = steam_games;
-
-        let mut steam_game_achievements = HashMap::new();
-
-        let mut games_with_achievements_taks = JoinSet::new();
-
-        for appid in steam_games_ref.keys() {
-            let game_with_achievements =
-                load_available_acheivments_for_game_response(*appid, config.clone());
-
-            games_with_achievements_taks.spawn(game_with_achievements);
-        }
-
-        while let Some(game) = games_with_achievements_taks.join_next().await {
-            if let Ok(Ok(game)) = game {
-                for achievement in game.achievements {
-                    steam_game_achievements.insert(achievement.name.clone(), achievement);
-                }
-            } else {
-                // TODO log
-            }
-        }
-
-        let mut steam_game_achievements_ref = self.steam_game_achievements.write().await;
-
-        *steam_game_achievements_ref = steam_game_achievements;
 
         Ok(())
     }
 
     pub async fn get_archived(&self) -> Result<GameRepoArchive> {
-        let games = self.steam_games.read().await;
+        let games = self.games.read().await;
 
         Ok(GameRepoArchive {
-            steam_games: games.clone(),
+            games: games.clone(),
         })
     }
 
     pub async fn get_all_games(&self) -> HashMap<u32, Game> {
-        let games = self.steam_games.read().await;
+        let games = self.games.read().await;
 
         games
             .iter()
@@ -242,40 +265,56 @@ impl GamesRepo {
             .collect()
     }
 
-    pub async fn get_most_recently_played_keys(&self) -> Vec<u32> {
-        let games = self.steam_games.read().await;
+    pub async fn get_games_by_most_recently_played(&self) -> Vec<u32> {
+        let games = self.games.read().await;
 
-        let mut games_array = games.values().cloned().collect::<Vec<SteamGame>>();
+        let mut games_array = games.values().cloned().collect::<Vec<Game>>();
 
-        games_array.sort_by(|a, b| b.rtime_last_played.cmp(&a.rtime_last_played));
+        games_array.sort_by(|a, b| b.last_played().cmp(&a.last_played()));
 
         games_array
             .iter()
-            .map(|game| game.appid)
+            .map(|game| game.id())
             .collect::<Vec<u32>>()
     }
 
-    pub async fn get_most_played_keys(&self) -> Vec<u32> {
-        let games = self.steam_games.read().await;
+    pub async fn get_games_by_most_played(&self) -> Vec<u32> {
+        let games = self.games.read().await;
 
-        let mut games_array = games.values().cloned().collect::<Vec<SteamGame>>();
+        let mut games_array = games.values().cloned().collect::<Vec<Game>>();
 
-        games_array.sort_by(|a, b| b.playtime_forever.cmp(&a.playtime_forever));
+        games_array.sort_by(|a, b| b.playtime().cmp(&a.playtime()));
 
         games_array
             .iter()
-            .map(|game| game.appid)
+            .map(|game| game.id())
+            .collect::<Vec<u32>>()
+    }
+
+    pub async fn get_games_by_most_completed_achievements(&self) -> Vec<u32> {
+        let games = self.games.read().await;
+
+        let mut games_array = games.values().cloned().collect::<Vec<Game>>();
+
+        games_array.sort_by(|a, b| {
+            b.achievements_unlocked_count()
+                .cmp(&a.achievements_unlocked_count())
+        });
+
+        games_array
+            .iter()
+            .map(|game| game.id())
             .collect::<Vec<u32>>()
     }
 
     pub async fn get_total_play_time(&self) -> u32 {
-        let games = self.steam_games.read().await;
+        let games = self.games.read().await;
 
-        games.values().map(|game| game.playtime_forever).sum()
+        games.values().map(|game| game.playtime()).sum()
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GameRepoArchive {
-    steam_games: HashMap<u32, SteamGame>,
+    games: HashMap<u32, Game>,
 }

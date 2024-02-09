@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 pub mod status_lol;
 pub mod lego;
-pub mod games;
+pub mod game;
 pub mod post;
 pub mod about;
 pub mod now;
