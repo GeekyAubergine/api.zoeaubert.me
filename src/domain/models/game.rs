@@ -173,4 +173,8 @@ impl Game {
             .map(|achievement| achievement.0.clone())
             .collect()
     }
+
+    pub fn set_achievements(&mut self, achievements: HashMap<String, GameAchievement>) {
+        self.achievements = achievements;
+    }
 }

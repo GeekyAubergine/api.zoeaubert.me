@@ -90,10 +90,15 @@ pub struct SteamGameDataAvaialableGameStats {
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct SteamAvailableGameStatsResponse {
+pub struct SteamAvailableGameSchemaResponse {
     #[serde(rename = "gameName")]
     game_name: String,
-    game: SteamGameDataAvaialableGameStats,
+    #[serde(rename = "availableGameStats")]
+    available_game_stats: SteamGameDataAvaialableGameStats,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SteamAvailableGameStatsResponse {
+    game: SteamAvailableGameSchemaResponse,
 }
 
 async fn get_steam_game_data(appid: u32, config: &Config) -> Result<Vec<SteamGameDataAcheivement>> {
@@ -101,7 +106,7 @@ async fn get_steam_game_data(appid: u32, config: &Config) -> Result<Vec<SteamGam
         get_json::<SteamAvailableGameStatsResponse>(&make_steam_game_data_url(appid, config))
             .await?;
 
-    Ok(response.game.achievements)
+    Ok(response.game.available_game_stats.achievements)
 }
 
 // ---- Steam Game Player Achievements
@@ -145,9 +150,6 @@ async fn get_steam_player_achievements(
 }
 
 async fn load_data_for_steam_game(steam_game: SteamOwnedGame, config: Config) -> Result<Game> {
-    let game_data = get_steam_game_data(steam_game.appid, &config).await?;
-    let player_achievements = get_steam_player_achievements(steam_game.appid, &config).await?;
-
     let game_link = format!(
         "https://store.steampowered.com/app/{}/{}",
         steam_game.appid,
@@ -159,46 +161,59 @@ async fn load_data_for_steam_game(steam_game: SteamOwnedGame, config: Config) ->
         steam_game.appid
     );
 
-    let mut achievements = HashMap::new();
-
-    for achievement in game_data {
-        let player_achievement = player_achievements
-            .iter()
-            .find(|player_achievement| player_achievement.apiname == achievement.name);
-
-        let unlocked_date = match player_achievement {
-            Some(player_achievement) => {
-                if player_achievement.achieved == 1 {
-                    DateTime::from_timestamp(player_achievement.unlocktime as i64, 0)
-                } else {
-                    None
-                }
-            }
-            None => None,
-        };
-
-        achievements.insert(
-            achievement.name.clone(),
-            GameAchievement::new(
-                achievement.name.clone(),
-                achievement.display_name,
-                achievement.description,
-                achievement.icon,
-                achievement.icon_gray,
-                unlocked_date,
-            ),
-        );
-    }
-
-    Ok(Game::new(
+    let mut game = Game::new(
         steam_game.appid,
         steam_game.name,
         game_header_image,
         steam_game.playtime_forever,
         steam_game.rtime_last_played,
         game_link,
-        achievements,
-    ))
+        HashMap::new(),
+    );
+
+    match get_steam_game_data(steam_game.appid, &config).await {
+        Ok(game_data) => {
+            let player_achievements =
+                get_steam_player_achievements(steam_game.appid, &config).await?;
+
+            let mut achievements = HashMap::new();
+
+            for achievement in game_data {
+                let player_achievement = player_achievements
+                    .iter()
+                    .find(|player_achievement| player_achievement.apiname == achievement.name);
+
+                let unlocked_date = match player_achievement {
+                    Some(player_achievement) => {
+                        if player_achievement.achieved == 1 {
+                            DateTime::from_timestamp(player_achievement.unlocktime as i64, 0)
+                        } else {
+                            None
+                        }
+                    }
+                    None => None,
+                };
+
+                achievements.insert(
+                    achievement.name.clone(),
+                    GameAchievement::new(
+                        achievement.name.clone(),
+                        achievement.display_name,
+                        achievement.description,
+                        achievement.icon,
+                        achievement.icon_gray,
+                        unlocked_date,
+                    ),
+                );
+            }
+
+            game.set_achievements(achievements);
+
+            Ok(game)
+        }
+        // So this seems weird but sometimes the API just returns `Game: {}` for some games that aren't really games :shrug: I don't care that much as it wont have the achievement data anyway
+        Err(err) => Ok(game),
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -223,21 +238,37 @@ impl GamesRepo {
         let steam_owned_games_response =
             get_json::<SteamGetOwnedGamesResponse>(&make_get_games_url(config)).await?;
 
-        let mut steam_game_data_tasks = JoinSet::new();
+        // let mut steam_game_data_tasks = JoinSet::new();
 
-        for game in steam_owned_games_response.response.games {
-            let game_with_achievements = load_data_for_steam_game(game, config.clone());
+        // for game in steam_owned_games_response.response.games {
+        //     let game_with_achievements = load_data_for_steam_game(game, config.clone());
 
-            steam_game_data_tasks.spawn(game_with_achievements);
-        }
+        //     steam_game_data_tasks.spawn(game_with_achievements);
+        // }
 
         let mut steam_games = HashMap::new();
 
-        while let Some(game) = steam_game_data_tasks.join_next().await {
-            if let Ok(Ok(game)) = game {
-                steam_games.insert(game.id(), game);
-            } else {
-                // TODO log
+        // while let Some(game) = steam_game_data_tasks.join_next().await {
+        //     if let Ok(Ok(game)) = game {
+        //         steam_games.insert(game.id(), game);
+        //     } else {
+        //         println!("Error loading game data");
+        //         // TODO log
+        //     }
+        // }
+
+        for game in steam_owned_games_response.response.games {
+            let game_with_achievements = load_data_for_steam_game(game, config.clone()).await;
+
+            match game_with_achievements {
+                Ok(game) => {
+                    steam_games.insert(game.id(), game);
+                }
+                Err(err) => {
+                    println!("Error loading game data: {:?}", err);
+                    // TODO log
+                    break;
+                }
             }
         }
 

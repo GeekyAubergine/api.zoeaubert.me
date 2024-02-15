@@ -29,6 +29,7 @@ use tokio::{
     task,
 };
 use tower_http::{cors::CorsLayer, services::ServeDir};
+use tracing::{debug, info, Level};
 
 mod application;
 mod domain;
@@ -59,6 +60,12 @@ async fn prepare_folders(config: &Config) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    tracing_subscriber::fmt()
+        .with_max_level(Level::DEBUG)
+        .init();
+
+    info!("Starting up...");
+
     let config = load_config().await?;
 
     prepare_folders(&config).await?;
@@ -120,6 +127,8 @@ async fn get_json<T>(url: &str) -> Result<T>
 where
     T: DeserializeOwned,
 {
+    debug!("Making request to: {}", url);
+
     let resp = reqwest::get(url).await.map_err(Error::HttpReqwest)?;
 
     let json = resp.json::<T>().await.map_err(Error::HttpReqwest)?;
