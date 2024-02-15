@@ -107,5 +107,10 @@ config.json
 config.ts
 _public
 .content
+.archive
 
 /build
+
+# Added by cargo
+
+/target
